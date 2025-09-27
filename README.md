@@ -4,9 +4,15 @@
 This is a simple FFT library written in C++, currently
 supporting only the complex double type.  The purpose of
 this repository is to study the performance compared to
-MinimalFFT.jl.  sincos is from the Openlibm library for
-better performance.  Compiling with gcc also yields
-much better performance than clang.
+MinimalFFT.jl to make improvements.  
+
+*sincos* is borrowed from the Openlibm library for
+better performance than the standard C library.  FFTW
+is a dependency for the correctness and performance testing in the test
+subdirectory.
+
+This was originally written in C and converted to C++.  Compiling
+with gcc or fastmath yields much better performance than standard clang.
 
 ## Organization
 

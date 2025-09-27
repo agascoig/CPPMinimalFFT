@@ -145,7 +145,9 @@ static int approx_cmp(MFFTELEM x, MFFTELEM y) {
 static double norm_v(MFFTELEM *x, size_t n) {
   double sum = 0.0;
   for (size_t i = 0; i < n; ++i) {
-    sum += std::real(x[i] * std::conj(x[i]));
+    double zr = std::real(x[i]);
+    double zi = std::imag(x[i]);
+    sum += zr * zr + zi * zi;
   }
   return sqrt(sum);
 }
@@ -168,12 +170,15 @@ static int approx_cmp_v(MFFTELEM *x, MFFTELEM *y, size_t n) {
   if (x == y)
     return 0;
 
+    double diff = 0.0;
+
   // Check for finite values
   if (is_finite(x, n) && is_finite(y, n)) {
-    double diff = 0.0;
     for (int i = 0; i < n; ++i) {
-      std::complex<double> c = x[i] - y[i];
-      diff += std::real(c * std::conj(c));
+      double zr = std::real(x[i]-y[i]);
+      double zi = std::imag(x[i]-y[i]);
+
+      diff += zr * zr + zi * zi;
     }
     diff = sqrt(diff);
     double norm_x = norm_v(x, n);
@@ -183,6 +188,7 @@ static int approx_cmp_v(MFFTELEM *x, MFFTELEM *y, size_t n) {
       return 0;
   }
 
+//  std::cout << "diff error: " << diff << std::endl;
   return 1;
 }
 
@@ -265,7 +271,7 @@ typedef struct {} pfa3_t; // tag for do_fft
 
 typedef void (*parent_fn_t)(MFFTELEM **YY, MFFTELEM **XX, const int32_t *es, const int64_t *Ns,
                     const fft_func_t *fs, int64_t bp, int64_t stride,
-                    int32_t flags);
+                    int32_t flags); // for casts
 
 void pfa_extend_4(MFFTELEM **YY, MFFTELEM **XX, const int32_t *es, const int64_t *Ns,
                   const fft_func_t *fs, int64_t bp,

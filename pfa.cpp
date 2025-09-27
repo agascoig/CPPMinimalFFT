@@ -55,7 +55,7 @@ void kmap_2(MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X, int64_t bp,
     for (int64_t k1p = 0; k1p < N1; k1p++) {
       int64_t k2 = mask_mux_mod(k2p + R1, N2);
       int64_t rhs_k = k1p + k2 * N1;
-      X[bp + stride * lhs_k] = Y[bp + stride * rhs_k];
+      Y[bp + stride * lhs_k] = X[bp + stride * rhs_k];
       R1 = mask_mux_mod(R1 + Q2P, N2);
       lhs_k++;
     }
@@ -103,7 +103,7 @@ void prime_factor_2(MFFTELEM **YY, MFFTELEM **XX, const int32_t *es, const int64
   if (Q2P < 0)
     Q2P += N2;
 
-  kmap_2(Y, X, bp, stride, N1, N2, Q2P);
+  kmap_2(X, Y, bp, stride, N1, N2, Q2P);
 
   *YY = X;
   *XX = Y;
@@ -220,7 +220,6 @@ void prime_factor_3(MFFTELEM **YY, MFFTELEM **XX, const int32_t *es, const int64
   Y = Y123.data;
   X = X123.data;
 
-  // Backward mapping
   kmap_3(Y, X, bp, stride, N1, N2, N3, P1, P2);
 
   *YY = Y;
@@ -266,7 +265,7 @@ void pfa_extend_4(MFFTELEM **YY, MFFTELEM **XX, const int32_t *es, const int64_t
   if (Q2P < 0)
     Q2P += N2E;
 
-  kmap_2(Y, X, bp, stride, N1E, N2E, Q2P);
+  kmap_2(X, Y, bp, stride, N1E, N2E, Q2P);
 
   *YY = X;
   *XX = Y;
@@ -310,7 +309,7 @@ void pfa_extend_5(MFFTELEM **YY, MFFTELEM **XX, const int32_t *es, const int64_t
   if (Q2P < 0)
     Q2P += N2E;
 
-  kmap_2(Y, X, bp, stride, N1E, N2E, Q2P);
+  kmap_2(X, Y, bp, stride, N1E, N2E, Q2P);
 
   *YY = X;
   *XX = Y;
@@ -354,7 +353,7 @@ void pfa_extend_6(MFFTELEM **YY, MFFTELEM **XX, const int32_t *es, const int64_t
   if (Q2P < 0)
     Q2P += N2E;
 
-  kmap_2(Y, X, bp, stride, N1E, N2E, Q2P);
+  kmap_2(X, Y, bp, stride, N1E, N2E, Q2P);
 
   *YY = X;
   *XX = Y;

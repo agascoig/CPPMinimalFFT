@@ -80,7 +80,7 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   MFFTELEM * __restrict__ y = *YY;
   MFFTELEM * __restrict__ x = *XX;
 
-//  minassert(N>0 && N <= DIRECT_SZ, "N too large for direct DFT");
+  minassert(N>0 && N <= DIRECT_SZ, "N too large for direct DFT");
 
   const std::complex<double> * __restrict__ W =
       reinterpret_cast<const std::complex<double> *>(DIRECT_COEFFS[N]);

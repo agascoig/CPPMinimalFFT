@@ -50,7 +50,7 @@ void do_1d_plan(MinimalPlan &P, MDArray *oy, MDArray *ix, int64_t r) {
   compute_strides(strides, oy->dims, ndims, 1);
 
   int64_t bp = 0;
-  int64_t flipped = 0;
+  bool flipped = false;
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
@@ -62,7 +62,7 @@ void do_1d_plan(MinimalPlan &P, MDArray *oy, MDArray *ix, int64_t r) {
     P.execute_plan(YY, XX, r, bp, stride);
 
     if (*YY != orig_y) {
-      flipped = 1;
+      flipped = true;
       swap_ptrs(YY, XX);
     }
     bp = indexer_count(r, ndims, counts, strides, bp, oy->dims);
@@ -80,7 +80,7 @@ void do_1d_r0(MinimalPlan &P, MDArray *oy, MDArray *ix) {
   int64_t vlength = oy->dims[0];
   int64_t bp = 0;
   int64_t limit = oy->total_size;
-  int64_t flipped = 0;
+  bool flipped = false;
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
@@ -90,7 +90,7 @@ void do_1d_r0(MinimalPlan &P, MDArray *oy, MDArray *ix) {
     P.execute_plan(YY, XX, 0, bp, 1);
 
     if (*YY != orig_y) {
-      flipped = 1;
+      flipped = true;
       swap_ptrs(YY, XX);
     }
     bp += vlength;
@@ -123,7 +123,7 @@ void do_1d_func(MDArray *oy, MDArray *ix, const fft_func_t *fs,
   compute_strides(strides, oy_dims, oy_ndims, instride);
 
   int64_t vlength = oy->dims[r];
-  int64_t flipped = 0;
+  bool flipped = false;
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
@@ -143,7 +143,7 @@ void do_1d_func(MDArray *oy, MDArray *ix, const fft_func_t *fs,
     }
 
     if (*YY != orig_y) {
-      flipped = 1;
+      flipped = true;
       swap_ptrs(YY, XX);
     }
 
@@ -169,12 +169,9 @@ void do_1d_r0_func(MDArray *oy, MDArray *ix, const fft_func_t *fs,
   MFFTELEM **XX = &(ix->data);
   MFFTELEM *orig_y = *YY;
 
-  // Compute limit from dimensions 2:end
-  int64_t limit = compute_product(oy->dims + 1, oy->ndims - 1);
-  int64_t l = 0;
+  int64_t limit = bp + oy->total_size * stride;
 
-  while (l < limit) {
-    l++;
+  while (bp < limit) {
     if constexpr (std::is_same_v<Func, fft_func_t>) {
       fs[0](YY, XX, vlength, es[0], bp, stride, flags);
     } else if constexpr (std::is_same_v<Func, pfa2_t>) {

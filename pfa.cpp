@@ -169,10 +169,7 @@ void prime_factor_2(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
   int64_t N2 = Ns[1];
   int64_t N = N1 * N2;
 
-  const int64_t Q1P = params[0];
-  const int64_t Q2P = params[1];
-
-  nmap_2(Y, X, bp, stride, N1, N2, Q1P);
+  nmap_2(Y, X, bp, stride, N1, N2, params[0]);
 
   // Create 2D arrays for FFT operations
   MDArray Y2D = create_mdarray(Y, Ns, 2);
@@ -186,7 +183,7 @@ void prime_factor_2(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
   Y = Y2D.data;
   X = X2D.data;
 
-  kmap_2(X, Y, bp, stride, N1, N2, Q2P);
+  kmap_2(X, Y, bp, stride, N1, N2, params[1]);
 
   *YY = X;
   *XX = Y;
@@ -251,13 +248,8 @@ void prime_factor_3(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
   const int64_t N3 = Ns[2];
   const int64_t N = N1 * N2 * N3;
 
-  const int64_t Q1P = params[0];
-  const int64_t Q2P = params[1];
-  const int64_t P1 = params[2];
-  const int64_t P2 = params[3];
-
   // Forward mapping
-  nmap_3(Y, X, bp, stride, N1, N2, N3, Q1P, Q2P);
+  nmap_3(Y, X, bp, stride, N1, N2, N3, params[0], params[1]);
 
   // Create 3D arrays for FFT operations
   MDArray Y123 = create_mdarray(Y, Ns, 3);
@@ -271,7 +263,7 @@ void prime_factor_3(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
   Y = Y123.data;
   X = X123.data;
 
-  kmap_3(Y, X, bp, stride, N1, N2, N3, P1, P2);
+  kmap_3(Y, X, bp, stride, N1, N2, N3, params[2], params[3]);
 
   *YY = Y;
   *XX = X;
@@ -286,10 +278,7 @@ void pfa_extend_4(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
 
   const int64_t NsE[] = {Ns[0] * Ns[1], Ns[2] * Ns[3]};
 
-  const int64_t Q1P = params[0];
-  const int64_t Q2P = params[1];
-
-  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], Q1P);
+  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], params[0]);
 
   MDArray Y2D = create_mdarray(Y, NsE, 2);
   MDArray X2D = create_mdarray(X, NsE, 2);
@@ -302,7 +291,7 @@ void pfa_extend_4(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
   Y = Y2D.data;
   X = X2D.data;
 
-  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], Q2P);
+  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], params[1]);
 
   *YY = X;
   *XX = Y;
@@ -317,10 +306,7 @@ void pfa_extend_5(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
 
   const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4]};
 
-  const int64_t Q1P = params[0];
-  const int64_t Q2P = params[1];
-
-  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], Q1P);
+  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], params[0]);
 
   MDArray Y2D = create_mdarray(Y, NsE, 2);
   MDArray X2D = create_mdarray(X, NsE, 2);
@@ -333,7 +319,7 @@ void pfa_extend_5(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
   Y = Y2D.data;
   X = X2D.data;
 
-  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], Q2P);
+  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], params[1]);
 
   *YY = X;
   *XX = Y;
@@ -348,9 +334,7 @@ void pfa_extend_6(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
 
   const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4] * Ns[5]};
 
-  const int64_t Q1P = params[0];
-  const int64_t Q2P = params[1];
-  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], Q1P);
+  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], params[0]);
 
   MDArray Y2D = create_mdarray(Y, NsE, 2);
   MDArray X2D = create_mdarray(X, NsE, 2);
@@ -363,7 +347,7 @@ void pfa_extend_6(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
   Y = Y2D.data;
   X = X2D.data;
 
-  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], Q2P);
+  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], params[1]);
 
   *YY = X;
   *XX = Y;

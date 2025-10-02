@@ -1,0 +1,8 @@
+./build
+*.s
+*.o
+./tmp
+./openlibm
+./.vscode
+.DS_Store
+*build*

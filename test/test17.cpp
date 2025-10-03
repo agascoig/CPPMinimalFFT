@@ -1,5 +1,6 @@
 
 #include "CPPMinimalFFT.hpp"
+#include "hmean.hpp"
 #include "plan.hpp"
 #include <fftw3.h>
 #include <float.h>
@@ -19,6 +20,8 @@ static const int OVERSAMPLE_FACTOR = 40;
 
 using hashmap_t = std::unordered_map<std::string, int>;
 using normal_dist_t = std::normal_distribution<double>;
+
+static HarmonicMean hm;
 
 class random_normal {
 public:
@@ -195,6 +198,8 @@ void print_result(const char *preamble, const char *name, int64_t N,
   } else {
     snprintf(timing_str, sizeof(timing_str), "untimed");
   }
+
+  hm_add(&hm, t_s / t_ref_s);
 
   char fn_str[256];
   fn_str[0] = '\0';
@@ -409,15 +414,17 @@ static const int64_t factor_6[][6] = {{4, 5, 7, 9, 11, 17}};
 static const int64_t bluestein_1[][1] = {{15}, {16}, {11}, {13}, {17}};
 
 void bluestein_test_parent(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
-                    const int32_t *es, const int64_t bp, const int64_t stride,
-                    const int32_t flags, const fft_func_t *fs,
-                    const int64_t *params) {
+                           const int32_t *es, const int64_t bp,
+                           const int64_t stride, const int32_t flags,
+                           const fft_func_t *fs, const int64_t *params) {
   bluestein(YY, XX, Ns[0], es[0], bp, stride, flags);
 }
 
 int main() {
   hashmap_t d;
   random_normal RNG(6502, 0.0, 1.0);
+
+  hm_init(&hm);
 
   int pass = 0, fail = 0;
   int *pc = &pass;
@@ -535,10 +542,10 @@ int main() {
   RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, 0, 0, pfa_extend_6, factor_6,
              "prime factor extend 6");
 
-  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 0, bluestein_test_parent, bluestein_1,
-             "bluestein test");
-  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 1, bluestein_test_parent, bluestein_1,
-             "bluestein inverse test");
+  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 0, bluestein_test_parent,
+             bluestein_1, "bluestein test");
+  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 1, bluestein_test_parent,
+             bluestein_1, "bluestein inverse test");
 
   d.clear();
 
@@ -583,6 +590,9 @@ int main() {
 
   printf("\nPassed %d tests.\n", pass);
   printf("Failed %d tests.\n", fail);
+  double hmv = hm_value(&hm);
+  printf("Harmonic mean xFFTW = %2.2e\n", hmv);
+
   fflush(stdout);
   return 0;
 }

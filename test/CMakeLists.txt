@@ -1,10 +1,12 @@
 # CMakeLists.txt
 
 cmake_minimum_required(VERSION 3.10)  # Minimum CMake version
+
 project(test17 CXX)          # Specify project name and language
 
 add_executable(test17
     test17.cpp
+    hmean.cpp
 )
 
 set(ASAN_FLAGS
@@ -24,5 +26,6 @@ ${FFTW_LIB})
 
 target_include_directories(test17 PRIVATE
 ..
+.
 )
 

@@ -34,17 +34,10 @@ static inline int64_t nextpow2_exp(uint64_t n) {
   return high_bit + 1;
 }
 
-// Bluestein FFT implementation
-void bluestein(MFFTELEM **YY, MFFTELEM **XX, int64_t N, int32_t discard_e1,
-               int64_t bp, int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ y = *YY;
-  MFFTELEM *__restrict__ x = *XX;
-
-  const int32_t e1 = nextpow2_exp(2 * N - 1);
-  const int64_t M = 1 << e1;
+static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
+  bool init = bs_buff.M == 0;
 
   const bool inverse = (flags & P_INVERSE);
-  bool init = bs_buff.M == 0;
 
   if (!init) {
     if (bs_buff.M != M) {
@@ -93,6 +86,19 @@ void bluestein(MFFTELEM **YY, MFFTELEM **XX, int64_t N, int32_t discard_e1,
   bs_buff.flags = flags;
   bs_buff.N = N;
 
+}
+
+// Bluestein FFT implementation
+void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t discard_e1,
+               const int64_t bp, const int64_t stride, const int32_t flags) {
+  MFFTELEM *__restrict__ y = *YY;
+  MFFTELEM *__restrict__ x = *XX;
+
+  const int32_t e1 = nextpow2_exp(2 * N - 1);
+  const int64_t M = 1 << e1;
+
+  bluestein_init(N, M, flags);
+
   MFFTELEM *a_n = bs_buff.a_n;
   const MFFTELEM *b_n = bs_buff.b_n;
   MFFTELEM *A_X = bs_buff.A_X;
@@ -103,7 +109,7 @@ void bluestein(MFFTELEM **YY, MFFTELEM **XX, int64_t N, int32_t discard_e1,
 
   // Fill a_n and y arrays
   for (int64_t n = 0; n < N; n++) {
-    MFFTELEM c = conj(b_n[n]);
+    MFFTELEM c = std::conj(b_n[n]);
     a_n[n] = x[bp + stride * n] * c;
     y[bp + stride * n] = c;
   }

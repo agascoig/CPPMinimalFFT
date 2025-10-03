@@ -3,6 +3,7 @@
 #include "plan.hpp"
 #include <fftw3.h>
 #include <float.h>
+#include <inttypes.h>
 #include <iostream>
 #include <new>
 #include <random>
@@ -12,7 +13,6 @@
 #include <time.h>
 #include <unordered_map>
 #include <vector>
-#include <inttypes.h>
 
 static const int NUM_TIMED_TESTS = 20;
 static const int OVERSAMPLE_FACTOR = 40;
@@ -127,14 +127,17 @@ MFFTELEM *test_fft_kernel(int64_t repeat_count, MFFTELEM *Y_ref, MFFTELEM *Y,
       if (inplace && (n != repeat_count))
         memcpy(X, copy_X, N * sizeof(MFFTELEM));
     } else {
-      if (num_factors == 1) {
+      if (parent_fn == nullptr) {
         ((fft_func_t)fns[0])(&Y, &X, N, es[0], 0, 1, inverse);
       } else if (num_factors <= MAX_FACTORS) {
         ((parent_fn_t)parent_fn)(&Y, &X, Ns, es, 0, 1, inverse, fns, params);
       } else {
         minassert(0, "Too many factors here.");
       }
-      memcpy(X, copy_X, N * sizeof(MFFTELEM)); // inner routines do not copy input, so must do it
+      memcpy(
+          X, copy_X,
+          N * sizeof(
+                  MFFTELEM)); // inner routines do not copy input, so must do it
     }
 
     inner_end = mingettime();
@@ -199,18 +202,20 @@ void print_result(const char *preamble, const char *name, int64_t N,
 
   char factors_str[256];
   factors_str[0] = '\0';
-  snprintf(factors_str, sizeof(factors_str), "N=%" PRId64 " [",N);
+  snprintf(factors_str, sizeof(factors_str), "N=%" PRId64 " [", N);
 
   char comma = ',';
 
-  for (int i=0;i<num_factors;i++) {
-    if (i==(num_factors-1))
-       comma = '\0';
+  for (int i = 0; i < num_factors; i++) {
+    if (i == (num_factors - 1))
+      comma = '\0';
 
-    snprintf(factors_str+strlen(factors_str),sizeof(factors_str),"%" PRId64 "%c",Ns[i],comma);
+    snprintf(factors_str + strlen(factors_str), sizeof(factors_str),
+             "%" PRId64 "%c", Ns[i], comma);
   }
 
-  printf("%s %s %s %s] std_dev=%2.2es (%s)\n",preamble, name, timing_str, factors_str, std_dev, fn_str);
+  printf("%s %s %s %s] std_dev=%2.2es (%s)\n", preamble, name, timing_str,
+         factors_str, std_dev, fn_str);
 
   fflush(stdout);
 }
@@ -238,22 +243,22 @@ void test_fft(random_normal &RNG, const char *name, int bm, int inverse,
 
   double std_dev;
 
-  int64_t params[MAX_PFA_PARAMS]={0};
+  int64_t params[MAX_PFA_PARAMS] = {0};
   if (num_factors > 1)
-    generate_pfa_params(num_factors, Ns, params);  
+    generate_pfa_params(num_factors, Ns, params);
 
-  MFFTELEM *Y_result =
-      test_fft_kernel(test_repeat, Y_ref.data(), Y.data(), X_ref.data(),
-                      X.data(), copy_X.data(), P_ref, P, N, bm, &t_ref_s, &t_s,
-                      num_factors, Ns, fns, es, parent_fn, inverse, &std_dev, params);
+  MFFTELEM *Y_result = test_fft_kernel(
+      test_repeat, Y_ref.data(), Y.data(), X_ref.data(), X.data(),
+      copy_X.data(), P_ref, P, N, bm, &t_ref_s, &t_s, num_factors, Ns, fns, es,
+      parent_fn, inverse, &std_dev, params);
 
   // reporting
-  if (inplace && (approx_cmp_v(X.data(), Y_ref.data(), N) || approx_cmp_v(Y_ref.data(), Y_result, N))) {
-    print_result("Failed for inplace ", name, N, num_factors, Ns, bm, t_ref_s, t_s,
-                 fns, std_dev);
+  if (inplace && (approx_cmp_v(X.data(), Y_ref.data(), N) ||
+                  approx_cmp_v(Y_ref.data(), Y_result, N))) {
+    print_result("Failed for inplace ", name, N, num_factors, Ns, bm, t_ref_s,
+                 t_s, fns, std_dev);
     (*fc)++;
-  }
-  else if (approx_cmp_v(Y_ref.data(), Y_result, N)) {
+  } else if (approx_cmp_v(Y_ref.data(), Y_result, N)) {
     print_result("Failed for", name, N, num_factors, Ns, bm, t_ref_s, t_s, fns,
                  std_dev);
     (*fc)++;
@@ -264,41 +269,6 @@ void test_fft(random_normal &RNG, const char *name, int bm, int inverse,
   }
   fftw_destroy_plan(P_ref);
 }
-
-static const int64_t factor_1[][1] = {
-    {8}, {4}, {25}, {27}, {16}, {125}, {49}, {64}, {81}, {9 * 9 * 9}, {256}};
-
-static const int64_t factor_2[][2] = {{4, 25},   {25, 4}, {4, 49},   {8, 9},
-                                      {256, 25}, {16, 5}, {8, 7},    {11, 8},
-                                      {49, 3},   {9, 8},  {25, 256}, {1, 256}};
-
-static const int64_t factor_3[][3] = {
-    {9, 5, 49},    {9, 49, 5},    {5, 9, 49},    {49, 5, 9},   {8, 7, 25},
-    {7, 25, 8},    {2, 3, 5},     {2, 5, 3},     {3, 2, 5},    {3, 5, 2},
-    {64, 3, 5},    {3, 5, 64},    {5, 64, 3},    {1, 1, 64},   {64, 1, 1},
-    {27, 625, 49}, {625, 27, 49}, {49, 27, 625}, {49, 625, 27}};
-
-static const int64_t high_radix_factor_1[][1] = {
-    {262144}, {2097152}, // powers of 8
-    {531441}, {4782969}, // powers of 9
-    {78125},  {390625},  // powers of 5
-    {823543}, {5764801}  // powers of 7
-};
-
-static const int64_t factor_4[][4] = {
-    {3, 5, 7, 11},   {11, 7, 5, 3},   {25, 27, 49, 11}, {49, 27, 25, 11},
-    {49, 25, 27, 11}, {7, 25, 9, 8},   {9, 25, 7, 8},    {8, 7, 25, 9},
-    {81, 49, 25, 11}, {1, 25, 49, 81}};
-
-static const int64_t factor_5[][5] = {
-    {3, 5, 7, 11, 13}, {13, 11, 7, 5, 3}, {25, 3, 49, 11, 13},
-    {49, 9, 25, 11, 1}, {7, 25, 27, 11, 13}, {7, 25, 9, 2, 13},
-    {9, 5, 7, 8, 13},   {8, 7, 5, 9, 13},   {81, 49, 5, 17, 13},
-    {27, 5, 49, 11, 13}};
-
-static const int64_t factor_6[][6] = {
-  {4, 5, 7, 9, 11, 17}
-};
 
 void hex_dump(const void *ptr, size_t len) {
   const unsigned char *data = (const unsigned char *)ptr;
@@ -363,7 +333,6 @@ void driver(random_normal &RNG, hashmap_t &d, int *radix, int radix_count,
             fns[i] = &direct_dft;
           else
             fns[i] = &bluestein;
-          minassert(fns[i], "Function not available.");
           i++;
           break;
         }
@@ -404,6 +373,48 @@ void print_compiler_ver() {
   std::cout << std::endl << std::endl << std::flush;
 }
 
+static const int64_t factor_1[][1] = {
+    {8}, {4}, {25}, {27}, {16}, {125}, {49}, {64}, {81}, {9 * 9 * 9}, {256}};
+
+static const int64_t factor_2[][2] = {{4, 25},   {25, 4}, {4, 49},   {8, 9},
+                                      {256, 25}, {16, 5}, {8, 7},    {11, 8},
+                                      {49, 3},   {9, 8},  {25, 256}, {1, 256}};
+
+static const int64_t factor_3[][3] = {
+    {9, 5, 49},    {9, 49, 5},    {5, 9, 49},    {49, 5, 9},   {8, 7, 25},
+    {7, 25, 8},    {2, 3, 5},     {2, 5, 3},     {3, 2, 5},    {3, 5, 2},
+    {64, 3, 5},    {3, 5, 64},    {5, 64, 3},    {1, 1, 64},   {64, 1, 1},
+    {27, 625, 49}, {625, 27, 49}, {49, 27, 625}, {49, 625, 27}};
+
+static const int64_t high_radix_factor_1[][1] = {
+    {262144}, {2097152}, // powers of 8
+    {531441}, {4782969}, // powers of 9
+    {78125},  {390625},  // powers of 5
+    {823543}, {5764801}  // powers of 7
+};
+
+static const int64_t factor_4[][4] = {
+    {3, 5, 7, 11},    {11, 7, 5, 3},  {25, 27, 49, 11}, {49, 27, 25, 11},
+    {49, 25, 27, 11}, {7, 25, 9, 8},  {9, 25, 7, 8},    {8, 7, 25, 9},
+    {81, 49, 25, 11}, {1, 25, 49, 81}};
+
+static const int64_t factor_5[][5] = {{3, 5, 7, 11, 13},   {13, 11, 7, 5, 3},
+                                      {25, 3, 49, 11, 13}, {49, 9, 25, 11, 1},
+                                      {7, 25, 27, 11, 13}, {7, 25, 9, 2, 13},
+                                      {9, 5, 7, 8, 13},    {8, 7, 5, 9, 13},
+                                      {81, 49, 5, 17, 13}, {27, 5, 49, 11, 13}};
+
+static const int64_t factor_6[][6] = {{4, 5, 7, 9, 11, 17}};
+
+static const int64_t bluestein_1[][1] = {{15}, {16}, {11}, {13}, {17}};
+
+void bluestein_test_parent(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
+                    const int32_t *es, const int64_t bp, const int64_t stride,
+                    const int32_t flags, const fft_func_t *fs,
+                    const int64_t *params) {
+  bluestein(YY, XX, Ns[0], es[0], bp, stride, flags);
+}
+
 int main() {
   hashmap_t d;
   random_normal RNG(6502, 0.0, 1.0);
@@ -415,13 +426,13 @@ int main() {
   print_time();
   print_compiler_ver();
 
-  for (int n=1;n<DIRECT_SZ;++n) {
-    int64_t N=n;
-    fft_func_t fns[MAX_FACTORS]={nullptr};
-    fns[0]=&direct_dft;
-    int32_t es=1;
-    test_fft(RNG, "direct_dft", 1, 0, N, pc, fc, 1, NULL, nullptr, &N,
-      fns, &es);
+  for (int n = 1; n < DIRECT_SZ; ++n) {
+    int64_t N = n;
+    fft_func_t fns[MAX_FACTORS] = {nullptr};
+    fns[0] = &direct_dft;
+    int32_t es = 1;
+    test_fft(RNG, "direct_dft", 1, 0, N, pc, fc, 1, NULL, nullptr, &N, fns,
+             &es);
   }
 
 #define RUN_DRIVER(radix_arr, num_factors, bm, inverse, parent_fn, N_vals,     \
@@ -431,42 +442,41 @@ int main() {
          (void (*)())(parent_fn), &(N_vals)[0][0],                             \
          sizeof((N_vals)) / sizeof(N_vals[0]), (name))
 
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 0, abort, factor_1,
+  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 0, nullptr, factor_1,
              "stockham test 0");
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 0, abort, factor_1,
+  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 0, nullptr, factor_1,
              "stockham test 1");
-  RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, 0, 0, abort, factor_1,
+  RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, 0, 0, nullptr, factor_1,
              "stockham test 2");
-  RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, 0, 0, abort, factor_1,
+  RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, 0, 0, nullptr, factor_1,
              "stockham test 3");
-  RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, 0, 0, abort, factor_1,
+  RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, 0, 0, nullptr, factor_1,
              "stockham test 4");
-  RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, 0, 0, abort, factor_1,
+  RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, 0, 0, nullptr, factor_1,
              "stockham test 5");
-  RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, 0, 0, abort, factor_1,
+  RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, 0, 0, nullptr, factor_1,
              "stockham test 6");
 
-  RUN_DRIVER(((int[]){2}), 1, 1, 0, abort, factor_1, "timed stockham test 0");
-  RUN_DRIVER(((int[]){3}), 1, 1, 0, abort, factor_1, "timed stockham test 1");
-  RUN_DRIVER(((int[]){4}), 1, 1, 0, abort, factor_1, "timed stockham test 2");
-  RUN_DRIVER(((int[]){5}), 1, 1, 0, abort, factor_1, "timed stockham test 3");
-  RUN_DRIVER(((int[]){7}), 1, 1, 0, abort, factor_1, "timed stockham test 4");
-  RUN_DRIVER(((int[]){8}), 1, 1, 0, abort, factor_1, "timed stockham test 5");
-  RUN_DRIVER(((int[]){9}), 1, 1, 0, abort, factor_1, "timed stockham test 6");
-
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 1, abort, factor_1,
+  RUN_DRIVER(((int[]){2}), 1, 1, 0, nullptr, factor_1, "timed stockham test 0");
+  RUN_DRIVER(((int[]){3}), 1, 1, 0, nullptr, factor_1, "timed stockham test 1");
+  RUN_DRIVER(((int[]){4}), 1, 1, 0, nullptr, factor_1, "timed stockham test 2");
+  RUN_DRIVER(((int[]){5}), 1, 1, 0, nullptr, factor_1, "timed stockham test 3");
+  RUN_DRIVER(((int[]){7}), 1, 1, 0, nullptr, factor_1, "timed stockham test 4");
+  RUN_DRIVER(((int[]){8}), 1, 1, 0, nullptr, factor_1, "timed stockham test 5");
+  RUN_DRIVER(((int[]){9}), 1, 1, 0, nullptr, factor_1, "timed stockham test 6");
+  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 1, nullptr, factor_1,
              "stockham inverse test 0");
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 1, abort, factor_1,
+  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, 0, 1, nullptr, factor_1,
              "stockham inverse test 1");
-  RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, 0, 1, abort, factor_1,
+  RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, 0, 1, nullptr, factor_1,
              "stockham inverse test 2");
-  RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, 0, 1, abort, factor_1,
+  RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, 0, 1, nullptr, factor_1,
              "stockham inverse test 3");
-  RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, 0, 1, abort, factor_1,
+  RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, 0, 1, nullptr, factor_1,
              "stockham inverse test 4");
-  RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, 0, 1, abort, factor_1,
+  RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, 0, 1, nullptr, factor_1,
              "stockham inverse test 5");
-  RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, 0, 1, abort, factor_1,
+  RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, 0, 1, nullptr, factor_1,
              "stockham inverse test 6");
 
   RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, 0, 1, prime_factor_2, factor_2,
@@ -495,19 +505,26 @@ int main() {
   RUN_DRIVER(((int[]){8, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3,
              "prime factor 3 test 5");
 
-  RUN_DRIVER(((int[]){2}), 1, 0, 0, abort, high_radix_factor_1, "radix 2 test");
+  RUN_DRIVER(((int[]){2}), 1, 0, 0, nullptr, high_radix_factor_1,
+             "radix 2 test");
 
-  RUN_DRIVER(((int[]){3}), 1, 0, 0, abort, high_radix_factor_1, "radix 3 test");
+  RUN_DRIVER(((int[]){3}), 1, 0, 0, nullptr, high_radix_factor_1,
+             "radix 3 test");
 
-  RUN_DRIVER(((int[]){4}), 1, 0, 0, abort, high_radix_factor_1, "radix 4 test");
+  RUN_DRIVER(((int[]){4}), 1, 0, 0, nullptr, high_radix_factor_1,
+             "radix 4 test");
 
-  RUN_DRIVER(((int[]){5}), 1, 0, 0, abort, high_radix_factor_1, "radix 5 test");
+  RUN_DRIVER(((int[]){5}), 1, 0, 0, nullptr, high_radix_factor_1,
+             "radix 5 test");
 
-  RUN_DRIVER(((int[]){7}), 1, 0, 0, abort, high_radix_factor_1, "radix 7 test");
+  RUN_DRIVER(((int[]){7}), 1, 0, 0, nullptr, high_radix_factor_1,
+             "radix 7 test");
 
-  RUN_DRIVER(((int[]){8}), 1, 0, 0, abort, high_radix_factor_1, "radix 8 test");
+  RUN_DRIVER(((int[]){8}), 1, 0, 0, nullptr, high_radix_factor_1,
+             "radix 8 test");
 
-  RUN_DRIVER(((int[]){9}), 1, 0, 0, abort, high_radix_factor_1, "radix 9 test");
+  RUN_DRIVER(((int[]){9}), 1, 0, 0, nullptr, high_radix_factor_1,
+             "radix 9 test");
 
   RUN_DRIVER(((int[]){2, 3, 5, 7}), 4, 0, 0, pfa_extend_4, factor_4,
              "prime factor extend 4");
@@ -518,14 +535,32 @@ int main() {
   RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, 0, 0, pfa_extend_6, factor_6,
              "prime factor extend 6");
 
+  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 0, bluestein_test_parent, bluestein_1,
+             "bluestein test");
+  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 1, bluestein_test_parent, bluestein_1,
+             "bluestein inverse test");
+
   d.clear();
 
-  static int64_t planner_n[] = {
-      15,      100,    196, 72,     6400,
-      80,      56,     147, 72,     2205,
-      1400,    30,     960, 826875, 2 * 3 * 5 * 7 * 11 * 13,
-      8 * 25 * 7 * 3, 2 * 25 * 49 * 9,
-      1 << 20, 1 << 22};
+  static int64_t planner_n[] = {15,
+                                100,
+                                196,
+                                72,
+                                6400,
+                                80,
+                                56,
+                                147,
+                                72,
+                                2205,
+                                1400,
+                                30,
+                                960,
+                                826875,
+                                2 * 3 * 5 * 7 * 11 * 13,
+                                8 * 25 * 7 * 3,
+                                2 * 25 * 49 * 9,
+                                1 << 20,
+                                1 << 22};
 
   int64_t *planner_n_inverse = planner_n;
 

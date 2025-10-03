@@ -495,6 +495,8 @@ int main() {
   RUN_DRIVER(((int[]){8, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3,
              "prime factor 3 test 5");
 
+  RUN_DRIVER(((int[]){2}), 1, 0, 0, abort, high_radix_factor_1, "radix 2 test");
+
   RUN_DRIVER(((int[]){3}), 1, 0, 0, abort, high_radix_factor_1, "radix 3 test");
 
   RUN_DRIVER(((int[]){4}), 1, 0, 0, abort, high_radix_factor_1, "radix 4 test");

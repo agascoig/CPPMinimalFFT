@@ -15,14 +15,14 @@ set(ASM_FLAGS
 )
 
 set(SRC_FILES
-    ../direct.cpp
-    ../bluestein.cpp
-    ../pfa.cpp
-    ../plan.cpp
-    ../stockham.cpp
-    ../wheel.cpp
-    ../indexer.cpp
-    ../sincos.cpp
+    ../src/direct.cpp
+    ../src/bluestein.cpp
+    ../src/pfa.cpp
+    ../src/plan.cpp
+    ../src/stockham.cpp
+    ../src/wheel.cpp
+    ../src/indexer.cpp
+    ../src/sincos.cpp
 )
 
 foreach(src ${SRC_FILES})

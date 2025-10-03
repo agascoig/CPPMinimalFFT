@@ -25,7 +25,7 @@ CPPMinimalFFT
 ${FFTW_LIB})
 
 target_include_directories(test17 PRIVATE
-..
+../src/
 .
 )
 

@@ -85,7 +85,7 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd) {
     int32_t exp = 63 - count_leading_zeros(n);
     if ((exp%3)==0)
       add_plan_factor(rd, n, 8, exp/3, &fftr8);
-    else if ((exp&3)==0)
+    else if ((exp&1)==0)
       add_plan_factor(rd, n, 4, exp/2, &fftr4);
     else
       add_plan_factor(rd, n, 2, exp, &fftr2);

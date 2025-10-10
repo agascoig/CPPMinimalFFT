@@ -83,7 +83,12 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd) {
   } else if ((n & (n - 1)) == 0) {
     // Power of 2
     int32_t exp = 63 - count_leading_zeros(n);
-    add_plan_factor(rd, n, 2, exp, &fftr2);
+    if ((exp%3)==0)
+      add_plan_factor(rd, n, 8, exp/4, &fftr8);
+    else if ((exp&3)==0)
+      add_plan_factor(rd, n, 4, exp/2, &fftr4);
+    else
+      add_plan_factor(rd, n, 2, exp, &fftr2);
   } else if (factor_count <= MAX_FACTORS) {
     for (int32_t j = factor_count - 1; j >= 0; j--) {
       int32_t i = factors[j].index;

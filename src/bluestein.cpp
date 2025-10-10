@@ -133,7 +133,7 @@ void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 
   // Final multiplication
   for (int64_t i = 0; i < N; i++) {
-    y[bp + stride * i] *= scale * B_X[i];
+    y[bp + stride * i] *= ((MFFTELEMRI)scale * B_X[i]);
   }
 }
 

@@ -1,6 +1,8 @@
 
+#include <cxxabi.h>
 #include <fftw3.h>
 #include <stdio.h>
+#include <typeinfo>
 
 #include <cfloat>
 #include <cinttypes>
@@ -42,7 +44,18 @@ class random_normal {
   }
 };
 
-fftw_plan create_fftw_plan(int n, MFFTELEM *in, MFFTELEM *out, int inverse) {
+fftwf_plan create_fftw_plan(int n, std::complex<float> *in,
+                            std::complex<float> *out, int inverse) {
+  if (inverse)
+    return fftwf_plan_dft_1d(n, (fftwf_complex *)in, (fftwf_complex *)out,
+                             FFTW_BACKWARD, FFTW_ESTIMATE);
+  else
+    return fftwf_plan_dft_1d(n, (fftwf_complex *)in, (fftwf_complex *)out,
+                             FFTW_FORWARD, FFTW_ESTIMATE);
+}
+
+fftw_plan create_fftw_plan(int n, std::complex<double> *in,
+                           std::complex<double> *out, int inverse) {
   if (inverse)
     return fftw_plan_dft_1d(n, (fftw_complex *)in, (fftw_complex *)out,
                             FFTW_BACKWARD, FFTW_ESTIMATE);
@@ -50,6 +63,14 @@ fftw_plan create_fftw_plan(int n, MFFTELEM *in, MFFTELEM *out, int inverse) {
     return fftw_plan_dft_1d(n, (fftw_complex *)in, (fftw_complex *)out,
                             FFTW_FORWARD, FFTW_ESTIMATE);
 }
+
+void execute_fftw_plan(fftw_plan &P) { fftw_execute(P); }
+
+void execute_fftw_plan(fftwf_plan &P) { fftwf_execute(P); }
+
+void destroy_fftw_plan(fftw_plan &P) { fftw_destroy_plan(P); }
+
+void destroy_fftw_plan(fftwf_plan &P) { fftwf_destroy_plan(P); }
 
 int64_t power_of(int64_t b, int64_t N) {
   int64_t count = 0;
@@ -78,7 +99,7 @@ double get_s_time(int64_t start, int64_t end) {
 
 MFFTELEM *test_fft_kernel(int64_t repeat_count, MFFTELEM *Y_ref, MFFTELEM *Y,
                           MFFTELEM *X_ref, MFFTELEM *X, MFFTELEM *copy_X,
-                          fftw_plan P_ref, MinimalPlan *P, int64_t N, int bm,
+                          auto P_ref, MinimalPlan *P, int64_t N, int bm,
                           double *t_ref_s, double *t_s, int32_t num_factors,
                           int64_t *Ns, fft_func_t *fns, int32_t *es,
                           void (*parent_fn)(void), int32_t inverse,
@@ -92,7 +113,7 @@ MFFTELEM *test_fft_kernel(int64_t repeat_count, MFFTELEM *Y_ref, MFFTELEM *Y,
   memcpy(X, copy_X, N * sizeof(MFFTELEM));
   memcpy(X_ref, copy_X, N * sizeof(MFFTELEM));
   t_ref_start = mingettime();
-  fftw_execute(P_ref);
+  execute_fftw_plan(P_ref);
   t_ref_end = mingettime();
   if (get_s_time(t_ref_start, t_ref_end) < 10e-6)
     repeat_count *= OVERSAMPLE_FACTOR;  // oversample if less than 10 us
@@ -101,7 +122,7 @@ MFFTELEM *test_fft_kernel(int64_t repeat_count, MFFTELEM *Y_ref, MFFTELEM *Y,
   t_ref_start = mingettime();
   while (n++ < repeat_count) {
     inner_start = mingettime();
-    fftw_execute(P_ref);
+    execute_fftw_plan(P_ref);
     if (inplace && (n != repeat_count))
       memcpy(X_ref, copy_X, N * sizeof(MFFTELEM));
     inner_end = mingettime();
@@ -208,7 +229,7 @@ void test_fft(random_normal &RNG, const char *name, int bm, int inverse,
   MinAlignedVector X_ref = RNG.get_rv(N);
   MinAlignedVector copy_X = X_ref;
   bool inplace = (P != nullptr && P->bt_flags(P_INPLACE)) ? true : false;
-  fftw_plan P_ref = create_fftw_plan(N, X_ref.data(), Y_ref.data(), inverse);
+  auto P_ref = create_fftw_plan(N, X_ref.data(), Y_ref.data(), inverse);
   int test_repeat = bm ? NUM_TIMED_TESTS : 1;
   double std_dev;
   int64_t params[MAX_PFA_PARAMS] = {0};
@@ -233,7 +254,7 @@ void test_fft(random_normal &RNG, const char *name, int bm, int inverse,
     print_result("Passed for", name, N, num_factors, Ns, bm, t_ref_s, t_s, fns,
                  std_dev);
   }
-  fftw_destroy_plan(P_ref);
+  destroy_fftw_plan(P_ref);
 }
 
 void hex_dump(const void *ptr, size_t len) {
@@ -329,7 +350,11 @@ void print_compiler_ver() {
 #else
   std::cout << "Unknown Compiler (" << __VERSION__ << ")";
 #endif
-  std::cout << std::endl << std::endl << std::flush;
+  int status = 0;
+  char *demangled =
+      abi::__cxa_demangle(typeid(MFFTELEM).name(), nullptr, nullptr, &status);
+  std::cout << "\n# " << demangled << std::endl << std::endl << std::flush;
+  free(demangled);
 }
 
 static const int64_t factor_1[][1] = {

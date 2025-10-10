@@ -24,8 +24,9 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
 
   minassert(N > 0 && N <= DIRECT_SZ, "N too large for direct DFT");
 
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(DIRECT_COEFFS[N]);
+  auto *__restrict__ W =
+      reinterpret_cast<const std::complex<MFFTELEMRI> *__restrict__>(
+          DIRECT_COEFFS[N]);
 
   const bool inverse = (flags & P_INVERSE);
 
@@ -46,7 +47,7 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
 
       int32_t nk_mod = N - k;
       for (int32_t n = 1; n < N; n++) {
-        s = s + W[nk_mod] * x[step];
+        s = s + ((MFFTELEM)W[nk_mod] * x[step]);
         nk_mod = rev_mask_mux_mod(nk_mod - k, N);
         step += stride;
       }
@@ -59,7 +60,7 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
 
       int32_t nk_mod = k;
       for (int32_t n = 1; n < N; n++) {
-        s = s + W[nk_mod] * x[step];
+        s = s + ((MFFTELEM)W[nk_mod] * x[step]);
         nk_mod = mask_mux_mod(nk_mod + k, N);
         step += stride;
       }

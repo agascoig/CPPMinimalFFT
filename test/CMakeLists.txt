@@ -17,11 +17,14 @@ target_compile_options(test17 PRIVATE ${ASAN_FLAGS})
 target_link_options(test17 PRIVATE ${ASAN_FLAGS})
 
 find_library(FFTW_LIB fftw3)
+find_library(FFTWF_LIB fftw3f)
+
 #set(FFTW_LIB "/Users/alexandergascoigne/fft/fftw-install/lib/libfftw3.dylib")
 
 target_link_libraries(test17
 CPPMinimalFFT
-${FFTW_LIB})
+${FFTW_LIB}
+${FFTWF_LIB})
 
 target_include_directories(test17 PRIVATE
 ../src/

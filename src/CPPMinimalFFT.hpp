@@ -17,8 +17,12 @@
 #include <new>
 #include <string>
 
-// Define the element type
+#if defined(MINFFT) && (MINFFT == 32)
+typedef float MFFTELEMRI;
+#else
 typedef double MFFTELEMRI;
+#endif
+
 typedef std::complex<MFFTELEMRI> MFFTELEM;
 
 #if !defined(__APPLE__)
@@ -39,7 +43,7 @@ void minsincos(double x, double *s, double *c);  // need for Bluestein
 inline MFFTELEM minsincos(double angle) {
   double zi, zr;
   minsincos(angle, &zi, &zr);  // calling openlibm
-  return std::complex<double>(zr, zi);
+  return std::complex<MFFTELEMRI>(zr, zi);
 }
 
 static inline std::complex<double> times_pmim(std::complex<double> z,
@@ -91,7 +95,7 @@ class MinAlignedAllocator {
     // Allocate memory with alignment of T
     //    void *ptr =
     //        aligned_alloc(sizeof(T), size);
-    void *ptr = std::aligned_alloc(16, size);  // simd: 16 byte alignment
+    void *ptr = std::aligned_alloc(sizeof(T), size);  // simd: 16 byte alignment
     if (!ptr) {
       throw std::bad_alloc();
     }

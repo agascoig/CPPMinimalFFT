@@ -26,7 +26,7 @@ void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         c0 = X[bp + stride * (k + j * m)];
         c1 = X[bp + stride * (k + j * m + l * m)];
         Y[bp + stride * (k + 2 * j * m)] = c0 + c1;
-        Y[bp + stride * (k + 2 * j * m + m)] = w * (c0 - c1);
+        Y[bp + stride * (k + 2 * j * m + m)] = ((MFFTELEM)w * (c0 - c1));
       }
       w = w * w_l;
     }
@@ -63,12 +63,12 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         c1 = X[bp + stride * (k + j * m + l * m)];
         c2 = X[bp + stride * (k + j * m + 2 * l * m)];
         d0 = c1 + c2;
-        d1 = c0 - c30 * d0;
-        d2 = times_pmim(c31 * (c1 - c2), inverse);
+        d1 = c0 - (MFFTELEM)c30 * d0;
+        d2 = times_pmim((MFFTELEM)c31 * (c1 - c2), inverse);
         w2 = w * w;
-        Y[bp + stride * (k + 3 * j * m)] = c0 + d0;
-        Y[bp + stride * (k + 3 * j * m + m)] = w * (d1 + d2);
-        Y[bp + stride * (k + 3 * j * m + 2 * m)] = w2 * (d1 - d2);
+        Y[bp + stride * (k + 3 * j * m)] = (c0 + d0);
+        Y[bp + stride * (k + 3 * j * m + m)] = ((MFFTELEM)w * (d1 + d2));
+        Y[bp + stride * (k + 3 * j * m + 2 * m)] = ((MFFTELEM)w2 * (d1 - d2));
       }
       w = w * w_l;
     }
@@ -109,10 +109,10 @@ void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         d1 = c0 - c2;
         d2 = c1 + c3;
         d3 = times_pmim(c1 - c3, inverse);
-        Y[bp + stride * (k + 4 * j * m)] = d0 + d2;
-        Y[bp + stride * (k + 4 * j * m + m)] = w * (d1 + d3);
-        Y[bp + stride * (k + 4 * j * m + 2 * m)] = w2 * (d0 - d2);
-        Y[bp + stride * (k + 4 * j * m + 3 * m)] = w3 * (d1 - d3);
+        Y[bp + stride * (k + 4 * j * m)] = (d0 + d2);
+        Y[bp + stride * (k + 4 * j * m + m)] = ((MFFTELEM)w * (d1 + d3));
+        Y[bp + stride * (k + 4 * j * m + 2 * m)] = ((MFFTELEM)w2 * (d0 - d2));
+        Y[bp + stride * (k + 4 * j * m + 3 * m)] = ((MFFTELEM)w3 * (d1 - d3));
       }
       w = w * w_l;
     }
@@ -158,20 +158,20 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         c4 = X[bp + stride * (k + j * m + 4 * l * m)];
         d0 = c1 + c4;
         d1 = c2 + c3;
-        d2 = c51 * (c1 - c4);
-        d3 = c51 * (c2 - c3);
+        d2 = (MFFTELEM)c51 * (c1 - c4);
+        d3 = (MFFTELEM)c51 * (c2 - c3);
         d4 = d0 + d1;
-        d5 = c52 * (d0 - d1);
-        d6 = c0 - c50 * d4;
+        d5 = (MFFTELEM)c52 * (d0 - d1);
+        d6 = c0 - (MFFTELEM)c50 * d4;
         d7 = d6 + d5;
         d8 = d6 - d5;
-        d9 = times_pmim(d2 + c53 * d3, inverse);
-        d10 = times_pmim(c53 * d2 - d3, inverse);
-        Y[bp + stride * (k + 5 * j * m)] = c0 + d4;
-        Y[bp + stride * (k + 5 * j * m + m)] = w * (d7 + d9);
-        Y[bp + stride * (k + 5 * j * m + 2 * m)] = w2 * (d8 + d10);
-        Y[bp + stride * (k + 5 * j * m + 3 * m)] = w3 * (d8 - d10);
-        Y[bp + stride * (k + 5 * j * m + 4 * m)] = w4 * (d7 - d9);
+        d9 = times_pmim(d2 + (MFFTELEM)c53 * d3, inverse);
+        d10 = times_pmim((MFFTELEM)c53 * d2 - d3, inverse);
+        Y[bp + stride * (k + 5 * j * m)] = (c0 + d4);
+        Y[bp + stride * (k + 5 * j * m + m)] = ((MFFTELEM)w * (d7 + d9));
+        Y[bp + stride * (k + 5 * j * m + 2 * m)] = ((MFFTELEM)w2 * (d8 + d10));
+        Y[bp + stride * (k + 5 * j * m + 3 * m)] = ((MFFTELEM)w3 * (d8 - d10));
+        Y[bp + stride * (k + 5 * j * m + 4 * m)] = ((MFFTELEM)w4 * (d7 - d9));
       }
       w = w * w_l;
     }
@@ -247,14 +247,14 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         a12 = a2 + a6;
         a13 = -a4 - a6;
         a14 = -a2 + a4;
-        m1 = c71 * a7;
-        m2 = c72 * a8;
-        m3 = c73 * a9;
-        m4 = c74 * a10;
-        m5 = -times_pmim(c75 * a11, inverse);
-        m6 = -times_pmim(c76 * a12, inverse);
-        m7 = -times_pmim(c77 * a13, inverse);
-        m8 = -times_pmim(c78 * a14, inverse);
+        m1 = (MFFTELEM)c71 * a7;
+        m2 = (MFFTELEM)c72 * a8;
+        m3 = (MFFTELEM)c73 * a9;
+        m4 = (MFFTELEM)c74 * a10;
+        m5 = -times_pmim((MFFTELEM)c75 * a11, inverse);
+        m6 = -times_pmim((MFFTELEM)c76 * a12, inverse);
+        m7 = -times_pmim((MFFTELEM)c77 * a13, inverse);
+        m8 = -times_pmim((MFFTELEM)c78 * a14, inverse);
         x1 = c0 - m1;
         x2 = x1 + m2 + m3;
         x3 = x1 - m2 - m4;
@@ -262,13 +262,13 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         x5 = m5 + m6 - m7;
         x6 = m5 - m6 - m8;
         x7 = -m5 - m7 - m8;
-        Y[bp + stride * (k + 7 * j * m)] = c0 + a7;
-        Y[bp + stride * (k + 7 * j * m + m)] = w * (x2 - x5);
-        Y[bp + stride * (k + 7 * j * m + 2 * m)] = w2 * (x3 - x6);
-        Y[bp + stride * (k + 7 * j * m + 3 * m)] = w3 * (x4 - x7);
-        Y[bp + stride * (k + 7 * j * m + 4 * m)] = w4 * (x4 + x7);
-        Y[bp + stride * (k + 7 * j * m + 5 * m)] = w5 * (x3 + x6);
-        Y[bp + stride * (k + 7 * j * m + 6 * m)] = w6 * (x2 + x5);
+        Y[bp + stride * (k + 7 * j * m)] = (c0 + a7);
+        Y[bp + stride * (k + 7 * j * m + m)] = ((MFFTELEM)w * (x2 - x5));
+        Y[bp + stride * (k + 7 * j * m + 2 * m)] = ((MFFTELEM)w2 * (x3 - x6));
+        Y[bp + stride * (k + 7 * j * m + 3 * m)] = ((MFFTELEM)w3 * (x4 - x7));
+        Y[bp + stride * (k + 7 * j * m + 4 * m)] = ((MFFTELEM)w4 * (x4 + x7));
+        Y[bp + stride * (k + 7 * j * m + 5 * m)] = ((MFFTELEM)w5 * (x3 + x6));
+        Y[bp + stride * (k + 7 * j * m + 6 * m)] = ((MFFTELEM)w6 * (x2 + x5));
       }
       w = w * w_l;
     }
@@ -329,20 +329,20 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         m1 = d0 - d2;
         m2 = d4 + d6;
         m3 = times_pmim((d4 - d6), inverse);
-        m4 = c81 * (d5 - d7);
-        m5 = -times_pmim(c82 * (d5 + d7), inverse);
+        m4 = (MFFTELEM)c81 * (d5 - d7);
+        m5 = -times_pmim((MFFTELEM)c82 * (d5 + d7), inverse);
         m6 = d1 + m4;
         m7 = d1 - m4;
         m8 = d3 + m5;
         m9 = d3 - m5;
-        Y[bp + stride * (k + 8 * j * m)] = m0 + m2;
-        Y[bp + stride * (k + 8 * j * m + m)] = w * (m6 + m8);
-        Y[bp + stride * (k + 8 * j * m + 2 * m)] = w2 * (m1 + m3);
-        Y[bp + stride * (k + 8 * j * m + 3 * m)] = w3 * (m7 - m9);
-        Y[bp + stride * (k + 8 * j * m + 4 * m)] = w4 * (m0 - m2);
-        Y[bp + stride * (k + 8 * j * m + 5 * m)] = w5 * (m7 + m9);
-        Y[bp + stride * (k + 8 * j * m + 6 * m)] = w6 * (m1 - m3);
-        Y[bp + stride * (k + 8 * j * m + 7 * m)] = w7 * (m6 - m8);
+        Y[bp + stride * (k + 8 * j * m)] = (m0 + m2);
+        Y[bp + stride * (k + 8 * j * m + m)] = ((MFFTELEM)w * (m6 + m8));
+        Y[bp + stride * (k + 8 * j * m + 2 * m)] = ((MFFTELEM)w2 * (m1 + m3));
+        Y[bp + stride * (k + 8 * j * m + 3 * m)] = ((MFFTELEM)w3 * (m7 - m9));
+        Y[bp + stride * (k + 8 * j * m + 4 * m)] = ((MFFTELEM)w4 * (m0 - m2));
+        Y[bp + stride * (k + 8 * j * m + 5 * m)] = ((MFFTELEM)w5 * (m7 + m9));
+        Y[bp + stride * (k + 8 * j * m + 6 * m)] = ((MFFTELEM)w6 * (m1 - m3));
+        Y[bp + stride * (k + 8 * j * m + 7 * m)] = ((MFFTELEM)w7 * (m6 - m8));
       }
       w = w * w_l;
     }
@@ -420,20 +420,20 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         t13 = t7 - t6;
         t14 = t7 - t9;
         m0 = c0 + t3 + t5;
-        m1 = c91 * t3;
-        m2 = -t5 * c90;
+        m1 = (MFFTELEM)c91 * t3;
+        m2 = -t5 * (MFFTELEM)c90;
         t15 = -t12 - t11;
-        m3 = c93 * t11;
-        m4 = c94 * t12;
-        m5 = c95 * t15;
+        m3 = (MFFTELEM)c93 * t11;
+        m4 = (MFFTELEM)c94 * t12;
+        m5 = (MFFTELEM)c95 * t15;
         s0 = -m3 - m4;
         s1 = m5 - m4;
-        m6 = times_pmim(s3u * t10, inverse);
-        m7 = times_pmim(s3u * t8, inverse);
+        m6 = times_pmim((MFFTELEM)s3u * t10, inverse);
+        m7 = times_pmim((MFFTELEM)s3u * t8, inverse);
         t16 = -t13 + t14;
-        m8 = -times_pmim(su * t13, inverse);
-        m9 = -times_pmim(s4u * t14, inverse);
-        m10 = -times_pmim(s2u * t16, inverse);
+        m8 = -times_pmim((MFFTELEM)su * t13, inverse);
+        m9 = -times_pmim((MFFTELEM)s4u * t14, inverse);
+        m10 = -times_pmim((MFFTELEM)s2u * t16, inverse);
         s2 = -m8 - m9;
         s3 = m9 - m10;
         s4 = m0 + m2 + m2;
@@ -446,14 +446,14 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         s11 = m7 - s3;
         s12 = m7 + s2 + s3;
         Y[bp + stride * (k + 9 * j * m)] = m0;
-        Y[bp + stride * (k + 9 * j * m + m)] = w * (s7 + s10);
-        Y[bp + stride * (k + 9 * j * m + 2 * m)] = w2 * (s8 - s11);
-        Y[bp + stride * (k + 9 * j * m + 3 * m)] = w3 * (s6 + m6);
-        Y[bp + stride * (k + 9 * j * m + 4 * m)] = w4 * (s9 + s12);
-        Y[bp + stride * (k + 9 * j * m + 5 * m)] = w5 * (s9 - s12);
-        Y[bp + stride * (k + 9 * j * m + 6 * m)] = w6 * (s6 - m6);
-        Y[bp + stride * (k + 9 * j * m + 7 * m)] = w7 * (s8 + s11);
-        Y[bp + stride * (k + 9 * j * m + 8 * m)] = w8 * (s7 - s10);
+        Y[bp + stride * (k + 9 * j * m + m)] = ((MFFTELEM)w * (s7 + s10));
+        Y[bp + stride * (k + 9 * j * m + 2 * m)] = ((MFFTELEM)w2 * (s8 - s11));
+        Y[bp + stride * (k + 9 * j * m + 3 * m)] = ((MFFTELEM)w3 * (s6 + m6));
+        Y[bp + stride * (k + 9 * j * m + 4 * m)] = ((MFFTELEM)w4 * (s9 + s12));
+        Y[bp + stride * (k + 9 * j * m + 5 * m)] = ((MFFTELEM)w5 * (s9 - s12));
+        Y[bp + stride * (k + 9 * j * m + 6 * m)] = ((MFFTELEM)w6 * (s6 - m6));
+        Y[bp + stride * (k + 9 * j * m + 7 * m)] = ((MFFTELEM)w7 * (s8 + s11));
+        Y[bp + stride * (k + 9 * j * m + 8 * m)] = ((MFFTELEM)w8 * (s7 - s10));
       }
       w = w * w_l;
     }

@@ -1,7 +1,7 @@
 
-#pragma once
+#include "CPPMinimalFFT.hpp"
 
-static const int ALIGN_SZ = 16;
+#define ALIGN_SZ 16
 
 alignas(ALIGN_SZ) static const MFFTELEMRI DIRECT_COEF_0[] = {
 };
@@ -163,6 +163,7 @@ DIRECT_COEF_8,DIRECT_COEF_9,DIRECT_COEF_10,DIRECT_COEF_11,
 DIRECT_COEF_12,DIRECT_COEF_13,DIRECT_COEF_14,DIRECT_COEF_15};
 
 static const int COSSIN_EXP_LIMIT = 40;
+
 
 alignas (ALIGN_SZ) static const double COS_SIN_2[] = {
 1.0000000000000000e+00,0.0000000000000000e+00,

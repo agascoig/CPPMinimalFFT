@@ -39,6 +39,7 @@ class random_normal {
     for (int i = 0; i < n; ++i) {
       MFFTELEM e = get_rv();
       v[i] = e;
+//      v[i] = 1.0f;
     }
     return v;
   }

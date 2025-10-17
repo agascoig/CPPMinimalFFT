@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)  # Minimum CMake version
 
 project(test17 CXX)          # Specify project name and language
 
-set(ASAN_FLAGS "") #-fsanitize=address")
+set(ASAN_FLAGS "")#-fsanitize=address") #-fsanitize=address")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ASAN_FLAGS}")
 

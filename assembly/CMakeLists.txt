@@ -3,14 +3,11 @@
 cmake_minimum_required(VERSION 3.10)  # Minimum CMake version
 project(asssembly CXX)          # Specify project name and language
 
+# will not accept -march=native for assembly generation
+separate_arguments(CXX_FLAGS_LIST UNIX_COMMAND "${CMAKE_CXX_FLAGS}")
+list(REMOVE_ITEM CMAKE_FLAGS_LIST "-march=native")
+
 set(ASM_FLAGS
-    -march=native
-    -g
-    -O3
-    -fPIC
-#    -fverbose-asm
-    -std=c++23
-#    -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.0.sdk
     -I/usr/local/include
     -I/opt/homebrew/opt/highway/include
     -I..
@@ -18,12 +15,13 @@ set(ASM_FLAGS
 )
 
 set(SRC_FILES
-#    ../src/direct.cpp
+    ../src/direct.cpp
 #    ../src/stockham.cpp
-#    ../src/bluestein.cpp
-    ../src/d2/direct.cpp
-    ../src/d2/bluestein.cpp
-    ../src/d2/stockham.cpp
+    ../src/bluestein.cpp
+#    ../src/d2/direct.cpp
+#    ../src/d2/bluestein.cpp
+#    ../src/d2/stockham.cpp
+    ../src/s4/stockham.cpp
     ../src/pfa.cpp
     ../src/plan.cpp
     ../src/wheel.cpp
@@ -36,7 +34,7 @@ foreach(src ${SRC_FILES})
     get_filename_component(src_abs ${src} ABSOLUTE)
     add_custom_command(
         OUTPUT ${src_name}.s
-        COMMAND ${CMAKE_CXX_COMPILER} ${ASM_FLAGS} -v -S ${src_abs} -o ${src_name}.s > ${src_name}_build.txt 2>&1
+        COMMAND ${CMAKE_CXX_COMPILER} ${CXX_FLAGS_LIST} ${ASM_FLAGS} -v -S ${src_abs} -o ${src_name}.s > ${src_name}_build.txt 2>&1
         DEPENDS ${src_abs}
         COMMENT "Generating assembly for ${src_abs}"
         VERBATIM

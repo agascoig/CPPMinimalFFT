@@ -96,13 +96,17 @@ class MinAlignedAllocator {
     //    void *ptr =
     //        aligned_alloc(sizeof(T), size);
     void *ptr = std::aligned_alloc(sizeof(T), size);  // simd: 16 byte alignment
+    //std::cerr << "Alloc: " << ptr << std::endl;
     if (!ptr) {
       throw std::bad_alloc();
     }
     return static_cast<T *>(ptr);
   }
 
-  void deallocate(T *p, std::size_t) noexcept { std::free(p); }
+  void deallocate(T *p, std::size_t) noexcept { 
+   // std::cerr << "Free: " << p << std::endl; 
+    std::free(p);
+  }
 };
 
 template <typename T, typename U>

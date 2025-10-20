@@ -8,25 +8,22 @@
 #include "plan.hpp"
 #include "weights.hpp"
 
-static inline int32_t mask_mux_mod(const int32_t a, const int32_t B) {
-  return a - (B & -(a >= B));
-}
+static inline int32_t mask_mux_mod(const int32_t a, const int32_t B) { return a - (B & -(a >= B)); }
 
 static inline int32_t rev_mask_mux_mod(const int32_t a, const int32_t B) {
   return a + (B & -(a < 0));
 }
 
 // Direct DFT implementation: good for small N<=DIRECT_SZ
-void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-                const int64_t bp, const int64_t stride, const int32_t flags) {
-  MFFTELEM *__restrict__ y = *YY;
-  MFFTELEM *__restrict__ x = *XX;
+void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+                const int64_t stride, const int32_t flags) {
+  MFFTELEM* __restrict__ y = *YY;
+  MFFTELEM* __restrict__ x = *XX;
 
   minassert(N > 0 && N <= DIRECT_SZ, "N too large for direct DFT");
 
-  auto *__restrict__ W =
-      reinterpret_cast<const std::complex<MFFTELEMRI> *__restrict__>(
-          DIRECT_COEFFS[N]);
+  auto* __restrict__ W =
+      reinterpret_cast<const std::complex<MFFTELEMRI>* __restrict__>(DIRECT_COEFFS[N]);
 
   const bool inverse = (flags & P_INVERSE);
 

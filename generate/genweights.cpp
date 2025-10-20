@@ -168,7 +168,7 @@ void generate_direct_entries(std::vector<std::string> &names, int N) {
 }
 
 void generate_direct() {
-  std::cout << "\n#define ALIGN_SZ 16\n\n";
+  std::cout << "\n\n";
   std::vector<std::string> names;
   for (int n = 0; n <= DIRECT_SZ; n++) {
     generate_direct_entries(names, n);

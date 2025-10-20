@@ -13,13 +13,13 @@
 namespace hn = hwy::HWY_NAMESPACE;
 
 #define CCDPTR(x) \
-  reinterpret_cast<const double *__restrict__ __attribute__((aligned(16)))>(x)
+  reinterpret_cast<const double *__restrict__ __attribute__((aligned(ALIGN_SZ)))>(x)
 #define CDPTR(x) \
-  reinterpret_cast<double *__restrict__ __attribute__((aligned(16)))>(x)
+  reinterpret_cast<double *__restrict__ __attribute__((aligned(ALIGN_SZ)))>(x)
 
-alignas(sizeof(double) * 2) static const double conj_values[] = {1.0, -1.0};
+alignas(ALIGN_SZ) static const double conj_values[] = {1.0, -1.0};
 
-using D = hn::CappedTag<double, 2>;
+using D = hn::FixedTag<double, 2>;
 
 static inline int32_t mask_mux_mod(const int32_t a, const int32_t B) {
   return a - (B & -(a >= B));

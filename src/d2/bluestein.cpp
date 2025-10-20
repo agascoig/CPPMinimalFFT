@@ -13,13 +13,13 @@
 namespace hn = hwy::HWY_NAMESPACE;
 
 #define CCDPTR(x) \
-  reinterpret_cast<const double *__restrict__ __attribute__((aligned(16)))>(x)
+  reinterpret_cast<const double *__restrict__ __attribute__((aligned(ALIGN_SZ)))>(x)
 #define CDPTR(x) \
-  reinterpret_cast<double *__restrict__ __attribute__((aligned(16)))>(x)
+  reinterpret_cast<double *__restrict__ __attribute__((aligned(ALIGN_SZ)))>(x)
 
-alignas(sizeof(double) * 2) static const double conj_values[] = {1.0, -1.0};
+alignas(ALIGN_SZ) static const double conj_values[] = {1.0, -1.0};
 
-using D = hn::CappedTag<double, 2>;
+using D = hn::FixedTag<double, 2>;
 
 typedef struct {
   MFFTELEM *__restrict__ a_n;
@@ -67,13 +67,13 @@ static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
     }
     // Allocate new buffers
     bs_buff.a_n =
-        (MFFTELEM *__restrict__)minaligned_alloc(16, sizeof(MFFTELEM), M);
+        (MFFTELEM *__restrict__)minaligned_alloc(ALIGN_SZ, sizeof(MFFTELEM), M);
     bs_buff.b_n =
-        (MFFTELEM *__restrict__)minaligned_calloc(16, sizeof(MFFTELEM), M);
+        (MFFTELEM *__restrict__)minaligned_calloc(ALIGN_SZ, sizeof(MFFTELEM), M);
     bs_buff.A_X =
-        (MFFTELEM *__restrict__)minaligned_alloc(16, sizeof(MFFTELEM), M);
+        (MFFTELEM *__restrict__)minaligned_alloc(ALIGN_SZ, sizeof(MFFTELEM), M);
     bs_buff.B_X =
-        (MFFTELEM *__restrict__)minaligned_alloc(16, sizeof(MFFTELEM), M);
+        (MFFTELEM *__restrict__)minaligned_alloc(ALIGN_SZ, sizeof(MFFTELEM), M);
   }
 
   if (init || bs_buff.N != N) {

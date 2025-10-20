@@ -11,84 +11,84 @@
 
 namespace hn = hwy::HWY_NAMESPACE;
 
-#define CCDPTR(x) reinterpret_cast<const double *__restrict__>(__builtin_assume_aligned(x, 16))
-#define CDPTR(x) reinterpret_cast<double *__restrict__>(__builtin_assume_aligned(x, 16))
-#define CCFPTR(x) reinterpret_cast<const float *__restrict__>(__builtin_assume_aligned(x, 16))
-#define CFPTR(x) reinterpret_cast<float *__restrict__>(__builtin_assume_aligned(x, 16))
+#define CCDPTR(x) \
+  reinterpret_cast<const double* __restrict__>(__builtin_assume_aligned(x, ALIGN_SZ))
+#define CDPTR(x) reinterpret_cast<double* __restrict__>(__builtin_assume_aligned(x, ALIGN_SZ))
+#define CCFPTR(x) reinterpret_cast<const float* __restrict__>(__builtin_assume_aligned(x, ALIGN_SZ))
+#define CFPTR(x) reinterpret_cast<float* __restrict__>(__builtin_assume_aligned(x, ALIGN_SZ))
 
-alignas(16) static const double conj_values[] = {1.0f, -1.0f};
+alignas(ALIGN_SZ) static const double conj_values[] = {1.0f, -1.0f};
 
-using D = hn::CappedTag<float, 4>;
+using D = hn::FixedTag<float, 4>;
 
 template <class D>
-HWY_INLINE auto LoadComplexGroup(D d, const auto *XC, int64_t stride) {
-  const auto *X = reinterpret_cast<const MFFTELEMRI *__restrict__>(XC);
-  constexpr size_t L = hn::Lanes(d);
-  constexpr size_t groups = L / 2;
-  if constexpr (groups == 1)
+HWY_INLINE auto LoadComplexGroup(D d, const auto* XC, int64_t stride) {
+  const auto* X = reinterpret_cast<const MFFTELEMRI* __restrict__>(XC);
+  HWY_LANES_CONSTEXPR size_t L = hn::Lanes(d);
+  HWY_LANES_CONSTEXPR size_t groups = L / 2;
+  if HWY_LANES_CONSTEXPR (groups == 1)
     return hn::Load(d, X);
-  else if constexpr (groups == 2) {
+  else if HWY_LANES_CONSTEXPR (groups == 2) {
     const int64_t istride = stride * 2;
     auto d_complex = hn::FixedTag<MFFTELEMRI, 2>();
     auto a0 = hn::Load(d_complex, X);
     auto a1 = hn::Load(d_complex, X + istride);
     return hn::Combine(d, a1, a0);
-  } else
-    static_assert(0, "Unsupported lane count");
+  }
 }
 
 template <class D>
-HWY_INLINE void StoreComplexGroup(D d, auto y, auto *__restrict__ YC, int64_t stride) {
-  auto *Y = reinterpret_cast<MFFTELEMRI *__restrict__>(YC);
-  constexpr size_t L = hn::Lanes(d);
-  constexpr size_t groups = L / 2;
+HWY_INLINE void StoreComplexGroup(D d, auto y, auto* __restrict__ YC, int64_t stride) {
+  auto* Y = reinterpret_cast<MFFTELEMRI* __restrict__>(YC);
+  HWY_LANES_CONSTEXPR size_t L = hn::Lanes(d);
+  HWY_LANES_CONSTEXPR size_t groups = L / 2;
   const int64_t istride = stride * 2;
-  if constexpr (groups == 1)
+  if HWY_LANES_CONSTEXPR (groups == 1) {
     hn::Store(y, d, Y);
-  else if constexpr (groups == 2) {
+    return;
+  } else if HWY_LANES_CONSTEXPR (groups == 2) {
     auto d_complex = hn::FixedTag<MFFTELEMRI, 2>();
     hn::Store(hn::LowerHalf(y), d_complex, Y);
     hn::Store(hn::UpperHalf(d, y), d_complex, Y + istride);
-  } else
+    return;
+  } else {
     static_assert(0, "Unsupported lane count");
+  }
 }
 
-static inline auto Convert(auto dnew, auto dold, auto &w) {
-  if constexpr (std::is_same_v<decltype(dnew), decltype(dold)>) return w;
+static inline auto Convert(auto dnew, auto dold, auto w) {
+  if HWY_LANES_CONSTEXPR (std::is_same_v<decltype(dnew), decltype(dold)>) return w;
 
-  constexpr size_t c_new = hn::Lanes(dnew);
-  constexpr size_t c_old = hn::Lanes(dold);
+  HWY_LANES_CONSTEXPR size_t c_new = hn::Lanes(dnew);
+  HWY_LANES_CONSTEXPR size_t c_old = hn::Lanes(dold);
 
   using T_old = hn::TFromD<decltype(dold)>;
   using T_new = hn::TFromD<decltype(dnew)>;  // always same or narrower
 
-  if constexpr (std::is_same_v<T_old, T_new>) {
-    if constexpr (c_new == c_old) {
+  if HWY_LANES_CONSTEXPR (std::is_same_v<T_old, T_new>) {
+    if HWY_LANES_CONSTEXPR (c_new == c_old) {
       return w;
-    } else if constexpr (c_new == 2 * c_old) {
+    } else if HWY_LANES_CONSTEXPR (c_new == 2 * c_old) {
       return hn::Combine(dnew, w, w);
-    } else if constexpr (c_new == 4 * c_old) {
+    } else if HWY_LANES_CONSTEXPR (c_new == 4 * c_old) {
       auto w2 = hn::Combine(dnew, w, w);
       return hn::Combine(dnew, w2, w2);
-    } else if constexpr (c_new == 8 * c_old) {
+    } else if HWY_LANES_CONSTEXPR (c_new == 8 * c_old) {
       auto w4 = hn::Combine(dnew, w, w);
       auto w8 = hn::Combine(dnew, w4, w4);
       return hn::Combine(dnew, w8, w8);
-    } else if constexpr (2 * c_new == c_old) {
+    } else if HWY_LANES_CONSTEXPR (2 * c_new == c_old) {
       return hn::LowerHalf(dnew, w);
-    } else if constexpr (4 * c_new == c_old) {
+    } else if HWY_LANES_CONSTEXPR (4 * c_new == c_old) {
       return hn::LowerHalf(dnew, hn::LowerHalf(dold, w));
-    } else {
-      static_assert(c_new <= 8 * c_old, "Unsupported lane scaling factor");
     }
-  } else {
-    auto dnew_h = hn::Half<decltype(dnew)>();
-    auto w_demoted = hn::DemoteTo(dnew_h, w);  // half size
-    return hn::Combine(dnew, w_demoted, w_demoted);
   }
+  auto dnew_h = hn::Half<decltype(dnew)>();
+  auto w_demoted = hn::DemoteTo(dnew_h, w);  // half size
+  return hn::Combine(dnew, w_demoted, w_demoted);
 }
 
-static inline void fftr2_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
+static inline void fftr2_kernel(auto d, MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 int64_t bp, int64_t stride, int64_t k, int64_t j, int64_t m,
                                 int64_t l, auto w_f) {
   auto v0 = LoadComplexGroup(d, &X[bp + stride * (k + j * m)], stride);
@@ -100,18 +100,18 @@ static inline void fftr2_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__re
   StoreComplexGroup(d, y1, &Y[bp + stride * (k + 2 * j * m + m)], stride);
 }
 
-void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr2(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
-  auto *__restrict__ Y = *YY;
-  auto *__restrict__ X = *XX;
+  auto* __restrict__ Y = *YY;
+  auto* __restrict__ X = *XX;
   int64_t l = N / 2;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
-  MFFTELEM *tmp;
+  MFFTELEM* tmp;
   D d;
   auto db = hn::FixedTag<double, 2>();
   auto d2 = hn::Half<decltype(d)>();
-  const auto *__restrict__ W = reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
+  const auto* __restrict__ W = reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   const auto conj_mask = hn::Load(db, conj_values);
   auto pmim_mask = Convert(d, db, conj_mask);
   if (inverse) pmim_mask = hn::Neg(pmim_mask);
@@ -119,12 +119,11 @@ void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
     auto w = hn::Load(db, CCDPTR(&W[0]));
     auto w_l = hn::Load(db, CCDPTR(&W[e1 - t - 1]));
     if (inverse) w_l = hn::Mul(w_l, conj_mask);
-    auto w_f = Convert(d, db, w);
     for (int64_t j = 0; j < l; j++) {
+      auto w_f = Convert(d, db, w);
       for (int64_t k = 0; k < (m - 1); k += 2) fftr2_kernel(d, Y, X, bp, stride, k, j, m, l, w_f);
       if (m & 1) fftr2_kernel(d2, Y, X, bp, stride, m - 1, j, m, l, hn::LowerHalf(w_f));
       w = hn::MulComplex(w, w_l);
-      w_f = Convert(d, db, w);
     }
     l >>= 1;
     m <<= 1;
@@ -136,7 +135,7 @@ void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
-static inline void fftr3_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
+static inline void fftr3_kernel(auto d, MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 int64_t bp, int64_t stride, int64_t k, int64_t j, int64_t m,
                                 int64_t l, auto vc30, auto vc31, auto pmim_mask, auto w_f,
                                 auto w2_f) {
@@ -156,21 +155,21 @@ static inline void fftr3_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__re
   StoreComplexGroup(d, y2, &Y[bp + stride * (k + 3 * j * m + 2 * m)], stride);
 }
 
-void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr3(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 3;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
   const double c30 = 0.5;
   const double c31 = 0.8660254037844386;  // sin(M_PI / 3.0);
-  MFFTELEM *tmp;
+  MFFTELEM* tmp;
   D d;
   auto db = hn::FixedTag<double, 2>();
   auto d2 = hn::Half<decltype(d)>();
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   auto conj_mask = hn::Load(db, conj_values);
   auto pmim_mask = Convert(d, db, conj_mask);
   if (inverse) pmim_mask = hn::Neg(pmim_mask);
@@ -180,17 +179,15 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
     auto w = hn::Load(db, CCDPTR(&W[0]));
     auto w_l = hn::Load(db, CCDPTR(&W[e1 - t - 1]));
     if (inverse) w_l = hn::Mul(w_l, conj_mask);
-    auto w_f = Convert(d, db, w);
     for (int64_t j = 0; j < l; j++) {
+      auto w_f = Convert(d, db, w);
       auto w2_f = hn::MulComplex(w_f, w_f);
-      int64_t k;
-      for (k = 0; k < (m - 1); k += 2)
+      for (int64_t k = 0; k < (m - 1); k += 2)
         fftr3_kernel(d, Y, X, bp, stride, k, j, m, l, vc30, vc31, pmim_mask, w_f, w2_f);
       // m&1 always true
       fftr3_kernel(d2, Y, X, bp, stride, m - 1, j, m, l, hn::LowerHalf(vc30), hn::LowerHalf(vc31),
                    hn::LowerHalf(pmim_mask), hn::LowerHalf(w_f), hn::LowerHalf(w2_f));
       w = hn::MulComplex(w, w_l);
-      w_f = Convert(d, db, w);
     }
     l /= 3;
     m *= 3;
@@ -202,7 +199,7 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
-static inline void fftr4_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
+static inline void fftr4_kernel(auto d, MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 int64_t bp, int64_t stride, int64_t k, int64_t j, int64_t m,
                                 int64_t l, auto pmim_mask, auto w_f, auto w2_f, auto w3_f) {
   auto v0 = LoadComplexGroup(d, &X[bp + stride * (k + j * m)], stride);
@@ -224,20 +221,19 @@ static inline void fftr4_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__re
   StoreComplexGroup(d, y3, &Y[bp + stride * (k + 4 * j * m + 3 * m)], stride);
 }
 
-void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr4(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N >> 2;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
-  MFFTELEM *tmp;
+  MFFTELEM* tmp;
   D d;
-  constexpr int64_t c_lanes = hn::Lanes(d) / 2;
   auto db = hn::FixedTag<double, 2>();
   auto d2 = hn::Half<decltype(d)>();
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   const auto conj_mask = hn::Load(db, conj_values);
   auto pmim_mask = Convert(d, db, conj_mask);
   if (inverse) pmim_mask = hn::Neg(pmim_mask);
@@ -245,8 +241,8 @@ void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
     auto w = hn::Load(db, CCDPTR(&W[0]));
     auto w_l = hn::Load(db, CCDPTR(&W[2 * (e1 - t) - 1]));
     if (inverse) w_l = hn::Mul(w_l, conj_mask);
-    auto w_f = Convert(d, db, w);
     for (int64_t j = 0; j < l; j++) {
+      auto w_f = Convert(d, db, w);
       auto w2_f = hn::MulComplex(w_f, w_f);
       auto w3_f = hn::MulComplex(w2_f, w_f);
       for (int64_t k = 0; k < (m - 1); k += 2)
@@ -255,7 +251,6 @@ void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
         fftr4_kernel(d2, Y, X, bp, stride, m - 1, j, m, l, hn::LowerHalf(pmim_mask),
                      hn::LowerHalf(w_f), hn::LowerHalf(w2_f), hn::LowerHalf(w3_f));
       w = hn::MulComplex(w, w_l);
-      w_f = Convert(d, db, w);
     }
     l >>= 2;
     m <<= 2;
@@ -267,7 +262,7 @@ void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
-static inline void fftr5_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
+static inline void fftr5_kernel(auto d, MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 int64_t bp, int64_t stride, int64_t k, int64_t j, int64_t m,
                                 int64_t l, auto vc50, auto vc51, auto vc52, auto vc53,
                                 auto pmim_mask, auto w_f, auto w2_f, auto w3_f, auto w4_f) {
@@ -301,10 +296,10 @@ static inline void fftr5_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__re
   StoreComplexGroup(d, y4, &Y[bp + stride * (k + 5 * j * m + 4 * m)], stride);
 }
 
-void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr5(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 5;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
@@ -312,12 +307,12 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   const double c51 = 0.9510565162951535;  // sin(2.0 * M_PI / 5.0);
   const double c52 = 0.5590169943749475;  // sqrt(5.0) / 4.0;
   const double c53 = 0.6180339887498949;  // sin(M_PI / 5.0) / sin(2.0 * M_PI / 5.0);
-  MFFTELEM *tmp;
+  MFFTELEM* tmp;
   D d;
   auto db = hn::FixedTag<double, 2>();
   auto d2 = hn::Half<decltype(d)>();
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_5);
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_5);
   auto conj_mask = hn::Load(db, conj_values);
   auto pmim_mask = Convert(d, db, conj_mask);
   if (inverse) pmim_mask = hn::Neg(pmim_mask);
@@ -329,8 +324,8 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
     auto w = hn::Load(db, CCDPTR(&W[0]));
     auto w_l = hn::Load(db, CCDPTR(&W[e1 - t - 1]));
     if (inverse) w_l = hn::Mul(w_l, conj_mask);
-    auto w_f = Convert(d, db, w);
     for (int64_t j = 0; j < l; j++) {
+      auto w_f = Convert(d, db, w);
       auto w2_f = hn::MulComplex(w_f, w_f);
       auto w3_f = hn::MulComplex(w2_f, w_f);
       auto w4_f = hn::MulComplex(w2_f, w2_f);
@@ -343,7 +338,6 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
                    hn::LowerHalf(w_f), hn::LowerHalf(w2_f), hn::LowerHalf(w3_f),
                    hn::LowerHalf(w4_f));
       w = hn::MulComplex(w, w_l);
-      w_f = Convert(d, db, w);
     }
     l /= 5;
     m *= 5;
@@ -355,7 +349,7 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
-static inline void fftr7_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
+static inline void fftr7_kernel(auto d, MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 int64_t bp, int64_t stride, int64_t k, int64_t j, int64_t m,
                                 int64_t l, auto vc71, auto vc72, auto vc73, auto vc74, auto vc75,
                                 auto vc76, auto vc77, auto vc78, auto pmim_mask, auto w_f,
@@ -416,10 +410,10 @@ static inline void fftr7_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__re
   StoreComplexGroup(d, y6, &Y[bp + stride * (k + 7 * j * m + 6 * m)], stride);
 }
 
-void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr7(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 7;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
@@ -431,13 +425,12 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   const double c76 = -0.34087293062393137;  // (2 * sin(u) - sin(2 * u) + sin(3 * u)) / 3.0;
   const double c77 = -0.5339693603377252;   // (-sin(u) + 2 * sin(2 * u) + sin(3 * u)) / 3.0;
   const double c78 = -0.8748422909616567;   // (sin(u) + sin(2 * u) + 2 * sin(3 * u)) / 3.0;
-  MFFTELEM *tmp;
+  MFFTELEM* tmp;
   D d;
-  constexpr int64_t c_lanes = hn::Lanes(d) / 2;
   auto db = hn::FixedTag<double, 2>();
   auto d2 = hn::Half<decltype(d)>();
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_7);
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_7);
   auto conj_mask = hn::Load(db, conj_values);
   auto pmim_mask = Convert(d, db, conj_mask);
   if (inverse) pmim_mask = hn::Neg(pmim_mask);
@@ -453,8 +446,8 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
     auto w = hn::Load(db, CCDPTR(&W[0]));
     auto w_l = hn::Load(db, CCDPTR(&W[e1 - t - 1]));
     if (inverse) w_l = hn::Mul(w_l, conj_mask);
-    auto w_f = Convert(d, db, w);
     for (int64_t j = 0; j < l; j++) {
+      auto w_f = Convert(d, db, w);
       auto w2_f = hn::MulComplex(w_f, w_f);
       auto w3_f = hn::MulComplex(w2_f, w_f);
       auto w4_f = hn::MulComplex(w2_f, w2_f);
@@ -471,7 +464,6 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
                    hn::LowerHalf(w3_f), hn::LowerHalf(w4_f), hn::LowerHalf(w5_f),
                    hn::LowerHalf(w6_f));
       w = hn::MulComplex(w, w_l);
-      w_f = Convert(d, db, w);
     }
     l /= 7;
     m *= 7;
@@ -483,7 +475,7 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
-static inline void fftr8_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
+static inline void fftr8_kernel(auto d, MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 int64_t bp, int64_t stride, int64_t k, int64_t j, int64_t m,
                                 int64_t l, auto vc81, auto pmim_mask, auto w_f, auto w2_f,
                                 auto w3_f, auto w4_f, auto w5_f, auto w6_f, auto w7_f) {
@@ -534,10 +526,10 @@ static inline void fftr8_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__re
   StoreComplexGroup(d, y7, &Y[bp + stride * (k + 8 * j * m + 7 * m)], stride);
 }
 
-void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr8(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N >> 3;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
@@ -545,9 +537,9 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   D d;
   auto db = hn::FixedTag<double, 2>();
   auto d2 = hn::Half<decltype(d)>();
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   auto conj_mask = hn::Load(db, conj_values);
   auto pmim_mask = Convert(d, db, conj_mask);
   if (inverse) pmim_mask = hn::Neg(pmim_mask);
@@ -556,8 +548,8 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
     auto w = hn::Load(db, CCDPTR(&W[0]));
     auto w_l = hn::Load(db, CCDPTR(&W[3 * (e1 - t) - 1]));
     if (inverse) w_l = hn::Mul(w_l, conj_mask);
-    auto w_f = Convert(d, db, w);
     for (int64_t j = 0; j < l; j++) {
+      auto w_f = Convert(d, db, w);
       auto w2_f = hn::MulComplex(w_f, w_f);
       auto w3_f = hn::MulComplex(w2_f, w_f);
       auto w4_f = hn::MulComplex(w2_f, w2_f);
@@ -573,7 +565,6 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
                      hn::LowerHalf(w3_f), hn::LowerHalf(w4_f), hn::LowerHalf(w5_f),
                      hn::LowerHalf(w6_f), hn::LowerHalf(w7_f));
       w = hn::MulComplex(w, w_l);
-      w_f = Convert(d, db, w);
     }
     l >>= 3;
     m <<= 3;
@@ -585,12 +576,12 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
-static inline void fftr9_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
+static inline void fftr9_kernel(auto d, MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 int64_t bp, int64_t stride, int64_t k, int64_t j, int64_t m,
                                 int64_t l, auto vc90, auto vc91, auto vc93, auto vc94, auto vc95,
-                                auto vsu, auto vs2u, auto vs3u, auto vs4u,
-                                auto pmim_mask, auto w_f, auto w2_f, auto w3_f, auto w4_f,
-                                auto w5_f, auto w6_f, auto w7_f, auto w8_f) {
+                                auto vsu, auto vs2u, auto vs3u, auto vs4u, auto pmim_mask, auto w_f,
+                                auto w2_f, auto w3_f, auto w4_f, auto w5_f, auto w6_f, auto w7_f,
+                                auto w8_f) {
   auto v0 = LoadComplexGroup(d, &X[bp + stride * (k + j * m)], stride);
   auto v1 = LoadComplexGroup(d, &X[bp + stride * (k + j * m + l * m)], stride);
   auto v2 = LoadComplexGroup(d, &X[bp + stride * (k + j * m + 2 * l * m)], stride);
@@ -664,10 +655,10 @@ static inline void fftr9_kernel(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__re
   StoreComplexGroup(d, y8, &Y[bp + stride * (k + 9 * j * m + 8 * m)], stride);
 }
 
-void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr9(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 9;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
@@ -676,16 +667,16 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   const double c93 = 0.766044443118978;    // (2 * cos(u) - cos(2 * u) - cos(4 * u)) / 3.0;
   const double c94 = 0.9396926207859083;   // (cos(u) + cos(2 * u) - 2 * cos(4 * u)) / 3.0;
   const double c95 = -0.1736481776669304;  // (cos(u) - 2 * cos(2 * u) + cos(4 * u)) / 3.0;
-  const double su = -0.6427876096865393;    // sin(u);
-  const double s2u = -0.984807753012208;    // sin(2 * u);
+  const double su = -0.6427876096865393;   // sin(u);
+  const double s2u = -0.984807753012208;   // sin(2 * u);
   const double s3u = 0.8660254037844387;   // sin(3 * u);
-  const double s4u = -0.3420201433256689;   // sin(4 * u);
+  const double s4u = -0.3420201433256689;  // sin(4 * u);
   D d;
   auto db = hn::FixedTag<double, 2>();
-  auto d2 = hn::Half<decltype(d)>();  
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
+  auto d2 = hn::Half<decltype(d)>();
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   auto conj_mask = hn::Load(db, conj_values);
   auto pmim_mask = Convert(d, db, conj_mask);
   if (inverse) pmim_mask = hn::Neg(pmim_mask);
@@ -702,8 +693,8 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
     auto w = hn::Load(db, CCDPTR(&W[0]));
     auto w_l = hn::Load(db, CCDPTR(&W[2 * (e1 - t) - 1]));
     if (inverse) w_l = hn::Mul(w_l, conj_mask);
-    auto w_f = Convert(d, db, w);
     for (int64_t j = 0; j < l; j++) {
+      auto w_f = Convert(d, db, w);
       auto w2_f = hn::MulComplex(w_f, w_f);
       auto w3_f = hn::MulComplex(w2_f, w_f);
       auto w4_f = hn::MulComplex(w2_f, w2_f);
@@ -711,20 +702,17 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
       auto w6_f = hn::MulComplex(w3_f, w3_f);
       auto w7_f = hn::MulComplex(w4_f, w3_f);
       auto w8_f = hn::MulComplex(w4_f, w4_f);
-      for (int64_t k = 0; k < (m-1); k+=2)
-        fftr9_kernel(d, Y, X, bp, stride, k, j, m, l, vc90, vc91, vc93, vc94, vc95, vsu, vs2u,
-                     vs3u, vs4u, pmim_mask, w_f, w2_f, w3_f, w4_f, w5_f, w6_f, w7_f,
-                     w8_f);
+      for (int64_t k = 0; k < (m - 1); k += 2)
+        fftr9_kernel(d, Y, X, bp, stride, k, j, m, l, vc90, vc91, vc93, vc94, vc95, vsu, vs2u, vs3u,
+                     vs4u, pmim_mask, w_f, w2_f, w3_f, w4_f, w5_f, w6_f, w7_f, w8_f);
       // m&1 always true
-      fftr9_kernel(d2, Y, X, bp, stride, m - 1, j, m, l, hn::LowerHalf(vc90), hn::LowerHalf(vc91),
-                   hn::LowerHalf(vc93), hn::LowerHalf(vc94), hn::LowerHalf(vc95),
-                   hn::LowerHalf(vsu), hn::LowerHalf(vs2u), hn::LowerHalf(vs3u),
-                   hn::LowerHalf(vs4u), hn::LowerHalf(pmim_mask), hn::LowerHalf(w_f),
-                   hn::LowerHalf(w2_f), hn::LowerHalf(w3_f), hn::LowerHalf(w4_f),
-                   hn::LowerHalf(w5_f), hn::LowerHalf(w6_f), hn::LowerHalf(w7_f),
-                   hn::LowerHalf(w8_f));
+      fftr9_kernel(
+          d2, Y, X, bp, stride, m - 1, j, m, l, hn::LowerHalf(vc90), hn::LowerHalf(vc91),
+          hn::LowerHalf(vc93), hn::LowerHalf(vc94), hn::LowerHalf(vc95), hn::LowerHalf(vsu),
+          hn::LowerHalf(vs2u), hn::LowerHalf(vs3u), hn::LowerHalf(vs4u), hn::LowerHalf(pmim_mask),
+          hn::LowerHalf(w_f), hn::LowerHalf(w2_f), hn::LowerHalf(w3_f), hn::LowerHalf(w4_f),
+          hn::LowerHalf(w5_f), hn::LowerHalf(w6_f), hn::LowerHalf(w7_f), hn::LowerHalf(w8_f));
       w = hn::MulComplex(w, w_l);
-      w_f = Convert(d, db, w);
     }
     l /= 9;
     m *= 9;

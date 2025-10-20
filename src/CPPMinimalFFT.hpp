@@ -79,6 +79,8 @@ static void print_stacktrace(void) {
     }                                                 \
   } while (0)
 
+static const int ALIGN_SZ = 16;
+
 template <typename T>
 class MinAlignedAllocator {
  public:

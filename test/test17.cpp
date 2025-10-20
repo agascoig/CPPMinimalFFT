@@ -409,7 +409,7 @@ int main() {
   int *fc = &fail;
   print_time();
   print_compiler_ver();
-  for (int n = 1; n < DIRECT_SZ; ++n) {
+  for (int n = 1; n <= DIRECT_SZ; ++n) {
     int64_t N = n;
     fft_func_t fns[MAX_FACTORS] = {nullptr};
     fns[0] = &direct_dft;

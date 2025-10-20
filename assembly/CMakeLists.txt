@@ -16,12 +16,12 @@ set(ASM_FLAGS
 
 set(SRC_FILES
     ../src/direct.cpp
-#    ../src/stockham.cpp
+    ../src/stockham.cpp
     ../src/bluestein.cpp
 #    ../src/d2/direct.cpp
 #    ../src/d2/bluestein.cpp
 #    ../src/d2/stockham.cpp
-    ../src/s4/stockham.cpp
+#    ../src/s4/stockham.cpp
     ../src/pfa.cpp
     ../src/plan.cpp
     ../src/wheel.cpp

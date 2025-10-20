@@ -1,7 +1,6 @@
 
 #include "CPPMinimalFFT.hpp"
 
-#define ALIGN_SZ 16
 
 alignas(ALIGN_SZ) static const MFFTELEMRI DIRECT_COEF_0[] = {
 };

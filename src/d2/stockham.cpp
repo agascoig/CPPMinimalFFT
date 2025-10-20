@@ -10,10 +10,10 @@
 
 namespace hn = hwy::HWY_NAMESPACE;
 
-#define CCDPTR(x) reinterpret_cast<const double *__restrict__>(__builtin_assume_aligned(x, 16))
-#define CDPTR(x) reinterpret_cast<double *__restrict__>(__builtin_assume_aligned(x, 16))
+#define CCDPTR(x) reinterpret_cast<const double *__restrict__>(__builtin_assume_aligned(x, ALIGN_SZ))
+#define CDPTR(x) reinterpret_cast<double *__restrict__>(__builtin_assume_aligned(x, ALIGN_SZ))
 
-alignas(sizeof(double) * 2) static const double conj_values[] = {1.0, -1.0};
+alignas(ALIGN_SZ) static const double conj_values[] = {1.0, -1.0};
 
 using D = hn::FixedTag<double, 2>;
 

@@ -14,6 +14,9 @@ static inline int32_t rev_mask_mux_mod(const int32_t a, const int32_t B) {
   return a + (B & -(a < 0));
 }
 
+void small_8(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+              const int64_t stride, const int32_t flags); // TBD
+
 // Direct DFT implementation: good for small N<=DIRECT_SZ
 void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
                 const int64_t stride, const int32_t flags) {

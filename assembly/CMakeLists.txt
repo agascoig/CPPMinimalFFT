@@ -27,6 +27,7 @@ set(SRC_FILES
     ../src/wheel.cpp
     ../src/indexer.cpp
     ../src/sincos.cpp
+    ../src/small.cpp
 )
 
 foreach(src ${SRC_FILES})

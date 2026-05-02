@@ -46,12 +46,12 @@ inline MFFTELEM minsincos(double angle) {
   return std::complex<MFFTELEMRI>(zr, zi);
 }
 
-static inline std::complex<double> times_pmim(std::complex<double> z,
+static inline std::complex<MFFTELEMRI> times_pmim(std::complex<MFFTELEMRI> z,
                                               int inverse) {
   if (inverse) {
-    return std::complex<double>(-std::imag(z), std::real(z));
+    return std::complex<MFFTELEMRI>(-std::imag(z), std::real(z));
   } else {
-    return std::complex<double>(std::imag(z), -std::real(z));
+    return std::complex<MFFTELEMRI>(std::imag(z), -std::real(z));
   }
 }
 
@@ -276,7 +276,13 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
 void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
                const int64_t bp, const int64_t stride, const int32_t flags);
 
-static fft_func_t dispatch[] = {NULL,   NULL, &fftr2, &fftr3, &fftr4,
+bool small_available(const int64_t N);
+void small_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+               const int64_t stride, const int32_t flags);
+
+static const int SMALL_SZ = 28;
+
+static const fft_func_t dispatch[] = {NULL,   NULL, &fftr2, &fftr3, &fftr4,
                                 &fftr5, NULL, &fftr7, &fftr8, &fftr9};
 static const int DISPATCH_SZ = sizeof(dispatch) / sizeof(dispatch[0]);
 

@@ -6,18 +6,18 @@
 #include "plan.hpp"
 #include "weights.hpp"
 
-void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+void fftr2(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags) {
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 2;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
   std::complex<double> w, w_l;
   MFFTELEM c0, c1;
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
     w = W[0];
     w_l = inverse ? conj(W[e1 - t - 1]) : W[e1 - t - 1];
@@ -40,10 +40,10 @@ void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   *YY = X;
 }
 
-void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+void fftr3(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags) {
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 3;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
@@ -51,9 +51,9 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   const double c31 = 0.8660254037844386;  // sin(M_PI / 3.0);
   std::complex<double> w, w_l, w2;
   MFFTELEM c0, c1, c2, d0, d1, d2;
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   for (int32_t t = 0; t < e1; t++) {
     w = W[0];
     w_l = inverse ? conj(W[e1 - t - 1]) : W[e1 - t - 1];
@@ -82,18 +82,18 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   *YY = X;
 }
 
-void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+void fftr4(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags) {
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N >> 2;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
   std::complex<double> w, w_l, w2, w3;
   MFFTELEM c0, c1, c2, c3, d0, d1, d2, d3;
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
     w = W[0];
     w_l = inverse ? conj(W[2 * (e1 - t) - 1]) : W[2 * (e1 - t) - 1];
@@ -126,23 +126,22 @@ void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   *YY = X;
 }
 
-void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+void fftr5(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags) {
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 5;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
   const double c50 = 0.25;
   const double c51 = 0.9510565162951535;  // sin(2.0 * M_PI / 5.0);
   const double c52 = 0.5590169943749475;  // sqrt(5.0) / 4.0;
-  const double c53 =
-      0.6180339887498949;  // sin(M_PI / 5.0) / sin(2.0 * M_PI / 5.0);
+  const double c53 = 0.6180339887498949;  // sin(M_PI / 5.0) / sin(2.0 * M_PI / 5.0);
   std::complex<double> w, w_l, w2, w3, w4;
   MFFTELEM c0, c1, c2, c3, c4, d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10;
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_5);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_5);
   for (int32_t t = 0; t < e1; t++) {
     w = W[0];
     w_l = inverse ? conj(W[e1 - t - 1]) : W[e1 - t - 1];
@@ -185,37 +184,29 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   *YY = X;
 }
 
-void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+void fftr7(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags) {
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 7;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
-  const double c71 =
-      0.1666666666666666;  // -(cos(u) + cos(2 * u) + cos(3 * u)) / 3.0;
-  const double c72 =
-      0.7901564685254002;  // (2 * cos(u) - cos(2 * u) - cos(3 * u)) / 3.0;
-  const double c73 =
-      0.05585426728964774;  // (cos(u) - 2 * cos(2 * u) + cos(3 * u)) / 3.0;
-  const double c74 =
-      0.7343022012357524;  // (cos(u) + cos(2 * u) - 2 * cos(3 * u)) / 3.0;
-  const double c75 =
-      0.4409585518440984;  // (sin(u) + sin(2 * u) - sin(3 * u)) / 3.0;
-  const double c76 =
-      0.34087293062393137;  // (2 * sin(u) - sin(2 * u) + sin(3 * u)) / 3.0;
-  const double c77 =
-      0.5339693603377252;  // (-sin(u) + 2 * sin(2 * u) + sin(3 * u)) / 3.0;
-  const double c78 =
-      0.8748422909616567;  // (sin(u) + sin(2 * u) + 2 * sin(3 * u)) / 3.0;
+  const double c71 = 0.1666666666666666;   // -(cos(u) + cos(2 * u) + cos(3 * u)) / 3.0;
+  const double c72 = 0.7901564685254002;   // (2 * cos(u) - cos(2 * u) - cos(3 * u)) / 3.0;
+  const double c73 = 0.05585426728964774;  // (cos(u) - 2 * cos(2 * u) + cos(3 * u)) / 3.0;
+  const double c74 = 0.7343022012357524;   // (cos(u) + cos(2 * u) - 2 * cos(3 * u)) / 3.0;
+  const double c75 = 0.4409585518440984;   // (sin(u) + sin(2 * u) - sin(3 * u)) / 3.0;
+  const double c76 = 0.34087293062393137;  // (2 * sin(u) - sin(2 * u) + sin(3 * u)) / 3.0;
+  const double c77 = 0.5339693603377252;   // (-sin(u) + 2 * sin(2 * u) + sin(3 * u)) / 3.0;
+  const double c78 = 0.8748422909616567;   // (sin(u) + sin(2 * u) + 2 * sin(3 * u)) / 3.0;
   std::complex<double> w, w_l, w2, w3, w4, w5, w6;
   MFFTELEM c0, c1, c2, c3, c4, c5, c6;
   MFFTELEM a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14;
   MFFTELEM m1, m2, m3, m4, m5, m6, m7, m8;
   MFFTELEM x1, x2, x3, x4, x5, x6, x7;
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_7);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_7);
   for (int32_t t = 0; t < e1; t++) {
     w = W[0];
     w_l = inverse ? conj(W[e1 - t - 1]) : W[e1 - t - 1];
@@ -282,22 +273,21 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   *YY = X;
 }
 
-void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+void fftr8(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags) {
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N >> 3;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
   const double c81 = 0.7071067811865476;   // sqrt(2.0) / 2.0;
-  const double c82 = -0.7071067811865476;  // -sqrt(2.0) / 2.0;
   std::complex<double> w, w_l, w2, w3, w4, w5, w6, w7;
   MFFTELEM c0, c1, c2, c3, c4, c5, c6, c7;
   MFFTELEM d0, d1, d2, d3, d4, d5, d6, d7;
   MFFTELEM m0, m1, m2, m3, m4, m5, m6, m7, m8, m9;
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
     w = W[0];
     w_l = inverse ? conj(W[3 * (e1 - t) - 1]) : W[3 * (e1 - t) - 1];
@@ -330,7 +320,7 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
         m2 = d4 + d6;
         m3 = times_pmim((d4 - d6), inverse);
         m4 = (MFFTELEMRI)c81 * (d5 - d7);
-        m5 = -times_pmim((MFFTELEMRI)c82 * (d5 + d7), inverse);
+        m5 = times_pmim((MFFTELEMRI)c81 * (d5 + d7), inverse);
         m6 = d1 + m4;
         m7 = d1 - m4;
         m8 = d3 + m5;
@@ -356,34 +346,30 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   *YY = X;
 }
 
-void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, int32_t flags) {
-  MFFTELEM *__restrict__ Y = *YY;
-  MFFTELEM *__restrict__ X = *XX;
+void fftr9(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags) {
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
   int64_t l = N / 9;
   int64_t m = 1;
   const bool inverse = (flags & P_INVERSE);
   const double c90 = 0.5;
   const double c91 = 3.0 / 2.0;
-  const double c93 =
-      0.766044443118978;  // (2 * cos(u) - cos(2 * u) - cos(4 * u)) / 3.0;
-  const double c94 =
-      0.9396926207859083;  // (cos(u) + cos(2 * u) - 2 * cos(4 * u)) / 3.0;
-  const double c95 =
-      -0.1736481776669304;  // (cos(u) - 2 * cos(2 * u) + cos(4 * u)) / 3.0;
-  const double su = 0.6427876096865393;   // sin(u);
-  const double s2u = 0.984807753012208;   // sin(2 * u);
-  const double s3u = 0.8660254037844387;  // sin(3 * u);
-  const double s4u = 0.3420201433256689;  // sin(4 * u);
+  const double c93 = 0.766044443118978;    // (2 * cos(u) - cos(2 * u) - cos(4 * u)) / 3.0;
+  const double c94 = 0.9396926207859083;   // (cos(u) + cos(2 * u) - 2 * cos(4 * u)) / 3.0;
+  const double c95 = -0.1736481776669304;  // (cos(u) - 2 * cos(2 * u) + cos(4 * u)) / 3.0;
+  const double su = 0.6427876096865393;    // sin(u);
+  const double s2u = 0.984807753012208;    // sin(2 * u);
+  const double s3u = 0.8660254037844387;   // sin(3 * u);
+  const double s4u = 0.3420201433256689;   // sin(4 * u);
   std::complex<double> w, w_l, w2, w3, w4, w5, w6, w7, w8;
   MFFTELEM c0, c1, c2, c3, c4, c5, c6, c7, c8;
-  MFFTELEM t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15,
-      t16;
+  MFFTELEM t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, t12, t13, t14, t15, t16;
   MFFTELEM m0, m1, m2, m3, m4, m5, m6, m7, m8, m9, m10;
   MFFTELEM s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12;
-  MFFTELEM *tmp;
-  const std::complex<double> *__restrict__ W =
-      reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
+  MFFTELEM* tmp;
+  const std::complex<double>* __restrict__ W =
+      reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   for (int32_t t = 0; t < e1; t++) {
     w = W[0];
     w_l = inverse ? conj(W[2 * (e1 - t) - 1]) : W[2 * (e1 - t) - 1];

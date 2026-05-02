@@ -409,13 +409,24 @@ int main() {
   int *fc = &fail;
   print_time();
   print_compiler_ver();
-  for (int n = 1; n <= DIRECT_SZ; ++n) {
-    int64_t N = n;
-    fft_func_t fns[MAX_FACTORS] = {nullptr};
-    fns[0] = &direct_dft;
-    int32_t es = 1;
-    test_fft(RNG, "direct_dft", 1, 0, N, pc, fc, 1, NULL, nullptr, &N, fns,
-             &es);
+  for (int n = 1; n <= SMALL_SZ; ++n) {
+    if (small_available(n)) {
+      int64_t N = n;
+      fft_func_t fns[MAX_FACTORS] = {nullptr};
+      fns[0] = &small_dft;
+      int32_t es = 1;
+      test_fft(RNG, "small_dft", 1, 0, N, pc, fc, 1, NULL, nullptr, &N, fns,
+               &es);
+    }
+  }
+
+    for (int n = 1; n <= DIRECT_SZ; ++n) {
+      int64_t N = n;
+      fft_func_t fns[MAX_FACTORS] = {nullptr};
+      fns[0] = &direct_dft;
+      int32_t es = 1;
+      test_fft(RNG, "direct_dft", 1, 0, N, pc, fc, 1, NULL, nullptr, &N, fns,
+               &es);
   }
 
 #define RUN_DRIVER(radix_arr, num_factors, bm, inverse, parent_fn, N_vals, \

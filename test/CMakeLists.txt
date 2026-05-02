@@ -16,8 +16,8 @@ add_executable(test17
 target_compile_options(test17 PRIVATE ${ASAN_FLAGS})
 target_link_options(test17 PRIVATE ${ASAN_FLAGS})
 
-find_library(FFTW_LIB fftw3)
-find_library(FFTWF_LIB fftw3f)
+find_library(FFTW_LIB fftw3 HINT /usr/lib/aarch64-linux-gnu)
+find_library(FFTWF_LIB fftw3f HINT /usr/lib/aarch64-linux-gnu)
 
 #set(FFTW_LIB "/Users/alexandergascoigne/fft/fftw-install/lib/libfftw3.dylib")
 

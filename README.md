@@ -1,19 +1,22 @@
 
 # CPPMinimalFFT
 
-This is a simple FFT library written in C++, currently
-supporting only the complex double type.  The purpose of
-this repository is to study the performance compared to
-MinimalFFT.jl to make improvements.  
+This is a simple FFT library written in C++, for the study of
+the performance compared to MinimalFFT.jl to make improvements.
+
+Google Highway is optionally used for SIMD operations for single
+precision by 4, or double precision by 2.
 
 *sincos* is borrowed from the Openlibm library for
-better performance than the standard C library.  FFTW
-is a dependency for the correctness and performance testing in the test
+better performance than the standard C library.
+
+FFTW is a dependency for the correctness and performance testing in the test
 subdirectory.
 
-This was originally written in C and converted to C++.  Compiling
-with gcc or fastmath yields much better performance than standard clang.
-Linux also runs this code faster than macOS.
+This was originally written in C and converted to C++.
+
+Compiling with gcc or fastmath yields much better performance
+than standard clang.
 
 ## Organization
 
@@ -27,8 +30,9 @@ Linux also runs this code faster than macOS.
 
 ## Testing
 
-The only tests currently run are test/test17.cpp.  No testing
-yet for multi-dimensional FFTs.
+The only tests currently run are test/test17.cpp.
+
+(No testing yet for multi-dimensional FFTs.)
 
 ## License
 

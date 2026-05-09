@@ -6,10 +6,12 @@
 $$
 n = \left< N_2 N_3 n_1 + A_1 \tilde{n}_2 \right>_N
 $$
+
 $$
 \tilde{n}_2 = \left< N_3 n_2 + A_2 n_3\right>_{N_2 N_3} \\[0.4cm]
 A_1 = p_1 N_1 = Q_1 N_2 N_3 + 1
 $$
+
 $$
 A_2 = p_2 N_2 = Q_2 N_3 + 1
 $$
@@ -19,13 +21,19 @@ The mapping reduces to the following:
 $$
 n = \left< N_2 N_3 n_1 + \tilde{n}_2 \right>_N
 $$
+
+$$
 \tilde{n}_2 = \left< N_3 n_2 + n_3 \right>_{N_2 N_3}
 $$
+
 $$
 n_1 = \left< n_1' + Q_1' \tilde{n}_2 \right>_{N_1}
-$$ 
+$$
+
+$$
 n_2 = \left< n_2' + Q_2' n_3 \right>_{N_2} \\
 $$
+
 $$
 n_3 = n_3'
 $$

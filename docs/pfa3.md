@@ -165,7 +165,11 @@ Note that the index for Y can be implemented as just a single counter.
 
 ## Remarks
 
-In this paper's notation, let $\left<A\right>_B = A \space \text{mod} \space B.$.
+In this paper's notation, let
+
+$$
+\left<A\right>_B = A \space \text{mod} \space B
+$$
 
 The notation $:=$ denotes synchronous asignment.
 

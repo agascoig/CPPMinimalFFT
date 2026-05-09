@@ -4,19 +4,29 @@
 ## n indexing
 
 $$
-n = \left< N_2 N_3 n_1 + A_1 \tilde{n}_2 \right>_N \\
+n = \left< N_2 N_3 n_1 + A_1 \tilde{n}_2 \right>_N
+$$
+$$
 \tilde{n}_2 = \left< N_3 n_2 + A_2 n_3\right>_{N_2 N_3} \\[0.4cm]
-A_1 = p_1 N_1 = Q_1 N_2 N_3 + 1 \\
+A_1 = p_1 N_1 = Q_1 N_2 N_3 + 1
+$$
+$$
 A_2 = p_2 N_2 = Q_2 N_3 + 1
 $$
 
 The mapping reduces to the following:
 
 $$
-n = \left< N_2 N_3 n_1 + \tilde{n}_2 \right>_N \\
-\tilde{n}_2 = \left< N_3 n_2 + n_3 \right>_{N_2 N_3} \\[0.4cm]
-n_1 = \left< n_1' + Q_1' \tilde{n}_2 \right>_{N_1} \\ 
+n = \left< N_2 N_3 n_1 + \tilde{n}_2 \right>_N
+$$
+\tilde{n}_2 = \left< N_3 n_2 + n_3 \right>_{N_2 N_3}
+$$
+$$
+n_1 = \left< n_1' + Q_1' \tilde{n}_2 \right>_{N_1}
+$$ 
 n_2 = \left< n_2' + Q_2' n_3 \right>_{N_2} \\
+$$
+$$
 n_3 = n_3'
 $$
 
@@ -65,20 +75,44 @@ The index for X can be implemented as just a single counter.
 ## k indexing
 
 $$
-k = \left< B_1 k_1 + N_1 \tilde{n}_2 \right>_N \\
-\tilde{k}_2 = \left< B_2 k_2 + N_2 k_3 \right>_{N_2 N_3}\\[0.4cm]
-B_1 = p_4 N_2 N_3 = Q_4 N_1 + 1 \\
-B_2 = p_3 N_3 = Q_3 N_1 N_2 + 1 \\
+k = \left< B_1 k_1 + N_1 \tilde{n}_2 \right>_N
+$$
+
+$$
+\tilde{k}_2 = \left< B_2 k_2 + N_2 k_3 \right>_{N_2 N_3}
+$$
+
+$$
+B_1 = p_4 N_2 N_3 = Q_4 N_1 + 1
+$$
+
+$$
+B_2 = p_3 N_3 = Q_3 N_1 N_2 + 1
+$$
+
+$$
 (p_4 = p_2 p_3)
 $$
 
 The mapping reduces to the following:
 
 $$
-k = \left< N_2 N_3 k_1 + \tilde{k}_2 \right>_N\\
-\tilde{k}_2 = \left< N_3 k_2 + k_3 \right>_{N_2 N_3}\\[0.4cm]
-k_1 = k_1' \\
-k_2 = \left< k_2' + \left< Q_3' k_1' \right>_{N_2} \right>_{N_2} \\
+k = \left< N_2 N_3 k_1 + \tilde{k}_2 \right>_N
+$$
+
+$$
+\tilde{k}_2 = \left< N_3 k_2 + k_3 \right>_{N_2 N_3}
+$$
+
+$$
+k_1 = k_1'
+$$
+
+$$
+k_2 = \left< k_2' + \left< Q_3' k_1' \right>_{N_2} \right>_{N_2}
+$$
+
+$$
 k_3 = \left< k_3' + \left< Q_4' (k_1' + N_1 k_2') \right>_{N_3} \right>_{N_3}
 $$
 

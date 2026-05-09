@@ -38,7 +38,7 @@ $$
 n_3 = n_3'
 $$
 
-where $Q_x' = \left< N_x - q_x \right>_{N_x}$.
+where $Q_x' = \left< N_x - Q_x \right>_{N_x}$.
 
 The implementation consists of three counters for $n_1',n_2',n_3'$ and
 two counters $R_1$ and $R_2$.
@@ -121,10 +121,20 @@ k_2 = \left< k_2' + \left< Q_3' k_1' \right>_{N_2} \right>_{N_2}
 $$
 
 $$
-k_3 = \left< k_3' + \left< Q_4' (k_1' + N_1 k_2') \right>_{N_3} \right>_{N_3}
+k_3 = \left< k_3' + \left< Q_4' k_1' \right>_{N_3} \right>_{N_3}
 $$
 
-where $Q_3' = \left< N_3 - Q_3 \right>_{N_3}$ and $Q_4' = \left< N_2 - Q_4\right>_{N_2}$.
+where
+
+$$
+Q_3' = \left< N_3 - Q_3 \right>_{N_3}
+$$
+
+and
+
+$$
+Q_4' = \left< N_2 - Q_4\right>_{N_2}
+$$
 
 The implementation consists three counters for $(k_1',k_2',k_3')$ 
 similar to the n mapping, and $R_1$ and $R_2$.

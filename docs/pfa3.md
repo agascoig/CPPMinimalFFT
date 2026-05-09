@@ -8,7 +8,10 @@ n = \left< N_2 N_3 n_1 + A_1 \tilde{n}_2 \right>_N
 $$
 
 $$
-\tilde{n}_2 = \left< N_3 n_2 + A_2 n_3\right>_{N_2 N_3} \\[0.4cm]
+\tilde{n}_2 = \left< N_3 n_2 + A_2 n_3\right>_{N_2 N_3}
+$$
+
+$$
 A_1 = p_1 N_1 = Q_1 N_2 N_3 + 1
 $$
 

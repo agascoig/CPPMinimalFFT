@@ -35,7 +35,10 @@ $$
 These two counters are used to generate a mapping $(n_1,n_2)$:
 
 $$
-n_1 = \left< n_1' + Q_1' n_2' \right>_{N_1} \\[0.2cm]
+n_1 = \left< n_1' + Q_1' n_2' \right>_{N_1}
+$$
+
+$$
 n_2 = n_2'
 $$
 

@@ -145,14 +145,14 @@ similar to the n mapping, and $R_1$ and $R_2$.
 $$
 R_1 := \begin{cases}
 0 & \text{if} \space n_2' \rightarrow 0 \space \text{and} \space n_3' \rightarrow 0 \\
-\left< R_1 + Q_1' \right>_{N_1} & \text{otherwise}
+\left< R_1 + Q_4' \right>_{N_1} & \text{otherwise}
 \end{cases}
 $$
 
 $$
 R_2 := \begin{cases}
 0 & \text{if} \space n_3' \rightarrow 0 \\
-\left< R_2 + Q_2' \right>_{N_2} & \text{otherwise}
+\left< R_2 + Q_3' \right>_{N_2} & \text{otherwise}
 \end{cases}
 $$
 

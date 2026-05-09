@@ -16,7 +16,7 @@ static const int P_SCALED = 32;
 static const int P_TOO_MANY_FACTORS = 64;
 static const int P_COPY_INPUT = 128;
 
-static const int DIRECT_SZ = 15;
+static int DIRECT_SZ = 15;
 static const int MAX_FACTORS = 6;
 static const int MAX_PFA_PARAMS = 10;
 

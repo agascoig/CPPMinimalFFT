@@ -91,6 +91,7 @@ static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
 }
 
 // Bluestein FFT implementation
+template <bool Inverse>
 void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                const int32_t discard_e1, const int64_t bp, const int64_t stride,
                const int32_t flags) {
@@ -121,12 +122,12 @@ void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
   memcpy(B_X, b_n, M * sizeof(MFFTELEM));
 
   // Perform circular convolution using FFT
-  fftr2(&A_X, &a_n, M, e1, 0, 1, P_NONE);
-  fftr2(&a_n, &B_X, M, e1, 0, 1, P_NONE);  // Forward FFT of b_n
+  fftr2<false>(&A_X, &a_n, M, e1, 0, 1, P_NONE);
+  fftr2<false>(&a_n, &B_X, M, e1, 0, 1, P_NONE);  // Forward FFT of b_n
   for (int64_t i = 0; i < M; i++) {
     a_n[i] *= A_X[i];
   }
-  fftr2(&B_X, &a_n, M, e1, 0, 1, P_INVERSE);
+  fftr2<true>(&B_X, &a_n, M, e1, 0, 1, P_INVERSE);
 
   // Scale by 1/M
   double scale = 1.0 / M;
@@ -148,3 +149,10 @@ void free_bluestein_buffer(void) {
     bs_buff.M = 0;
   }
 }
+
+template void bluestein<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
+               const int32_t discard_e1, const int64_t bp, const int64_t stride,
+               const int32_t flags);
+template void bluestein<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
+              const int32_t discard_e1, const int64_t bp, const int64_t stride,
+              const int32_t flags);

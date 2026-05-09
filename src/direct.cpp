@@ -14,57 +14,58 @@ static inline int32_t rev_mask_mux_mod(const int32_t a, const int32_t B) {
   return a + (B & -(a < 0));
 }
 
-void small_8(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags); // TBD
-
 // Direct DFT implementation: good for small N<=DIRECT_SZ
+template <bool Inverse>
 void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
                 const int64_t stride, const int32_t flags) {
-  MFFTELEM* __restrict__ y = *YY;
-  MFFTELEM* __restrict__ x = *XX;
+  MFFTELEM* __restrict__ Y = *YY;
+  MFFTELEM* __restrict__ X = *XX;
 
   minassert(N > 0 && N <= DIRECT_SZ, "N too large for direct DFT");
 
   auto* __restrict__ W =
       reinterpret_cast<const std::complex<MFFTELEMRI>* __restrict__>(DIRECT_COEFFS[N]);
 
-  const bool inverse = (flags & P_INVERSE);
-
   MFFTELEM s{};  // zero
+
+  // special case Y[0]
   int64_t step = bp;
   for (int64_t n = 0; n < N; n++) {
-    s += x[step];
+    s += X[step];
     step += stride;
   }
-  y[bp] = s;
+  Y[bp] = s;
 
-  // prefetch W does not help
-
-  if (inverse) {
+  if constexpr (Inverse) {
     for (int32_t k = 1; k < N; k++) {
-      s = x[bp];
+      s = X[bp];
       step = bp + stride;
 
       int32_t nk_mod = N - k;
       for (int32_t n = 1; n < N; n++) {
-        s = s + ((MFFTELEM)W[nk_mod] * x[step]);
+        s = s + ((MFFTELEM)W[nk_mod] * X[step]);
         nk_mod = rev_mask_mux_mod(nk_mod - k, N);
         step += stride;
       }
-      y[bp + stride * k] = s;
+      Y[bp + stride * k] = s;
     }
-  } else {
+  }else {
     for (int32_t k = 1; k < N; k++) {
-      s = x[bp];
+      s = X[bp];
       step = bp + stride;
 
       int32_t nk_mod = k;
       for (int32_t n = 1; n < N; n++) {
-        s = s + ((MFFTELEM)W[nk_mod] * x[step]);
+        s = s + ((MFFTELEM)W[nk_mod] * X[step]);
         nk_mod = mask_mux_mod(nk_mod + k, N);
         step += stride;
       }
-      y[bp + stride * k] = s;
+      Y[bp + stride * k] = s;
     }
   }
 }
+
+template void direct_dft<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
+                 const int64_t bp, const int64_t stride, const int32_t flags);
+template void direct_dft<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
+                 const int64_t bp, const int64_t stride, const int32_t flags);

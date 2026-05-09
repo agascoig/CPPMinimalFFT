@@ -46,9 +46,9 @@ inline MFFTELEM minsincos(double angle) {
   return std::complex<MFFTELEMRI>(zr, zi);
 }
 
-static inline std::complex<MFFTELEMRI> times_pmim(std::complex<MFFTELEMRI> z,
-                                              int inverse) {
-  if (inverse) {
+template <bool Inverse>
+static inline std::complex<MFFTELEMRI> times_pmim(std::complex<MFFTELEMRI> z) {
+  if constexpr (Inverse) {
     return std::complex<MFFTELEMRI>(-std::imag(z), std::real(z));
   } else {
     return std::complex<MFFTELEMRI>(std::imag(z), -std::real(z));
@@ -257,33 +257,47 @@ void do_fft(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
             const int64_t bp, const int64_t stride, const int32_t flags,
             const fft_func_t *fs, const int64_t *params, const int32_t r);
 
+template <bool Inverse>
 void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
            const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
            const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
            const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
            const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
            const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
            const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
            const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
                 const int64_t bp, const int64_t stride, const int32_t flags);
+template <bool Inverse>
 void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
                const int64_t bp, const int64_t stride, const int32_t flags);
 
 bool small_available(const int64_t N);
+
+template <bool Inverse>
 void small_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
                const int64_t stride, const int32_t flags);
 
 static const int SMALL_SZ = 28;
 
-static const fft_func_t dispatch[] = {NULL,   NULL, &fftr2, &fftr3, &fftr4,
-                                &fftr5, NULL, &fftr7, &fftr8, &fftr9};
+static const fft_func_t dispatch[] = {nullptr, nullptr, &fftr2<false>, &fftr3<false>, &fftr4<false>,
+                                &fftr5<false>, nullptr, &fftr7<false>, &fftr8<false>, &fftr9<false>};
+static const fft_func_t dispatch_inverse[] = {nullptr, nullptr, &fftr2<true>, &fftr3<true>, &fftr4<true>,
+                                &fftr5<true>, nullptr, &fftr7<true>, &fftr8<true>, &fftr9<true>};
+
 static const int DISPATCH_SZ = sizeof(dispatch) / sizeof(dispatch[0]);
 
 void prime_factor_2(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,

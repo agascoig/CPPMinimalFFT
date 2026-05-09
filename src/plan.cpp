@@ -9,31 +9,49 @@
 
 #include "CPPMinimalFFT.hpp"
 
-std::ostream &operator<<(std::ostream &os, const MinimalPlan &P) {
+MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, int32_t _region_end,
+                         int32_t _flags)
+    : n_dims(_n_dims), region_start(_region_start), region_end(_region_end), flags(_flags) {
+  minassert(n_dims <= MAX_DIMS, "Too many dimensions");
+  minassert(region_end - region_start < MAX_REGIONS, "Too many regions");
+
+  base_p = new int64_t[region_end + 1][MAX_FACTORS]();
+  ns_p = new int64_t[region_end + 1][MAX_FACTORS]();
+  func_p = new fft_func_t[region_end + 1][MAX_FACTORS]();
+  exp_p = new int32_t[region_end + 1][MAX_FACTORS]();
+  pfa_params_p = new int64_t[region_end + 1][MAX_PFA_PARAMS]();
+  total_size = 1;
+  for (int i = 0; i < _n_dims; i++) {
+    n[i] = _n[i];
+    total_size *= n[i];
+  }
+  gen_inner_plan(flags);
+}
+
+std::ostream& operator<<(std::ostream& os, const MinimalPlan& P) {
   os << "Plan:\n";
   os << "  n_dims: " << P.n_dims << "\n";
   os << "  region_start: " << P.region_start << "\n";
   os << "  region_end: " << P.region_end << "\n";
   os << "  flags: " << P.flags << "\n";
   for (int32_t r = P.region_start; r <= P.region_end; r++) {
-    os << "  Region " << r << ": n=" << P.n[r]
-       << " num_factors=" << P.num_factors[r] << "\n";
+    os << "  Region " << r << ": n=" << P.n[r] << " num_factors=" << P.num_factors[r] << "\n";
 
-    const int64_t *b_p = P.base_p[r];
-    const int64_t *n_p = P.ns_p[r];
-    const fft_func_t *f_p = P.func_p[r];
-    const int32_t *e_p = P.exp_p[r];
+    const int64_t* b_p = P.base_p[r];
+    const int64_t* n_p = P.ns_p[r];
+    const fft_func_t* f_p = P.func_p[r];
+    const int32_t* e_p = P.exp_p[r];
 
     for (int32_t f = 0; f < P.num_factors[r]; f++) {
-      os << "    Factor " << f << ": base=" << b_p[f] << " exp=" << e_p[f]
-         << " ns=" << n_p[f] << " func=" << (void *)f_p[f] << "\n";
+      os << "    Factor " << f << ": base=" << b_p[f] << " exp=" << e_p[f] << " ns=" << n_p[f]
+         << " func=" << (void*)f_p[f] << "\n";
     }
   }
   return os;
 }
 
-void MinimalPlan::add_plan_factor(int32_t region, int64_t _ns, int64_t _base,
-                                  int32_t _exp, fft_func_t _func) {
+void MinimalPlan::add_plan_factor(int32_t region, int64_t _ns, int64_t _base, int32_t _exp,
+                                  fft_func_t _func) {
   int32_t factor_idx = num_factors[region];
 
   minassert(region < MAX_REGIONS, "Region index out of bounds");
@@ -44,22 +62,23 @@ void MinimalPlan::add_plan_factor(int32_t region, int64_t _ns, int64_t _base,
   base_p[region][factor_idx] = _base;
   exp_p[region][factor_idx] = _exp;
   func_p[region][factor_idx] = _func;
-
   num_factors[region]++;
 }
 
 // Plan 1D FFT
-void MinimalPlan::plan_1d(int64_t n, int32_t rd) {
+void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
   if (num_factors[rd] > 0) {
-    return;  // region already planned
+    return;  // region already planned, refuse
   }
   minassert(rd < MAX_REGIONS, "Region index out of bounds");
 
-  factorization *p_factors = factorize(n);
+  bool inverse = (flags & P_INVERSE) != 0;
+  factorization* p_factors = factorize(n);
 
   bool copy_input = true;
 
   const int32_t factor_count = p_factors->count;
+  minassert(factor_count <= MAX_FACTORS, "Too many factors to plan_1d.");
 
   struct sort_factor {
     int64_t n;
@@ -71,23 +90,22 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd) {
     factors[i].n = p_factors->n[i];
     factors[i].index = i;
   }
-  std::sort(factors, factors + factor_count,
-            [](const sort_factor &a, const sort_factor &b) {
-              return a.n > b.n;  // descending by n
-            });
+  std::sort(factors, factors + factor_count, [](const sort_factor& a, const sort_factor& b) {
+    return a.n > b.n;  // descending by n
+  });
 
   if (n <= DIRECT_SZ) {
-    add_plan_factor(rd, n, n, 1, &direct_dft);
+    add_plan_factor(rd, n, n, 1, inverse ? &direct_dft<true> : &direct_dft<false>);
     copy_input = false;
   } else if ((n & (n - 1)) == 0) {
     // Power of 2
     int32_t exp = 63 - count_leading_zeros(n);
-    if ((exp%3)==0)
-      add_plan_factor(rd, n, 8, exp/3, &fftr8);
-    else if ((exp&1)==0)
-      add_plan_factor(rd, n, 4, exp/2, &fftr4);
+    if ((exp % 3) == 0)
+      add_plan_factor(rd, n, 8, exp / 3, inverse ? &fftr8<true> : &fftr8<false>);
+    else if ((exp & 1) == 0)
+      add_plan_factor(rd, n, 4, exp / 2, inverse ? &fftr4<true> : &fftr4<false>);
     else
-      add_plan_factor(rd, n, 2, exp, &fftr2);
+      add_plan_factor(rd, n, 2, exp, inverse ? &fftr2<true> : &fftr2<false>);
   } else if (factor_count <= MAX_FACTORS) {
     for (int32_t j = factor_count - 1; j >= 0; j--) {
       int32_t i = factors[j].index;
@@ -96,45 +114,45 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd) {
       int32_t nf = p_factors->n[i];
       fft_func_t func;
       if (nf <= DIRECT_SZ) {
-        func = &direct_dft;
+        func = inverse ? &direct_dft<true> : &direct_dft<false>;
       } else {
         if ((base < DISPATCH_SZ) && (dispatch[base])) {
-          func = dispatch[base];
+          func = inverse ? dispatch_inverse[base] : dispatch[base];
           copy_input = true;
         } else {
-          func = &bluestein;
+          func = inverse ? &bluestein<true> : &bluestein<false>;
         }
       }
       add_plan_factor(rd, nf, base, exp, func);
     }
   } else {
-    add_plan_factor(rd, n, n, 1, &bluestein);
+    add_plan_factor(rd, n, n, 1, inverse ? &bluestein<true> : &bluestein<false>);
     flags |= P_TOO_MANY_FACTORS;
   }
 
   if (copy_input && !(flags & P_INPLACE)) flags |= P_COPY_INPUT;
   free(p_factors);
 
-  if (num_factors[rd] >= 2)
-    generate_pfa_params(factor_count, ns_p[rd], pfa_params_p[rd]);
+  if (num_factors[rd] >= 2) generate_pfa_params(factor_count, ns_p[rd], pfa_params_p[rd]);
 }
 
-void MinimalPlan::gen_inner_plan() {
+void MinimalPlan::gen_inner_plan(int32_t flags) {
   for (int64_t r = region_start; r <= region_end; r++) {
     int64_t nt = n[r];
-    plan_1d(nt, r);
+    plan_1d(nt, r, flags);
   }
 }
 
-void MinimalPlan::execute_plan_no_copy(MFFTELEM **YY, MFFTELEM **XX, int64_t r,
-                                       int64_t bp, int64_t stride) const {
-  const int64_t *b_p = base_p[r];
-  const int64_t *n_p = ns_p[r];
-  const fft_func_t *f_p = func_p[r];
-  const int32_t *e_p = exp_p[r];
-  const int64_t *params_p = pfa_params_p[r];
+void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
+                                       int64_t stride) const {
+  const int64_t* b_p = base_p[r];
+  const int64_t* n_p = ns_p[r];
+  const fft_func_t* f_p = func_p[r];
+  const int32_t* e_p = exp_p[r];
+  const int64_t* params_p = pfa_params_p[r];
 
   int64_t lf = num_factors[r];
+  minassert(lf <= MAX_FACTORS, "Too many factors to execute_plan_no_copy.");
   if (!lf) return;
 
   switch (lf) {
@@ -162,22 +180,20 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM **YY, MFFTELEM **XX, int64_t r,
 }
 
 // Execute plan function with input copying if needed
-void MinimalPlan::execute_plan(MFFTELEM *Y, MFFTELEM *X, int64_t r, int64_t bp,
+void MinimalPlan::execute_plan(MFFTELEM* Y, MFFTELEM* X, int64_t r, int64_t bp,
                                int64_t stride) const {
-  MFFTELEM *orig_Y = Y;
-  MFFTELEM **YY = &Y;
-  MFFTELEM **XX = &X;
-  MFFTELEM *copy_X = nullptr;
+  MFFTELEM* orig_Y = Y;
+  MFFTELEM** YY = &Y;
+  MFFTELEM** XX = &X;
+  MFFTELEM* copy_X = nullptr;
 
-  minassert(
-      Y != X || (flags & P_INPLACE),
-      "Input and output buffers must not be the same unless in-place plan.");
+  minassert(Y != X || (flags & P_INPLACE),
+            "Input and output buffers must not be the same unless in-place plan.");
 
   bool copy_input = ((flags & P_COPY_INPUT) != 0);
 
   if (copy_input) {
-    copy_X = (MFFTELEM *)minaligned_alloc(sizeof(MFFTELEM), sizeof(MFFTELEM),
-                                          total_size);
+    copy_X = (MFFTELEM*)minaligned_alloc(sizeof(MFFTELEM), sizeof(MFFTELEM), total_size);
     memcpy(copy_X, X, total_size * sizeof(MFFTELEM));
     *XX = copy_X;
   }
@@ -185,9 +201,8 @@ void MinimalPlan::execute_plan(MFFTELEM *Y, MFFTELEM *X, int64_t r, int64_t bp,
   execute_plan_no_copy(YY, XX, r, bp, stride);
 
   if (*YY != orig_Y)
-    memcpy(
-        orig_Y, *YY,
-        total_size * sizeof(MFFTELEM));  // swapped, so copy to original output
+    memcpy(orig_Y, *YY,
+           total_size * sizeof(MFFTELEM));  // swapped, so copy to original output
   else if (flags & P_INPLACE)
     memcpy(X, *YY,
            total_size * sizeof(MFFTELEM));  // in-place, so copy back to

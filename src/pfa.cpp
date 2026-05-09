@@ -54,6 +54,7 @@ void nmap_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp
     for (int64_t n2p = 0; n2p < N2; n2p++) {
       int64_t n1 = mask_mux_mod(n1p + R1, N1);
       int64_t lhs_n = n1 + N1 * n2p;
+      minassert(lhs_n >= 0 && lhs_n < N1 * N2, "lhs_n out of bounds");
       Y[bp + stride * lhs_n] = X[rhs_n_stride];
       R1 = mask_mux_mod(R1 + Q1P, N1);
       rhs_n_stride += stride;
@@ -69,6 +70,7 @@ void kmap_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp
     for (int64_t k1p = 0; k1p < N1; k1p++) {
       int64_t k2 = mask_mux_mod(k2p + R1, N2);
       int64_t rhs_k = k1p + k2 * N1;
+      minassert(rhs_k >= 0 && rhs_k < N1 * N2, "rhs_k out of bounds");
       Y[lhs_k_stride] = X[bp + stride * rhs_k];
       R1 = mask_mux_mod(R1 + Q2P, N2);
       lhs_k_stride += stride;
@@ -154,6 +156,7 @@ void nmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp
         int64_t n1 = mask_mux_mod(n1p + R1, N1);
         int64_t n2 = mask_mux_mod(n2p + R2, N2);
         int64_t lhs_n = n1 + N1 * n2 + N1 * N2 * n3p;
+        minassert(lhs_n >= 0 && lhs_n < N1 * N2 * N3, "lhs_n out of bounds");
         Y[bp + stride * lhs_n] = X[rhs_n_stride];
         R1 = mask_mux_mod(R1 + Q1P, N1);
         R2 = mask_mux_mod(R2 + Q2P, N2);
@@ -175,6 +178,7 @@ void kmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp
         int64_t k2 = mask_mux_mod(k2p + R1, N2);
         int64_t k3 = mask_mux_mod(k3p + R2, N3);
         int64_t rhs_k = k1p + N1 * k2 + N1 * N2 * k3;
+        minassert(rhs_k >= 0 && rhs_k < N1 * N2 * N3, "rhs_k out of bounds");
         Y[lhs_k_stride] = X[bp + stride * rhs_k];
         R1 = mask_mux_mod(R1 + Q4P, N2);
         R2 = mask_mux_mod(R2 + Q3P, N3);

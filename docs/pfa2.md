@@ -32,10 +32,10 @@ $$
 These two counters are used to generate a mapping $(n_1,n_2)$:
 
 $$
-n_1 = \left<n_1' + Q_1' n_2' \right>_{N_1} \\
+n_1 = \left< n_1' + Q_1' n_2' \right>_{N_1} \\
 n_2 = n_2'
 $$
-where $Q_1' = \left<N_x - Q_1 \right>_{N_1}$.
+where $Q_1' = \left< N_x - Q_1 \right>_{N_1}$.
 
 An auxilliary counter $R_1$ is used to generate $n_1$ and is updated every cycle:
 
@@ -59,7 +59,7 @@ Note that the index for X can be implemented as a single counter.
 ## k indexing
 
 $$
-k = \left<B_1 k_1 + N_1 k_2 \right>_N \\
+k = \left< B_1 k_1 + N_1 k_2 \right>_N \\
 B_1 = p_2 N_2 = Q_2 N_1 + 1
 $$
 

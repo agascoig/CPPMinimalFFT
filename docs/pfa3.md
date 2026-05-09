@@ -37,7 +37,7 @@ The counter $R_2$ is defined by:
 $$
 R_2 := \begin{cases}
 0 & \text{if} \space n_3' \rightarrow 0 \\
-\left<R_2 + Q_2'\right>_{N_2} & \text{otherwise}
+\left< R_2 + Q_2' \right>_{N_2} & \text{otherwise}
 \end{cases}
 $$
 
@@ -114,6 +114,8 @@ Note that the index for Y can be implemented as just a single counter.
 ## Remarks
 
 In this paper's notation, let $\left<A\right>_B = A \space \text{mod} \space B.$.
+
+The notation $:=$ denotes synchronous asignment.
 
 ## References
 

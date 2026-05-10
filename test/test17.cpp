@@ -118,7 +118,12 @@ void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinA
     if (*YY != Y.data()) {
       std::swap(Y, X);
     }
-    X = copy_X;
+    if (P!= nullptr) {
+      if (approx_cmp_v(X_ref, X, N))
+        minassert(0, "Planned FFT did not preserve input.");
+    } else {
+      X = copy_X;
+    }
   }
   *std_dev = 0.0;
   *t_ref_s = 0.0;
@@ -180,8 +185,14 @@ void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAli
         swap(Y, X);
       }
     }
-    X = copy_X;
     inner_end = mingettime();
+    if (P!= nullptr) {
+       if (approx_cmp_v(X_ref, X, N))
+          minassert(0, "Planned FFT did not preserve input.");
+    }
+    else {
+        X = copy_X; // restore input for next test
+    }
     double x = get_s_time(inner_start, inner_end);
     delta = x - mu;
     mu += delta / (n + 1);

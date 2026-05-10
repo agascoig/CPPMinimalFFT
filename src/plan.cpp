@@ -187,11 +187,14 @@ void MinimalPlan::execute_plan(MinAlignedVector &Y, MinAlignedVector &X, int64_t
   
   MFFTELEM** YY = &Y_data;
   MFFTELEM** XX = &X_data;
-  MFFTELEM* copy_X = nullptr;
+  MinAlignedVector copy_X(X);
   
   execute_plan_no_copy(YY, XX, r, bp, stride);
 
   if (*YY != Y.data()) {
     swap(Y, X);
+  }
+  if (X != copy_X) {
+    X = copy_X;
   }
 }

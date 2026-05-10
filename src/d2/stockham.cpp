@@ -21,22 +21,22 @@ inline void prefetchw(const void *p) {
   __builtin_prefetch(p, 1, 3);  // 1 = write intent, 3 = high temporal locality
 }
 
+template <bool Inverse>
 void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
   auto *__restrict__ Y = *YY;
   auto *__restrict__ X = *XX;
   int64_t l = N / 2;
   int64_t m = 1;
-  const bool inverse = (flags & P_INVERSE);
   MFFTELEM *tmp;
   D d;
   const auto *__restrict__ W = reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
   const auto conj_mask = hn::Load(d, conj_values);
-  const auto pmim_mask = (inverse) ? hn::Neg(conj_mask) : conj_mask;
+  const auto pmim_mask = Inverse ? hn::Neg(conj_mask) : conj_mask;
   for (int32_t t = 0; t < e1 - 1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (inverse) w_l = hn::Mul(w_l, conj_mask);
+    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       for (int64_t k = 0; k < m; k++) {
         auto c0 = hn::Load(d, CCDPTR(&X[bp + stride * (k + j * m)]));
@@ -68,13 +68,13 @@ void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = Y;
 }
 
+template <bool Inverse>
 void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
   auto *__restrict__ Y = *YY;
   auto *__restrict__ X = *XX;
   int64_t l = N / 3;
   int64_t m = 1;
-  const bool inverse = (flags & P_INVERSE);
   const double c30 = 0.5;
   const double c31 = 0.8660254037844386;  // sin(M_PI / 3.0);
   MFFTELEM *tmp;
@@ -82,13 +82,13 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   const auto *__restrict__ W =
       reinterpret_cast<const std::complex<double> *__restrict__>(COS_SIN_3);
   const auto conj_mask = hn::Load(d, conj_values);
-  const auto pmim_mask = (inverse) ? hn::Neg(conj_mask) : conj_mask;
+  const auto pmim_mask = (Inverse) ? hn::Neg(conj_mask) : conj_mask;
   const auto vc30 = hn::Set(d, c30);
   const auto vc31 = hn::Set(d, c31);
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (inverse) w_l = hn::Mul(w_l, conj_mask);
+    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       for (int64_t k = 0; k < m; k++) {
@@ -119,22 +119,22 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
+template <bool Inverse>
 void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
   auto *__restrict__ Y = *YY;
   auto *__restrict__ X = *XX;
   int64_t l = N >> 2;
   int64_t m = 1;
-  const bool inverse = (flags & P_INVERSE);
   MFFTELEM *tmp;
   D d;
   const auto *__restrict__ W = reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
   const auto conj_mask = hn::Load(d, conj_values);
-  const auto pmim_mask = (inverse) ? hn::Neg(conj_mask) : conj_mask;
+  const auto pmim_mask = (Inverse) ? hn::Neg(conj_mask) : conj_mask;
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[2 * (e1 - t) - 1]));
-    if (inverse) w_l = hn::Mul(w_l, conj_mask);
+    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -169,13 +169,13 @@ void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
+template <bool Inverse>
 void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
   auto *__restrict__ Y = *YY;
   auto *__restrict__ X = *XX;
   int64_t l = N / 5;
   int64_t m = 1;
-  const bool inverse = (flags & P_INVERSE);
   const double c50 = 0.25;
   const double c51 = 0.9510565162951535;  // sin(2.0 * M_PI / 5.0);
   const double c52 = 0.5590169943749475;  // sqrt(5.0) / 4.0;
@@ -184,7 +184,7 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   D d;
   const auto *__restrict__ W = reinterpret_cast<const std::complex<double> *>(COS_SIN_5);
   const auto conj_mask = hn::Load(d, conj_values);
-  const auto pmim_mask = (inverse) ? hn::Neg(conj_mask) : conj_mask;
+  const auto pmim_mask = (Inverse) ? hn::Neg(conj_mask) : conj_mask;
   const auto vc50 = hn::Set(d, c50);
   const auto vc51 = hn::Set(d, c51);
   const auto vc52 = hn::Set(d, c52);
@@ -192,7 +192,7 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (inverse) w_l = hn::Mul(w_l, conj_mask);
+    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -241,13 +241,13 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
+template <bool Inverse>
 void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
   auto *__restrict__ Y = *YY;
   auto *__restrict__ X = *XX;
   int64_t l = N / 7;
   int64_t m = 1;
-  const bool inverse = (flags & P_INVERSE);
   const double c71 = 0.1666666666666666;    // -(cos(u) + cos(2 * u) + cos(3 * u)) / 3.0;
   const double c72 = 0.7901564685254002;    // (2 * cos(u) - cos(2 * u) - cos(3 * u)) / 3.0;
   const double c73 = 0.05585426728964774;   // (cos(u) - 2 * cos(2 * u) + cos(3 * u)) / 3.0;
@@ -260,7 +260,7 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   D d;
   const auto *W = reinterpret_cast<const std::complex<double> *>(COS_SIN_7);
   const auto conj_mask = hn::Load(d, conj_values);
-  const auto pmim_mask = (inverse) ? hn::Neg(conj_mask) : conj_mask;
+  const auto pmim_mask = (Inverse) ? hn::Neg(conj_mask) : conj_mask;
   auto vc71 = hn::Set(d, c71);
   auto vc72 = hn::Set(d, c72);
   auto vc73 = hn::Set(d, c73);
@@ -272,7 +272,7 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (inverse) w_l = hn::Mul(w_l, conj_mask);
+    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -351,25 +351,25 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
+template <bool Inverse>
 void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
   auto *__restrict__ Y = *YY;
   auto *__restrict__ X = *XX;
   int64_t l = N >> 3;
   int64_t m = 1;
-  const bool inverse = (flags & P_INVERSE);
   const double c81 = 0.7071067811865476;  // sqrt(2.0) / 2.0;
   MFFTELEM *tmp;
   D d;
   const auto *__restrict__ W =
       reinterpret_cast<const std::complex<double> *__restrict__>(COS_SIN_2);
   const auto conj_mask = hn::Load(d, conj_values);
-  const auto pmim_mask = (inverse) ? hn::Neg(conj_mask) : conj_mask;
+  const auto pmim_mask = (Inverse) ? hn::Neg(conj_mask) : conj_mask;
   const auto vc81 = hn::Set(d, c81);
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[3 * (e1 - t) - 1]));
-    if (inverse) w_l = hn::Mul(w_l, conj_mask);
+    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -439,13 +439,13 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *YY = X;
 }
 
+template <bool Inverse>
 void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, int32_t flags) {
   auto *__restrict__ Y = *YY;
   auto *__restrict__ X = *XX;
   int64_t l = N / 9;
   int64_t m = 1;
-  const bool inverse = (flags & P_INVERSE);
   const double c90 = -0.5;
   const double c91 = 3.0 / 2.0;
   const double c93 = 0.766044443118978;    // (2 * cos(u) - cos(2 * u) - cos(4 * u)) / 3.0;
@@ -468,11 +468,11 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   auto vs4u = hn::Set(d, s4u);
   const auto *__restrict__ W = reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
   const auto conj_mask = hn::Load(d, conj_values);
-  const auto pmim_mask = (inverse) ? hn::Neg(conj_mask) : conj_mask;
+  const auto pmim_mask = (Inverse) ? hn::Neg(conj_mask) : conj_mask;
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[2 * (e1 - t) - 1]));
-    if (inverse) w_l = hn::Mul(w_l, conj_mask);
+    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -570,3 +570,32 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   *XX = Y;
   *YY = X;
 }
+
+template void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);
+template void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, int32_t flags);

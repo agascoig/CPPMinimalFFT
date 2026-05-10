@@ -30,6 +30,7 @@ static inline int32_t rev_mask_mux_mod(const int32_t a, const int32_t B) {
 }
 
 // Direct DFT implementation: good for small N<=DIRECT_SZ
+template <bool Inverse>
 void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
                 const int64_t bp, const int64_t stride, const int32_t flags) {
   MFFTELEM *__restrict__ y = *YY;
@@ -38,7 +39,6 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
   D d;
   const auto *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(DIRECT_COEFFS[N]);
-  const bool inverse = (flags & P_INVERSE);
   auto s = hn::Set(d, 0.0);
   int64_t step = bp;
   for (int64_t n = 0; n < N; n++) {
@@ -47,7 +47,7 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
     step += stride;
   }
   hn::Store(s, d, CDPTR(&y[bp]));
-  if (inverse) {
+  if (Inverse) {
     for (int32_t k = 1; k < N; k++) {
       s = hn::Load(d, CDPTR(&x[bp]));
       step = bp + stride;
@@ -78,3 +78,9 @@ void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
     }
   }
 }
+
+
+template void direct_dft<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
+                 const int64_t bp, const int64_t stride, const int32_t flags);
+template void direct_dft<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
+                 const int64_t bp, const int64_t stride, const int32_t flags);

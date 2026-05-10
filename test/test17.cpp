@@ -96,7 +96,7 @@ double get_s_time(int64_t start, int64_t end) {
 
 void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
                              MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
-                             auto P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
+                             auto &P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
                              double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns,
                              int32_t* es, void (*parent_fn)(void), int32_t inverse, double* std_dev,
                              const int64_t* params) {
@@ -127,7 +127,7 @@ void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinA
 
 void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
                            MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
-                           fftw_plan& P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
+                           auto &P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
                            double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns,
                            int32_t* es, void (*parent_fn)(void), int32_t inverse, double* std_dev,
                            const int64_t* params) {
@@ -196,7 +196,7 @@ void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAli
 
 void test_fft_kernel(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
                      MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
-                     fftw_plan P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
+                     auto &P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
                      double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns, int32_t* es,
                      void (*parent_fn)(void), int32_t inverse, double* std_dev,
                      const int64_t* params) {

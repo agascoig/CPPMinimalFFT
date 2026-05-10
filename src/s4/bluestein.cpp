@@ -44,13 +44,13 @@ static inline int64_t nextpow2_exp(uint64_t n) {
   return high_bit + 1;
 }
 
-static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
+template<bool Inverse>
+void bluestein_init(int64_t N, int64_t M, int32_t flags) {
   bool init = bs_buff.M == 0;
-  const bool inverse = (flags & P_INVERSE);
   if (!init) {
     if (bs_buff.M != M) {
       init = true;
-    } else if ((bs_buff.flags & P_INVERSE) != inverse) {
+    } else if ((bs_buff.flags & P_INVERSE) != Inverse) {
       // Conjugate b_n array
       for (int64_t i = 0; i < M; i++) {
         bs_buff.b_n[i] = conj(bs_buff.b_n[i]);
@@ -82,7 +82,7 @@ static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
     if (N < bs_buff.N)
       memset(bs_buff.b_n + N, 0, (M - 2 * N + 1) * sizeof(MFFTELEM));
     bs_buff.b_n[0] = 1.0;
-    double arg = inverse ? -M_PI / N : M_PI / N;
+    double arg = Inverse ? -M_PI / N : M_PI / N;
     std::complex<double> c_e;
     for (int64_t n = 1; n < N; n++) {
       c_e = minsincos(arg * n * n);
@@ -96,6 +96,7 @@ static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
 }
 
 // Bluestein FFT implementation
+template <bool Inverse>
 void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                const int32_t discard_e1, const int64_t bp, const int64_t stride,
                const int32_t flags) {
@@ -106,7 +107,10 @@ void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
   D d;
   auto d_complex = hn::FixedTag<MFFTELEMRI, 2>();
   const auto conj_mask = hn::Load(d, conj_values);
-  bluestein_init(N, M, flags);
+  if (Inverse)
+    bluestein_init<true>(N, M, flags);
+  else
+    bluestein_init<false>(N, M, flags);
   MFFTELEM *a_n = bs_buff.a_n;
   const MFFTELEM *b_n = bs_buff.b_n;
   MFFTELEM *A_X = bs_buff.A_X;
@@ -131,8 +135,8 @@ void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     y[bp + stride * (N - 1)] = c;
   }
   memcpy(B_X, b_n, M * sizeof(MFFTELEM));
-  fftr2(&A_X, &a_n, M, e1, 0, 1, P_NONE);
-  fftr2(&a_n, &B_X, M, e1, 0, 1, P_NONE);
+  fftr2<false>(&A_X, &a_n, M, e1, 0, 1, P_NONE);
+  fftr2<false>(&a_n, &B_X, M, e1, 0, 1, P_NONE);
   // M always power of 2
   for (int64_t i = 0; i < M-1; i+=2) {
     auto AXv = hn::Load(d, CCFPTR(&A_X[i]));
@@ -140,7 +144,7 @@ void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     anv = hn::MulComplex(anv, AXv);
     hn::Store(anv, d, CFPTR(&a_n[i]));
   }
-  fftr2(&B_X, &a_n, M, e1, 0, 1, P_INVERSE);
+  fftr2<true>(&B_X, &a_n, M, e1, 0, 1, P_INVERSE);
   auto scale = hn::Set(d, 1.0 / M);
   for (int64_t i = 0; i < N-1; i+=2) {
     auto BXv = hn::Load(d, CCFPTR(&B_X[i]));
@@ -168,3 +172,13 @@ void free_bluestein_buffer(void) {
     bs_buff.M = 0;
   }
 }
+
+template void bluestein_init<false>(int64_t N, int64_t M, int32_t flags);
+template void bluestein_init<true>(int64_t N, int64_t M, int32_t flags);
+
+template void bluestein<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
+               const int32_t discard_e1, const int64_t bp, const int64_t stride,
+               const int32_t flags);
+template void bluestein<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
+               const int32_t discard_e1, const int64_t bp, const int64_t stride,
+               const int32_t flags);

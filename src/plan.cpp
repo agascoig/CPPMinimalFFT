@@ -180,32 +180,18 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
 }
 
 // Execute plan function with input copying if needed
-void MinimalPlan::execute_plan(MFFTELEM* Y, MFFTELEM* X, int64_t r, int64_t bp,
+void MinimalPlan::execute_plan(MinAlignedVector &Y, MinAlignedVector &X, int64_t r, int64_t bp,
                                int64_t stride) const {
-  MFFTELEM* orig_Y = Y;
-  MFFTELEM** YY = &Y;
-  MFFTELEM** XX = &X;
+  MFFTELEM *Y_data = Y.data();
+  MFFTELEM *X_data = X.data();
+  
+  MFFTELEM** YY = &Y_data;
+  MFFTELEM** XX = &X_data;
   MFFTELEM* copy_X = nullptr;
-
-  minassert(Y != X || (flags & P_INPLACE),
-            "Input and output buffers must not be the same unless in-place plan.");
-
-  bool copy_input = ((flags & P_COPY_INPUT) != 0);
-
-  if (copy_input) {
-    copy_X = (MFFTELEM*)minaligned_alloc(sizeof(MFFTELEM), sizeof(MFFTELEM), total_size);
-    memcpy(copy_X, X, total_size * sizeof(MFFTELEM));
-    *XX = copy_X;
-  }
-
+  
   execute_plan_no_copy(YY, XX, r, bp, stride);
 
-  if (*YY != orig_Y)
-    memcpy(orig_Y, *YY,
-           total_size * sizeof(MFFTELEM));  // swapped, so copy to original output
-  else if (flags & P_INPLACE)
-    memcpy(X, *YY,
-           total_size * sizeof(MFFTELEM));  // in-place, so copy back to
-                                            // original input if not already
-  if (copy_X) free(copy_X);
+  if (*YY != Y.data()) {
+    swap(Y, X);
+  }
 }

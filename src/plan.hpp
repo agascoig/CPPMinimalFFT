@@ -3,6 +3,7 @@
 #define __PLAN_H__
 
 #include <cstdint>
+#include <vector>
 
 #include "CPPMinimalFFT.hpp"
 
@@ -46,8 +47,7 @@ class MinimalPlan {
 
   void execute_plan_no_copy(MFFTELEM **YY, MFFTELEM **XX, int64_t r, int64_t bp,
                             int64_t stride) const;  // *XX may be destroyed
-
-  void execute_plan(MFFTELEM *Y, MFFTELEM *X, int64_t r, int64_t bp,
+  void execute_plan(MinAlignedVector &Y, MinAlignedVector &X, int64_t r, int64_t bp,
                     int64_t stride) const;  // X preserved if not inplace
   inline bool bt_flags(int32_t flag) { return (flags & flag) != 0; };
 
@@ -69,13 +69,13 @@ class MinimalPlan {
   int64_t pfa_params[MAX_PFA_PARAMS];
 
   // pointers to regions
-  int64_t (*base_p)[MAX_FACTORS];
-  int64_t (*ns_p)[MAX_FACTORS];
-  fft_func_t (*func_p)[MAX_FACTORS];
-  int32_t (*exp_p)[MAX_FACTORS];
-  int64_t (*pfa_params_p)[MAX_PFA_PARAMS];
+  int64_t (*base_p)[MAX_FACTORS]={nullptr};
+  int64_t (*ns_p)[MAX_FACTORS]={nullptr};
+  fft_func_t (*func_p)[MAX_FACTORS]={nullptr};
+  int32_t (*exp_p)[MAX_FACTORS]={nullptr};
+  int64_t (*pfa_params_p)[MAX_PFA_PARAMS]={nullptr};
 
-  int32_t num_factors[MAX_REGIONS]={};  // zero init number of factors per region
+  int32_t num_factors[MAX_REGIONS]={0};  // zero init number of factors per region
 
   void add_plan_factor(int32_t r, int64_t ns, int64_t base, int32_t exp,
                        fft_func_t func);

@@ -7,8 +7,8 @@ project(CPPMinimalFFT CXX)          # Specify project name and language
 #set(MINFFT "32") # single precision
 set(MINFFT "64") # double precision
 
-# one-hot: set use SIMD code ON, or OFF regular scalar
-option(SIMD ON)
+# set use SIMD code ON, or OFF for regular scalar
+set(SIMD "ON")
 
 #set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
 set(SANITIZE "")
@@ -29,20 +29,23 @@ SET(LIB_SOURCES
    src/small.cpp
 )
 
-if(SIMD)
-  if(MINFFT EQUAL 32)
+if(SIMD STREQUAL "ON")
+  if(MINFFT STREQUAL "32")
+    message(STATUS "Building SIMD single-precision")
     list(APPEND LIB_SOURCES
     src/s4/direct.cpp
     src/s4/stockham.cpp
     src/s4/bluestein.cpp)
   endif()
-  if(MINFFT EQUAL 64)
+  if(MINFFT STREQUAL "64")
+    message(STATUS "Building SIMD double-precision")
     list(APPEND LIB_SOURCES
     src/d2/direct.cpp
     src/d2/stockham.cpp
     src/d2/bluestein.cpp)
   endif()
 else()
+   message(STATUS "Building non-SIMD precision=${MINFFT}")
    list(APPEND LIB_SOURCES
    src/direct.cpp
    src/stockham.cpp

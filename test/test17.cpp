@@ -32,13 +32,13 @@ class random_normal {
   random_normal(int64_t seed, double mean, double stddev) : rng(seed), dist(mean, stddev) {}
   std::mt19937 rng;
   normal_dist_t dist;
-  MFFTELEM get_rv() { return MFFTELEM(dist(rng), dist(rng)); }
+  MFFTELEM get_rand() { return MFFTELEM(dist(rng), dist(rng)); }
   MinAlignedVector get_rv(size_t n) {
     MinAlignedVector v(n);
     for (int i = 0; i < n; ++i) {
-      MFFTELEM e = get_rv();
+      MFFTELEM e = get_rand();
+      // MFFTELEM e = MFFTELEM((double)i, 0.0);
       v[i] = e;
-      //      v[i] = 1.0f;
     }
     return v;
   }
@@ -80,7 +80,7 @@ int64_t power_of(int64_t b, int64_t N) {
   return 0;
 }
 
-void print_v(const char* name, MFFTELEM* v, size_t n) {
+void print_v(const char* name, MinAlignedVector v, size_t n) {
   printf("%s = \n", name);
   for (size_t i = 0; i < n; ++i) {
     printf("  (%2.2f,%2.2f)\n", std::real(v[i]), std::imag(v[i]));
@@ -94,61 +94,67 @@ double get_s_time(int64_t start, int64_t end) {
   return elapsed_ns * 1e-9;
 }
 
-MFFTELEM* test_fft_kernel_untimed(int64_t repeat_count, MFFTELEM* Y_ref, MFFTELEM* Y,
-                                  MFFTELEM* X_ref, MFFTELEM* X, MFFTELEM* copy_X, auto P_ref,
-                                  MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
-                                  double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns,
-                                  int32_t* es, void (*parent_fn)(void), int32_t inverse,
-                                  double* std_dev, const int64_t* params) {
-  bool inplace = (P != nullptr && P->bt_flags(P_INPLACE)) ? true : false;
-  memcpy(X, copy_X, N * sizeof(MFFTELEM));
-  memcpy(X_ref, copy_X, N * sizeof(MFFTELEM));
+void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
+                             MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
+                             auto P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
+                             double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns,
+                             int32_t* es, void (*parent_fn)(void), int32_t inverse, double* std_dev,
+                             const int64_t* params) {
   execute_fftw_plan(P_ref);
-  memcpy(X_ref, copy_X, N * sizeof(MFFTELEM));
-
-  if (P != NULL) {
+  if (P != nullptr) {
     P->execute_plan(Y, X, 0, 0, 1);
   } else {
+    MFFTELEM* Y_data = Y.data();
+    MFFTELEM* X_data = X.data();
+    MFFTELEM** YY = &Y_data;
+    MFFTELEM** XX = &X_data;
     if (parent_fn == nullptr) {
-      ((fft_func_t)fns[0])(&Y, &X, N, es[0], 0, 1, inverse);
+      ((fft_func_t)fns[0])(YY, XX, N, es[0], 0, 1, inverse);
     } else if (num_factors <= MAX_FACTORS) {
-      ((parent_fn_t)parent_fn)(&Y, &X, Ns, es, 0, 1, inverse, fns, params);
+      ((parent_fn_t)parent_fn)(YY, XX, Ns, es, 0, 1, inverse, fns, params);
     } else {
       minassert(0, "Too many factors here.");
     }
+    if (*YY != Y.data()) {
+      std::swap(Y, X);
+    }
+    X = copy_X;
   }
   *std_dev = 0.0;
   *t_ref_s = 0.0;
   *t_s = 0.0;
-  return Y;
 }
 
-MFFTELEM* test_fft_kernel_timed(int64_t repeat_count, MFFTELEM* Y_ref, MFFTELEM* Y, MFFTELEM* X_ref,
-                                MFFTELEM* X, MFFTELEM* copy_X, auto P_ref, MinimalPlan* P,
-                                int64_t N, int32_t bm, double* t_ref_s, double* t_s,
-                                int32_t num_factors, int64_t* Ns, fft_func_t* fns, int32_t* es,
-                                void (*parent_fn)(void), int32_t inverse, double* std_dev,
-                                const int64_t* params) {
+void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
+                           MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
+                           fftw_plan& P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
+                           double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns,
+                           int32_t* es, void (*parent_fn)(void), int32_t inverse, double* std_dev,
+                           const int64_t* params) {
   int64_t t_ref_start = 0, t_ref_end = 0;
   int64_t inner_start = 0, inner_end = 0;
   int64_t t_start = 0, t_end = 0;
   *t_ref_s = 0.0;
   *t_s = 0.0;
-  bool inplace = (P != nullptr && P->bt_flags(P_INPLACE)) ? true : false;
-  memcpy(X, copy_X, N * sizeof(MFFTELEM));
-  memcpy(X_ref, copy_X, N * sizeof(MFFTELEM));
-  int64_t n = 0;
+  MFFTELEM* Y_data = Y.data();
+  MFFTELEM* X_data = X.data();
+  MFFTELEM** YY = &Y_data;
+  MFFTELEM** XX = &X_data;
+
+  X = copy_X;
+  X_ref = copy_X;
   t_ref_start = mingettime();
   execute_fftw_plan(P_ref);
   t_ref_end = mingettime();
   if (get_s_time(t_ref_start, t_ref_end) < 10e-6)
     repeat_count *= OVERSAMPLE_FACTOR;  // oversample if less than 10 us
-  memcpy(X_ref, copy_X, N * sizeof(MFFTELEM));
+  X_ref = copy_X;
   t_ref_start = mingettime();
+  int64_t n = 0;
   while (n++ < repeat_count) {
     inner_start = mingettime();
     execute_fftw_plan(P_ref);
-    if (inplace && (n != repeat_count)) memcpy(X_ref, copy_X, N * sizeof(MFFTELEM));
+    X_ref = copy_X;
     inner_end = mingettime();
   }
   t_ref_end = mingettime();
@@ -160,20 +166,21 @@ MFFTELEM* test_fft_kernel_timed(int64_t repeat_count, MFFTELEM* Y_ref, MFFTELEM*
   n = 0;
   while (n++ < repeat_count) {
     inner_start = mingettime();
-    if (P != NULL) {
+    if (P != nullptr) {
       P->execute_plan(Y, X, 0, 0, 1);
-      if (inplace && (n != repeat_count)) memcpy(X, copy_X, N * sizeof(MFFTELEM));
     } else {
       if (parent_fn == nullptr) {
-        ((fft_func_t)fns[0])(&Y, &X, N, es[0], 0, 1, inverse);
+        ((fft_func_t)fns[0])(YY, XX, N, es[0], 0, 1, inverse);
       } else if (num_factors <= MAX_FACTORS) {
-        ((parent_fn_t)parent_fn)(&Y, &X, Ns, es, 0, 1, inverse, fns, params);
+        ((parent_fn_t)parent_fn)(YY, XX, Ns, es, 0, 1, inverse, fns, params);
       } else {
         minassert(0, "Too many factors here.");
       }
-      memcpy(X, copy_X, N * sizeof(MFFTELEM));  // inner routines do not copy input, so
-                                                // must do it
+      if (*YY != Y.data()) {
+        swap(Y, X);
+      }
     }
+    X = copy_X;
     inner_end = mingettime();
     double x = get_s_time(inner_start, inner_end);
     delta = x - mu;
@@ -185,57 +192,53 @@ MFFTELEM* test_fft_kernel_timed(int64_t repeat_count, MFFTELEM* Y_ref, MFFTELEM*
   *std_dev = sqrt(1.0 * M2 / (n - 1));
   *t_ref_s = get_s_time(t_ref_start, t_ref_end) / (double)repeat_count;
   *t_s = get_s_time(t_start, t_end) / (double)repeat_count;
-  return Y;
 }
 
-MFFTELEM* test_fft_kernel(int64_t repeat_count, MFFTELEM* Y_ref, MFFTELEM* Y, MFFTELEM* X_ref,
-                          MFFTELEM* X, MFFTELEM* copy_X, auto P_ref, MinimalPlan* P, int64_t N,
-                          int32_t bm, double* t_ref_s, double* t_s, int32_t num_factors,
-                          int64_t* Ns, fft_func_t* fns, int32_t* es, void (*parent_fn)(void),
-                          int32_t inverse, double* std_dev, const int64_t* params) {
+void test_fft_kernel(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
+                     MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
+                     fftw_plan P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
+                     double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns, int32_t* es,
+                     void (*parent_fn)(void), int32_t inverse, double* std_dev,
+                     const int64_t* params) {
   // dispatch time or untimed
   if (bm) {
-    return test_fft_kernel_timed(repeat_count, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, t_ref_s,
-                                 t_s, num_factors, Ns, fns, es, parent_fn, inverse, std_dev,
-                                 params);
+    test_fft_kernel_timed(repeat_count, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, t_ref_s, t_s,
+                          num_factors, Ns, fns, es, parent_fn, inverse, std_dev, params);
   } else {
-    return test_fft_kernel_untimed(repeat_count, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm,
-                                   t_ref_s, t_s, num_factors, Ns, fns, es, parent_fn, inverse,
-                                   std_dev, params);
+    test_fft_kernel_untimed(repeat_count, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, t_ref_s, t_s,
+                            num_factors, Ns, fns, es, parent_fn, inverse, std_dev, params);
   }
 }
 
+struct fn_name_s {
+  fft_func_t fn;
+  const char* name;
+} fns_names[] = {{&bluestein<false>, "bluestein"},   {&bluestein<true>, "ibluestein"},
+                 {&direct_dft<false>, "direct_dft"}, {&direct_dft<true>, "idirect_dft"},
+                 {&small_dft<false>, "small_dft"},   {&small_dft<true>, "ismall_dft"}};
+
 void print_fns(char* buf, fft_func_t* fns) {
-  char fn[256];
-  if (fns == NULL) return;
+  char fn_str[256];
   buf[0] = '\0';
-  fn[0] = '\0';
+  fn_str[0] = '\0';
+  if (fns == nullptr) return;
   for (int i = 0; i < MAX_FACTORS; ++i) {
-    if (fns[i] == nullptr) continue;
+    fft_func_t func = fns[i];
+    if (func == nullptr) continue;
     for (int j = 0; j < sizeof(dispatch) / sizeof(dispatch[0]); ++j) {
-      if (((fft_func_t)(fns[i])) == dispatch[j]) {
-        snprintf(fn, sizeof(fn), "fftr%d ", j);
-        strcat(buf, fn);
-      } else if (((fft_func_t)(fns[i])) == dispatch_inverse[j]) {
-        snprintf(fn, sizeof(fn), "ifftr%d ", j);
-        strcat(buf, fn);
+      if (func == dispatch[j]) {
+        snprintf(fn_str, sizeof(fn_str), "fftr%d ", j);
+        strcat(buf, fn_str);
+      } else if (func == dispatch_inverse[j]) {
+        snprintf(fn_str, sizeof(fn_str), "ifftr%d ", j);
+        strcat(buf, fn_str);
       }
     }
-    if (fns[i] == (fft_func_t)&bluestein<false>) {
-      snprintf(fn, sizeof(fn), "bluestein ");
-      strcat(buf, fn);
-    } else if (fns[i] == (fft_func_t)&bluestein<true>) {
-      snprintf(fn, sizeof(fn), "bluestein ");
-      strcat(buf, fn);
-    } else if (fns[i] == (fft_func_t)&bluestein<true>) {
-      snprintf(fn, sizeof(fn), "ibluestein ");
-      strcat(buf, fn);
-    } else if (fns[i] == (fft_func_t)&direct_dft<false>) {
-      snprintf(fn, sizeof(fn), "direct_dft ");
-      strcat(buf, fn);
-    } else if (fns[i] == (fft_func_t)&direct_dft<true>) {
-      snprintf(fn, sizeof(fn), "idirect_dft ");
-      strcat(buf, fn);
+    for (int j = 0; j < sizeof(fns_names) / sizeof(fn_name_s); ++j) {
+      if (func == fns_names[j].fn) {
+        snprintf(fn_str, sizeof(fn_str), "%s ", fns_names[j].name);
+        strcat(buf, fn_str);
+      }
     }
   }
   if (strlen(buf)) buf[strlen(buf) - 1] = 0;  // remove last space
@@ -261,8 +264,12 @@ void print_result(const char* preamble, const char* name, int64_t N, int num_fac
     if (i == (num_factors - 1)) comma = '\0';
     snprintf(factors_str + strlen(factors_str), sizeof(factors_str), "%" PRId64 "%c", Ns[i], comma);
   }
-  printf("%s %s %s %s] std_dev=%2.2es (%s)\n", preamble, name, timing_str, factors_str, std_dev,
-         fn_str);
+  if (bm) {
+    printf("%s %s %s %s] std_dev=%2.2es (%s)\n", preamble, name, timing_str, factors_str, std_dev,
+           fn_str);
+  } else {
+    printf("%s %s %s %s] (%s)\n", preamble, name, timing_str, factors_str, fn_str);
+  }
   fflush(stdout);
 }
 
@@ -273,27 +280,21 @@ void test_fft(random_normal& RNG, const char* name, int bm, int inverse, int64_t
   struct timespec t_start, t_end;
   double t_ref_s = DBL_MAX, t_s = DBL_MAX;
   MinAlignedVector Y_ref(N);
-  MinAlignedVector X(N);
   MinAlignedVector Y(N);
-  MinAlignedVector X_ref = RNG.get_rv(N);
-  MinAlignedVector copy_X = X_ref;
-  bool inplace = (P != nullptr && P->bt_flags(P_INPLACE)) ? true : false;
+  MinAlignedVector X_ref(RNG.get_rv(N));
+  MinAlignedVector X(X_ref);
+  MinAlignedVector copy_X(X_ref);
   auto P_ref = create_fftw_plan(N, X_ref.data(), Y_ref.data(), inverse);
   int test_repeat = bm ? NUM_TIMED_TESTS : 1;
   double std_dev;
   int64_t params[MAX_PFA_PARAMS] = {0};
   minassert(num_factors <= MAX_FACTORS, "Too many factors in test_fft.");
   if (num_factors > 1) generate_pfa_params(num_factors, Ns, params);
-  MFFTELEM* Y_result = test_fft_kernel(test_repeat, Y_ref.data(), Y.data(), X_ref.data(), X.data(),
-                                       copy_X.data(), P_ref, P, N, bm, &t_ref_s, &t_s, num_factors,
-                                       Ns, fns, es, parent_fn, inverse, &std_dev, params);
+  test_fft_kernel(test_repeat, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, &t_ref_s, &t_s,
+                  num_factors, Ns, fns, es, parent_fn, inverse, &std_dev, params);
   // reporting
   if (bm) hm_add(&hm, t_s / t_ref_s);
-  if (inplace &&
-      (approx_cmp_v(X.data(), Y_ref.data(), N) || approx_cmp_v(Y_ref.data(), Y_result, N))) {
-    print_result("Failed for inplace ", name, N, num_factors, Ns, bm, t_ref_s, t_s, fns, std_dev);
-    (*fc)++;
-  } else if (approx_cmp_v(Y_ref.data(), Y_result, N)) {
+  if (approx_cmp_v(Y_ref, Y, N)) {
     print_result("Failed for", name, N, num_factors, Ns, bm, t_ref_s, t_s, fns, std_dev);
     (*fc)++;
   } else {
@@ -377,7 +378,7 @@ void print_time() {
   time_t now = time(NULL);
   struct tm* t = localtime(&now);
   char buf[64];
-  buf[0]='\0';
+  buf[0] = '\0';
   strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
   printf("# %s\n", buf);
 }
@@ -395,7 +396,7 @@ void print_compiler_ver() {
 #endif
   int status = 0;
   char* demangled = abi::__cxa_demangle(typeid(MFFTELEM).name(), nullptr, nullptr, &status);
-  std::cout << "\n# " << demangled << std::endl << std::endl << std::flush;
+  std::cout << "\n# " << demangled << std::endl << std::flush;
   free(demangled);
 }
 
@@ -446,97 +447,102 @@ int main() {
   int pass = 0, fail = 0;
   int* pc = &pass;
   int* fc = &fail;
-  int bm = 0;  // 1=benchmark
+  int bm = 1;  // 1=benchmark timing enabled
 
   hm_init(&hm);
 
   print_time();
   print_compiler_ver();
+#ifdef SIMDON
+  std::cout << "# Highway SIMD ON\n";
+#else
+  std::cout << "# Highway SIMD OFF\n";
+#endif
+  
+    for (int n = 1; n <= SMALL_SZ; ++n) {
+      if (small_available(n)) {
+        int64_t N = n;
+        fft_func_t fns[MAX_FACTORS] = {nullptr};
+        fns[0] = &small_dft<false>;
+        int32_t es = 1;
+        test_fft(RNG, "small_dft", bm, 0, N, pc, fc, 1, NULL, nullptr, &N, fns, &es);
+      }
+    }
 
-  for (int n = 1; n <= SMALL_SZ; ++n) {
-    if (small_available(n)) {
+    for (int n = 1; n <= DIRECT_SZ; ++n) {
       int64_t N = n;
       fft_func_t fns[MAX_FACTORS] = {nullptr};
-      fns[0] = &small_dft<false>;
+      fns[0] = &direct_dft<false>;
       int32_t es = 1;
-      test_fft(RNG, "small_dft", 1, 0, N, pc, fc, 1, NULL, nullptr, &N, fns, &es);
+      test_fft(RNG, "direct_dft", bm, 0, N, pc, fc, 1, NULL, nullptr, &N, fns, &es);
     }
-  }
 
-  for (int n = 1; n <= DIRECT_SZ; ++n) {
-    int64_t N = n;
-    fft_func_t fns[MAX_FACTORS] = {nullptr};
-    fns[0] = &direct_dft<false>;
-    int32_t es = 1;
-    test_fft(RNG, "direct_dft", 1, 0, N, pc, fc, 1, NULL, nullptr, &N, fns, &es);
-  }
+  #define RUN_DRIVER(radix_arr, num_factors, bm, inverse, parent_fn, N_vals, name)                 \
+    driver(RNG, d, (radix_arr), sizeof(radix_arr) / sizeof((radix_arr)[0]), (num_factors), bm, pc, \
+           fc, (inverse), (void (*)())(parent_fn), &(N_vals)[0][0],                                \
+           sizeof((N_vals)) / sizeof(N_vals[0]), (name))
 
-#define RUN_DRIVER(radix_arr, num_factors, bm, inverse, parent_fn, N_vals, name)         \
-driver(RNG, d, (radix_arr), sizeof(radix_arr) / sizeof((radix_arr)[0]), (num_factors), \
-       bm, pc, fc, (inverse), (void (*)())(parent_fn), &(N_vals)[0][0],        \
-       sizeof((N_vals)) / sizeof(N_vals[0]), (name))
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 0");
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 1");
+    RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 2");
+    RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 3");
+    RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 4");
+    RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 5");
+    RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 6");
+    d.clear();
+    RUN_DRIVER(((int[]){2}), 1, bm, 0, nullptr, factor_1, "timed stockham test 0");
+    RUN_DRIVER(((int[]){3}), 1, bm, 0, nullptr, factor_1, "timed stockham test 1");
+    RUN_DRIVER(((int[]){4}), 1, bm, 0, nullptr, factor_1, "timed stockham test 2");
+    RUN_DRIVER(((int[]){5}), 1, bm, 0, nullptr, factor_1, "timed stockham test 3");
+    RUN_DRIVER(((int[]){7}), 1, bm, 0, nullptr, factor_1, "timed stockham test 4");
+    RUN_DRIVER(((int[]){8}), 1, bm, 0, nullptr, factor_1, "timed stockham test 5");
+    RUN_DRIVER(((int[]){9}), 1, bm, 0, nullptr, factor_1, "timed stockham test 6");
+    d.clear();
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 0");
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 1");
+    RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 2");
+    RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 3");
+    RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 4");
+    RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 5");
+    RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 6");
+    d.clear();
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, 0, 1, prime_factor_2, factor_2,
+               "prime factor 2 test 0 inverse");
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, bm, 0, prime_factor_2, factor_2,
+               "prime factor 2 test 1 timed");
+    RUN_DRIVER(((int[]){4, 3, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 2");
+    RUN_DRIVER(((int[]){8, 3, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 3");
+    RUN_DRIVER(((int[]){2, 9, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 4");
+    RUN_DRIVER(((int[]){8, 9, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 5");
+    d.clear();
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, 0, 1, prime_factor_3, factor_3,
+               "prime factor 3 test 0 inverse");
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, bm, 0, prime_factor_3, factor_3, "prime factor 3 test 1");
+    RUN_DRIVER(((int[]){4, 3, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 2");
+    RUN_DRIVER(((int[]){8, 3, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 3");
+    RUN_DRIVER(((int[]){2, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 4");
+    RUN_DRIVER(((int[]){8, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 5");
+    d.clear();
+    RUN_DRIVER(((int[]){2}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 2 test");
+    RUN_DRIVER(((int[]){3}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 3 test");
+    RUN_DRIVER(((int[]){4}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 4 test");
+    RUN_DRIVER(((int[]){5}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 5 test");
+    RUN_DRIVER(((int[]){7}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 7 test");
+    RUN_DRIVER(((int[]){8}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 8 test");
+    RUN_DRIVER(((int[]){9}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 9 test");
+    d.clear();
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 4, 0, 0, pfa_extend_4, factor_4, "prime factor extend 4");
+    RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 5, 0, 0, pfa_extend_5, factor_5,
+               "prime factor extend 5");
+    RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, 0, 0, pfa_extend_6, factor_6,
+               "prime factor extend 6");
+    d.clear();
+    RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 0, bluestein_test_parent, bluestein_1,
+               "bluestein test");
+    RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 1, bluestein_test_parent, bluestein_1,
+               "bluestein inverse test");
+    d.clear();
 
-
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 0");
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 1");
-  RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 2");
-  RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 3");
-  RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 4");
-  RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 5");
-  RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, bm, 0, nullptr, factor_1, "stockham test 6");
-  d.clear();
-  RUN_DRIVER(((int[]){2}), 1, bm, 0, nullptr, factor_1, "timed stockham test 0");
-  RUN_DRIVER(((int[]){3}), 1, bm, 0, nullptr, factor_1, "timed stockham test 1");
-  RUN_DRIVER(((int[]){4}), 1, bm, 0, nullptr, factor_1, "timed stockham test 2");
-  RUN_DRIVER(((int[]){5}), 1, bm, 0, nullptr, factor_1, "timed stockham test 3");
-  RUN_DRIVER(((int[]){7}), 1, bm, 0, nullptr, factor_1, "timed stockham test 4");
-  RUN_DRIVER(((int[]){8}), 1, bm, 0, nullptr, factor_1, "timed stockham test 5");
-  RUN_DRIVER(((int[]){9}), 1, bm, 0, nullptr, factor_1, "timed stockham test 6");
-  d.clear();
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 0");
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 1");
-  RUN_DRIVER(((int[]){2, 9, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 2");
-  RUN_DRIVER(((int[]){4, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 3");
-  RUN_DRIVER(((int[]){4, 9, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 4");
-  RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 5");
-  RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 6");
-  d.clear();
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, 0, 1, prime_factor_2, factor_2,
-             "prime factor 2 test 0 inverse");
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, bm, 0, prime_factor_2, factor_2,
-             "prime factor 2 test 1 timed");
-  RUN_DRIVER(((int[]){4, 3, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 2");
-  RUN_DRIVER(((int[]){8, 3, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 3");
-  RUN_DRIVER(((int[]){2, 9, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 4");
-  RUN_DRIVER(((int[]){8, 9, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 5");
-  d.clear();
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, 0, 1, prime_factor_3, factor_3,
-             "prime factor 3 test 0 inverse");
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, bm, 0, prime_factor_3, factor_3, "prime factor 3 test 1");
-  RUN_DRIVER(((int[]){4, 3, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 2");
-  RUN_DRIVER(((int[]){8, 3, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 3");
-  RUN_DRIVER(((int[]){2, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 4");
-  RUN_DRIVER(((int[]){8, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 5");
-  d.clear();
-  RUN_DRIVER(((int[]){2}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 2 test");
-  RUN_DRIVER(((int[]){3}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 3 test");
-  RUN_DRIVER(((int[]){4}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 4 test");
-  RUN_DRIVER(((int[]){5}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 5 test");
-  RUN_DRIVER(((int[]){7}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 7 test");
-  RUN_DRIVER(((int[]){8}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 8 test");
-  RUN_DRIVER(((int[]){9}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 9 test");
-  d.clear();
-  RUN_DRIVER(((int[]){2, 3, 5, 7}), 4, 0, 0, pfa_extend_4, factor_4, "prime factor extend 4");
-  RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 5, 0, 0, pfa_extend_5, factor_5,
-             "prime factor extend 5");
-  RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, 0, 0, pfa_extend_6, factor_6,
-             "prime factor extend 6");
-  d.clear();
-  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 0, bluestein_test_parent, bluestein_1,
-             "bluestein test");
-  RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 1, bluestein_test_parent, bluestein_1,
-             "bluestein inverse test");
-  d.clear();
   static int64_t planner_n[] = {4,
                                 15,
                                 30,
@@ -564,7 +570,8 @@ driver(RNG, d, (radix_arr), sizeof(radix_arr) / sizeof((radix_arr)[0]), (num_fac
     int64_t* N_p = &N;
     const int32_t region = 0;
     MinimalPlan P(N_p, 1, region, region, P_NONE);
-    test_fft(RNG, "planner", bm, P_NONE, N, pc, fc, 1, nullptr, &P, &N, P.get_funcs(region), nullptr);
+    test_fft(RNG, "planner", bm, P_NONE, N, pc, fc, 1, nullptr, &P, &N, P.get_funcs(region),
+             nullptr);
     MinimalPlan P_inv(N_p, 1, region, region, P_INVERSE);
     test_fft(RNG, "planner inverse", bm, P_INVERSE, N, pc, fc, 1, nullptr, &P_inv, &N,
              P_inv.get_funcs(region), nullptr);

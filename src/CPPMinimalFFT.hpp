@@ -16,6 +16,7 @@
 #include <iostream>
 #include <new>
 #include <string>
+#include <vector>
 
 #if defined(MINFFT) && (MINFFT == 32)
 typedef float MFFTELEMRI;
@@ -79,7 +80,7 @@ static void print_stacktrace(void) {
     }                                                 \
   } while (0)
 
-static const int ALIGN_SZ = 16;
+static const int ALIGN_SZ = 16; // 8 for single-precision will not work
 
 template <typename T>
 class MinAlignedAllocator {
@@ -122,6 +123,7 @@ bool operator!=(const MinAlignedAllocator<T> &,
                 const MinAlignedAllocator<U> &) noexcept {
   return false;
 }
+
 using MinAlignedVector = std::vector<MFFTELEM, MinAlignedAllocator<MFFTELEM>>;
 
 static inline void *minaligned_alloc(size_t alignment, size_t sz,
@@ -164,51 +166,48 @@ static int approx_cmp(MFFTELEM x, MFFTELEM y) {
   return 1;
 }
 
-static double norm_v(MFFTELEM *x, size_t n) {
+static double norm_v(const MinAlignedVector &X, size_t n) {
   double sum = 0.0;
   for (size_t i = 0; i < n; ++i) {
-    double zr = std::real(x[i]);
-    double zi = std::imag(x[i]);
+    double zr = std::real(X[i]);
+    double zi = std::imag(X[i]);
     sum += zr * zr + zi * zi;
   }
   return sqrt(sum);
 }
 
-static int is_finite(MFFTELEM *x, size_t n) {
+static int is_finite(const MinAlignedVector &X, size_t n) {
   for (size_t i = 0; i < n; ++i) {
-    if (!std::isfinite(std::real(x[i])) || !std::isfinite(std::imag(x[i]))) {
+    if (!std::isfinite(std::real(X[i])) || !std::isfinite(std::imag(X[i]))) {
       return 0;
     }
   }
   return 1;
 }
 
-static int approx_cmp_v(MFFTELEM *x, MFFTELEM *y, size_t n) {
+static int approx_cmp_v(const MinAlignedVector &X, const MinAlignedVector &Y, size_t n) {
   double atol = 0;
   double rtol = sizeof(MFFTELEM) == 2 * 8   ? 1.4901161193847656e-8
                 : sizeof(MFFTELEM) == 2 * 4 ? 0.00034526698
                                             : 0.03125;
 
-  if (x == y) return 0;
+  if (X == Y) return 0;
 
   double diff = 0.0;
 
   // Check for finite values
-  if (is_finite(x, n) && is_finite(y, n)) {
+  if (is_finite(X, n) && is_finite(Y, n)) {
     for (int i = 0; i < n; ++i) {
-      double zr = std::real(x[i] - y[i]);
-      double zi = std::imag(x[i] - y[i]);
-
+      double zr = std::real(X[i] - Y[i]);
+      double zi = std::imag(X[i] - Y[i]);
       diff += zr * zr + zi * zi;
     }
     diff = sqrt(diff);
-    double norm_x = norm_v(x, n);
-    double norm_y = norm_v(y, n);
+    double norm_x = norm_v(X, n);
+    double norm_y = norm_v(X, n);
     double tol = std::fmax(atol, rtol * std::fmax(norm_x, norm_y));
     if (diff <= tol) return 0;
   }
-
-  //  std::cerr << "diff error: " << diff << std::endl;
   return 1;
 }
 

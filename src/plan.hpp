@@ -19,7 +19,7 @@ static const int P_COPY_INPUT = 128;
 
 static int DIRECT_SZ = 15;
 static const int MAX_FACTORS = 6;
-static const int MAX_PFA_PARAMS = 12;
+static const int MAX_PFA_PARAMS = 10;
 
 // Prime factorization result
 typedef struct {
@@ -29,31 +29,31 @@ typedef struct {
   int32_t count;  // MAX_FACTORS+1 on too many factors
 } factorization;
 
-factorization *factorize(int64_t n);
+factorization* factorize(int64_t n);
 
 // Minimal plan structure
 class MinimalPlan {
  public:
-  MinimalPlan(int64_t *_n, int32_t _n_dims, int32_t _region_start,
-              int32_t _region_end, int32_t _flags);
+  MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, int32_t _region_end,
+              int32_t _flags);
 
   ~MinimalPlan() {
-      delete[] base_p;
-      delete[] ns_p;
-      delete[] func_p;
-      delete[] exp_p;
-      delete[] pfa_params_p;
+    delete[] base_p;
+    delete[] ns_p;
+    delete[] func_p;
+    delete[] exp_p;
+    delete[] pfa_params_p;
   }
 
-  void execute_plan_no_copy(MFFTELEM **YY, MFFTELEM **XX, int64_t r, int64_t bp,
+  void execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
                             int64_t stride) const;  // *XX may be destroyed
-  void execute_plan(MinAlignedVector &Y, MinAlignedVector &X, int64_t r, int64_t bp,
+  void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int64_t r, int64_t bp,
                     int64_t stride) const;  // X preserved if not inplace
   inline bool bt_flags(int32_t flag) { return (flags & flag) != 0; };
 
-  friend std::ostream &operator<<(std::ostream &os, const MinimalPlan &P);
+  friend std::ostream& operator<<(std::ostream& os, const MinimalPlan& P);
 
-  fft_func_t *get_funcs(int r) { return func_p[r]; }
+  fft_func_t* get_funcs(int r) { return func_p[r]; }
 
  protected:
   void gen_inner_plan(int32_t flags);
@@ -69,16 +69,15 @@ class MinimalPlan {
   int64_t pfa_params[MAX_PFA_PARAMS];
 
   // pointers to regions
-  int64_t (*base_p)[MAX_FACTORS]={nullptr};
-  int64_t (*ns_p)[MAX_FACTORS]={nullptr};
-  fft_func_t (*func_p)[MAX_FACTORS]={nullptr};
-  int32_t (*exp_p)[MAX_FACTORS]={nullptr};
-  int64_t (*pfa_params_p)[MAX_PFA_PARAMS]={nullptr};
+  int64_t (*base_p)[MAX_FACTORS] = {nullptr};
+  int64_t (*ns_p)[MAX_FACTORS] = {nullptr};
+  fft_func_t (*func_p)[MAX_FACTORS] = {nullptr};
+  int32_t (*exp_p)[MAX_FACTORS] = {nullptr};
+  int64_t (*pfa_params_p)[MAX_PFA_PARAMS] = {nullptr};
 
-  int32_t num_factors[MAX_REGIONS]={0};  // zero init number of factors per region
+  int32_t num_factors[MAX_REGIONS] = {0};  // zero init number of factors per region
 
-  void add_plan_factor(int32_t r, int64_t ns, int64_t base, int32_t exp,
-                       fft_func_t func);
+  void add_plan_factor(int32_t r, int64_t ns, int64_t base, int32_t exp, fft_func_t func);
   void plan_1d(int64_t n, int32_t rd, int32_t flags);
 };
 

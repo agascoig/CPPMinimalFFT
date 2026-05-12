@@ -34,6 +34,10 @@ The only tests currently run are test/test17.cpp.
 
 (No testing yet for multi-dimensional FFTs.)
 
+The Bluestein algorithm has numerical problems with
+large block sizes in single-precision floating point,
+especially if done as later dimensions in a decomposition.
+
 ## License
 
 The license is MIT as described in LICENSE.txt, except for

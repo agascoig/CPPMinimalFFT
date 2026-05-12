@@ -4,19 +4,25 @@ cmake_minimum_required(VERSION 3.10)  # Minimum CMake version
 
 project(CPPMinimalFFT CXX)          # Specify project name and language
 
-#set(MINFFT "32") # single precision
-set(MINFFT "64") # double precision
+set(MINFFT "32") # single precision
+#set(MINFFT "64") # double precision
 
 # set use SIMD code ON, or OFF for regular scalar
 set(SIMD "ON")
+#set(SIMD "OFF")
 
 #set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
 set(SANITIZE "")
 
-#set(OPTIMIZE "-O1")
-set(OPTIMIZE "-O3")
+#set(OPTIMIZE "-O0") # cannot do with SIMD ON
+set(OPTIMIZE "-O1")
+#set(OPTIMIZE "-O3")
 
-set(CMAKE_CXX_FLAGS "-march=native -g ${OPTIMIZE} -std=c++23 -fPIC -DMINFFT=${MINFFT} ${SANITIZE}")
+#set(NDEBUG "-DNDEBUG")
+set(NDEBUG "")
+
+# remove -fPIC
+set(CMAKE_CXX_FLAGS "-march=native -g ${OPTIMIZE} -std=c++23 -DMINFFT=${MINFFT} ${SANITIZE} ${NDEBUG}")
 
 find_library(HIGHWAY_LIB highway HINT /opt/homebrew/opt/highway)
 
@@ -63,3 +69,5 @@ src/)
 
 add_subdirectory(test)
 add_subdirectory(assembly)
+
+#add_dependencies(CPPMinimalFFT assembly)

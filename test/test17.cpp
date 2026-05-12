@@ -14,6 +14,7 @@
 #include <typeinfo>
 #include <unordered_map>
 #include <vector>
+#include <cfenv> // for NaN trapping
 
 #include "CPPMinimalFFT.hpp"
 #include "hmean.hpp"
@@ -226,7 +227,15 @@ struct fn_name_s {
   const char* name;
 } fns_names[] = {{&bluestein<false>, "bluestein"},   {&bluestein<true>, "ibluestein"},
                  {&direct_dft<false>, "direct_dft"}, {&direct_dft<true>, "idirect_dft"},
-                 {&small_dft<false>, "small_dft"},   {&small_dft<true>, "ismall_dft"}};
+                 {&small_dft<false>, "small_dft"},   {&small_dft<true>, "ismall_dft"},
+                 {&fftr2<false>, "fftr2"}, {&fftr2<true>, "ifftr2"},
+                 {&fftr3<false>, "fftr3"}, {&fftr3<true>, "ifftr3"},
+                 {&fftr4<false>, "fftr4"}, {&fftr4<true>, "ifftr4"},
+                 {&fftr5<false>, "fftr5"}, {&fftr5<true>, "ifftr5"},
+                 {&fftr7<false>, "fftr7"}, {&fftr7<true>, "ifftr7"},
+                 {&fftr8<false>, "fftr8"}, {&fftr8<true>, "ifftr8"},
+                 {&fftr9<false>, "fftr9"}, {&fftr9<true>, "ifftr9"}
+              };
 
 void print_fns(char* buf, fft_func_t* fns) {
   char fn_str[256];
@@ -236,19 +245,11 @@ void print_fns(char* buf, fft_func_t* fns) {
   for (int i = 0; i < MAX_FACTORS; ++i) {
     fft_func_t func = fns[i];
     if (func == nullptr) continue;
-    for (int j = 0; j < sizeof(dispatch) / sizeof(dispatch[0]); ++j) {
-      if (func == dispatch[j]) {
-        snprintf(fn_str, sizeof(fn_str), "fftr%d ", j);
-        strcat(buf, fn_str);
-      } else if (func == dispatch_inverse[j]) {
-        snprintf(fn_str, sizeof(fn_str), "ifftr%d ", j);
-        strcat(buf, fn_str);
-      }
-    }
     for (int j = 0; j < sizeof(fns_names) / sizeof(fn_name_s); ++j) {
       if (func == fns_names[j].fn) {
         snprintf(fn_str, sizeof(fn_str), "%s ", fns_names[j].name);
         strcat(buf, fn_str);
+        break;
       }
     }
   }
@@ -438,7 +439,17 @@ static const int64_t factor_5[][5] = {{3, 5, 7, 11, 13},  {13, 11, 7, 5, 3},   {
                                       {9, 5, 7, 8, 13},   {8, 7, 5, 9, 13},    {81, 49, 5, 17, 13},
                                       {27, 5, 49, 11, 13}};
 
-static const int64_t factor_6[][6] = {{4, 5, 7, 9, 11, 17}};
+static const int64_t factor_6[][6] = {{17, 4, 5, 7, 9, 11},
+                                      {17, 11, 9, 7, 5, 4},
+                                      {2, 3, 5, 7, 11, 13},
+                                      {3, 2, 7, 5, 13, 11}};
+
+/* original test case                                     
+static const int64_t factor_6[][6] = {{4, 5, 7, 9, 11, 17},
+                                      {17, 11, 9, 7, 5, 4},
+                                      {2, 3, 5, 7, 11, 13},
+                                      {3, 2, 7, 5, 13, 11}};
+*/
 
 static const int64_t bluestein_1[][1] = {{15}, {16}, {11}, {13}, {17}};
 
@@ -452,13 +463,77 @@ void bluestein_test_parent(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, cons
   }
 }
 
-int main() {
+#ifdef __linux__
+
+#include <fenv.h>
+#include <arm_neon.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <ucontext.h>
+
+// Signal handler
+void fpe_handler(int sig, siginfo_t *si, void *uc_void) {
+    ucontext_t *uc = (ucontext_t *)uc_void;
+    printf("Floating point exception trapped! si_code=%d\n", si->si_code);
+    exit(EXIT_FAILURE);
+}
+
+void enable_fp_exceptions() {
+    // Setup signal handler
+    struct sigaction sa;
+    sa.sa_flags = SA_SIGINFO;
+    sa.sa_sigaction = fpe_handler;
+    sigemptyset(&sa.sa_mask);
+    if (sigaction(SIGFPE, &sa, NULL) != 0) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read FPCR
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+
+    // Set Invalid Operation, Divide-by-zero, Overflow traps
+    fpcr |= (1 << 8) | (1 << 9) | (1 << 10); // IOC | DZC | OFC
+
+    // Write FPCR back
+    asm volatile("msr fpcr, %0" :: "r"(fpcr));
+
+    // Also enable exceptions in FE environment for C++ fenv
+    feenableexcept(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW); // optional, may be stub
+}
+
+#endif
+
+int main(int argc, char *argv[]) {
   hashmap_t d;
-  random_normal RNG(6502, 0.0, 1.0);
+  std::random_device rd;
+  random_normal RNG(rd(), 0.0, 1.0);
+
+#ifdef __linux__
+  enable_fp_exceptions();
+#endif
+
   int pass = 0, fail = 0;
   int* pc = &pass;
   int* fc = &fail;
-  int bm = 1;  // 1=benchmark timing enabled
+
+  if (argc<2) {
+    std::cerr << "test17: 1 or 0 for timing or no timing\n";
+    exit(1);
+  }
+
+  int bm = -1;
+  std::string bm_str(argv[1]);
+  if (bm_str=="1")
+    bm = 1;
+  else if(bm_str=="0")
+    bm = 0;
+  if (bm==-1) {
+    std::cerr << "test17: 1 or 0 for timing or no timing\n";
+    exit(1);
+  }
 
   hm_init(&hm);
 
@@ -596,5 +671,6 @@ int main() {
     printf("Geometric mean xFFTW = %2.2e\n", gm_value(&hm));
   }
   fflush(stdout);
+
   return 0;
 }

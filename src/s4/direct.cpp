@@ -19,7 +19,11 @@ namespace hn = hwy::HWY_NAMESPACE;
 
 alignas(ALIGN_SZ) static const double conj_values[] = {1.0, -1.0};
 
-using D = hn::FixedTag<float, 4>;
+using sp_2_t = hn::FixedTag<float, 2>;
+using sp_4_t = hn::FixedTag<float, 4>;
+
+static auto sp_2 = sp_2_t();
+static auto sp_4 = sp_4_t();
 
 static inline int32_t mask_mux_mod(const int32_t a, const int32_t B) { return a - (B & -(a >= B)); }
 
@@ -34,10 +38,8 @@ void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
   MFFTELEM* __restrict__ y = *YY;
   MFFTELEM* __restrict__ x = *XX;
   minassert(N > 0 && N <= DIRECT_SZ, "N too large for direct DFT");
-  D d;
-  auto d_complex = hn::FixedTag<MFFTELEMRI, 2>();
   const auto* __restrict__ W = reinterpret_cast<const std::complex<MFFTELEMRI>*>(DIRECT_COEFFS[N]);
-  auto s = hn::Set(d, 0.0);
+  auto s = hn::Set(sp_4, 0.0);
 
   for (int32_t k = 0; k < N; k++) {
     int32_t nk_mod0, nk_mod1;
@@ -49,16 +51,16 @@ void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
       nk_mod1 = mask_mux_mod(nk_mod0 + k, N);
     }
     int64_t step = bp;
-    s = hn::Set(d, 0.0);
+    s = hn::Set(sp_4, 0.0);
     for (int32_t n = 0; n < N - 1; n += 2) {
-      auto Wv_low = hn::Load(d_complex, CCFPTR(&W[nk_mod0]));
-      auto Wv_high = hn::Load(d_complex, CCFPTR(&W[nk_mod1]));
-      auto Wv = hn::Combine(d, Wv_high, Wv_low);
-      auto x_low = hn::Load(d_complex, CCFPTR(&x[step]));
-      auto x_high = hn::Load(d_complex, CCFPTR(&x[step + stride]));
-      auto xv = hn::Combine(d, x_high, x_low);
+      auto Wv_low = hn::Load(sp_2, CCFPTR(&W[nk_mod0]));
+      auto Wv_high = hn::Load(sp_2, CCFPTR(&W[nk_mod1]));
+      auto Wv = hn::Combine(sp_4, Wv_high, Wv_low);
+      auto x_low = hn::Load(sp_2, CCFPTR(&x[step]));
+      auto x_high = hn::Load(sp_2, CCFPTR(&x[step + stride]));
+      auto xv = hn::Combine(sp_4, x_high, x_low);
       s = hn::Add(s, hn::MulComplex(Wv, xv));
-      if (Inverse) {
+      if constexpr (Inverse) {
         nk_mod1 = rev_mask_mux_mod(nk_mod1 - k, N);
         nk_mod0 = nk_mod1;
         nk_mod1 = rev_mask_mux_mod(nk_mod1 - k, N);
@@ -69,15 +71,15 @@ void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
       }
       step += 2 * stride;
     }
-    auto sc = hn::Set(d_complex, 0.0);
+    auto sc = hn::Set(sp_2, 0.0);
     if (N & 1) {
-      auto v = hn::Load(d_complex, CCFPTR(&W[nk_mod0]));
-      sc = hn::Load(d_complex, CCFPTR(&x[step]));
+      auto v = hn::Load(sp_2, CCFPTR(&W[nk_mod0]));
+      sc = hn::Load(sp_2, CCFPTR(&x[step]));
       sc = hn::MulComplex(v, sc);
     }
     sc = hn::Add(sc, hn::LowerHalf(s));
-    sc = hn::Add(sc, hn::UpperHalf(d, s));
-    hn::Store(sc, d_complex, CFPTR(&y[bp + stride * k]));
+    sc = hn::Add(sc, hn::UpperHalf(sp_4, s));
+    hn::Store(sc, sp_2, CFPTR(&y[bp + stride * k]));
   }
 }
 

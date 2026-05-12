@@ -3,16 +3,14 @@
 #define CMINIMALFFT_H
 
 #include <execinfo.h>
+
+#include <cmath>
+#include <complex>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-
-#include <cmath>
-#include <complex>
-#include <cstdint>
-#include <cstdlib>
 #include <iostream>
 #include <new>
 #include <string>
@@ -35,11 +33,9 @@ static inline uint64_t clock_gettime_nsec_np(clockid_t clk_id) {
 }
 #endif
 
-static inline uint64_t mingettime() {
-  return clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW);
-}
+static inline uint64_t mingettime() { return clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW); }
 
-void minsincos(double x, double *s, double *c);  // need for Bluestein
+void minsincos(double x, double* s, double* c);  // need for Bluestein
 
 inline MFFTELEM minsincos(double angle) {
   double zi, zr;
@@ -57,9 +53,9 @@ static inline std::complex<MFFTELEMRI> times_pmim(std::complex<MFFTELEMRI> z) {
 }
 
 static void print_stacktrace(void) {
-  void *buffer[100];
+  void* buffer[100];
   int nptrs = backtrace(buffer, 100);
-  char **strings = backtrace_symbols(buffer, nptrs);
+  char** strings = backtrace_symbols(buffer, nptrs);
   if (strings == NULL) {
     perror("backtrace_symbols");
     exit(EXIT_FAILURE);
@@ -71,6 +67,9 @@ static void print_stacktrace(void) {
   free(strings);
 }
 
+#ifdef NDEBUG
+#define minassert(cond, msg) ((void)0)
+#else
 #define minassert(cond, msg)                          \
   do {                                                \
     if (!(cond)) {                                    \
@@ -79,8 +78,9 @@ static void print_stacktrace(void) {
       exit(EXIT_FAILURE);                             \
     }                                                 \
   } while (0)
+#endif
 
-static const int ALIGN_SZ = 16; // 8 for single-precision will not work
+static const int ALIGN_SZ = 16;  // 8 for single-precision will not work
 
 template <typename T>
 class MinAlignedAllocator {
@@ -89,53 +89,49 @@ class MinAlignedAllocator {
 
   MinAlignedAllocator() noexcept = default;
   template <typename U>
-  MinAlignedAllocator(const MinAlignedAllocator<U> &) noexcept {}
+  MinAlignedAllocator(const MinAlignedAllocator<U>&) noexcept {}
 
-  [[nodiscard]] T *allocate(std::size_t n) {
+  [[nodiscard]] T* allocate(std::size_t n) {
     // Calculate the size needed for n elements
 
     std::size_t size = n * sizeof(T);
     // Allocate memory with alignment of T
     //    void *ptr =
     //        aligned_alloc(sizeof(T), size);
-    void *ptr = std::aligned_alloc(sizeof(T), size);  // simd: 16 byte alignment
-    //std::cerr << "Alloc: " << ptr << std::endl;
+    void* ptr = std::aligned_alloc(sizeof(T), size);  // simd: 16 byte alignment
+    // std::cerr << "Alloc: " << ptr << std::endl;
     if (!ptr) {
       throw std::bad_alloc();
     }
-    return static_cast<T *>(ptr);
+    return static_cast<T*>(ptr);
   }
 
-  void deallocate(T *p, std::size_t) noexcept { 
-   // std::cerr << "Free: " << p << std::endl; 
+  void deallocate(T* p, std::size_t) noexcept {
+    // std::cerr << "Free: " << p << std::endl;
     std::free(p);
   }
 };
 
 template <typename T, typename U>
-bool operator==(const MinAlignedAllocator<T> &,
-                const MinAlignedAllocator<U> &) noexcept {
+bool operator==(const MinAlignedAllocator<T>&, const MinAlignedAllocator<U>&) noexcept {
   return true;
 }
 
 template <typename T, typename U>
-bool operator!=(const MinAlignedAllocator<T> &,
-                const MinAlignedAllocator<U> &) noexcept {
+bool operator!=(const MinAlignedAllocator<T>&, const MinAlignedAllocator<U>&) noexcept {
   return false;
 }
 
 using MinAlignedVector = std::vector<MFFTELEM, MinAlignedAllocator<MFFTELEM>>;
 
-static inline void *minaligned_alloc(size_t alignment, size_t sz,
-                                     size_t count) {
-  void *p = aligned_alloc(alignment, sz * count);
+static inline void* minaligned_alloc(size_t alignment, size_t sz, size_t count) {
+  void* p = aligned_alloc(alignment, sz * count);
   minassert(p, "Memory allocation failed.");
   return p;
 }
 
-static inline void *minaligned_calloc(size_t alignment, size_t sz,
-                                      size_t count) {
-  void *p = aligned_alloc(alignment, sz * count);
+static inline void* minaligned_calloc(size_t alignment, size_t sz, size_t count) {
+  void* p = aligned_alloc(alignment, sz * count);
   if (!p) {
     print_stacktrace();
   }
@@ -154,8 +150,8 @@ static int approx_cmp(MFFTELEM x, MFFTELEM y) {
   if (x == y) return 0;
 
   // Check for finite values
-  if (std::isfinite(std::real(x)) && std::isfinite(std::imag(x)) &&
-      std::isfinite(std::real(y)) && std::isfinite(std::imag(y))) {
+  if (std::isfinite(std::real(x)) && std::isfinite(std::imag(x)) && std::isfinite(std::real(y)) &&
+      std::isfinite(std::imag(y))) {
     double diff = std::abs(x - y);
     double norm_x = std::abs(x);
     double norm_y = std::abs(y);
@@ -166,7 +162,7 @@ static int approx_cmp(MFFTELEM x, MFFTELEM y) {
   return 1;
 }
 
-static double norm_v(const MinAlignedVector &X, size_t n) {
+static double norm_v(const MinAlignedVector& X, size_t n) {
   double sum = 0.0;
   for (size_t i = 0; i < n; ++i) {
     double zr = std::real(X[i]);
@@ -176,16 +172,17 @@ static double norm_v(const MinAlignedVector &X, size_t n) {
   return sqrt(sum);
 }
 
-static int is_finite(const MinAlignedVector &X, size_t n) {
+static int is_finite(const MinAlignedVector& X, size_t n) {
   for (size_t i = 0; i < n; ++i) {
     if (!std::isfinite(std::real(X[i])) || !std::isfinite(std::imag(X[i]))) {
+//      std::cerr << "not finite at n=" << i << std::endl;
       return 0;
     }
   }
   return 1;
 }
 
-static int approx_cmp_v(const MinAlignedVector &X, const MinAlignedVector &Y, size_t n) {
+static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, size_t n) {
   double atol = 0;
   double rtol = sizeof(MFFTELEM) == 2 * 8   ? 1.4901161193847656e-8
                 : sizeof(MFFTELEM) == 2 * 4 ? 0.00034526698
@@ -194,6 +191,7 @@ static int approx_cmp_v(const MinAlignedVector &X, const MinAlignedVector &Y, si
   if (X == Y) return 0;
 
   double diff = 0.0;
+  double tol = 0.0;
 
   // Check for finite values
   if (is_finite(X, n) && is_finite(Y, n)) {
@@ -205,7 +203,7 @@ static int approx_cmp_v(const MinAlignedVector &X, const MinAlignedVector &Y, si
     diff = sqrt(diff);
     double norm_x = norm_v(X, n);
     double norm_y = norm_v(X, n);
-    double tol = std::fmax(atol, rtol * std::fmax(norm_x, norm_y));
+    tol = std::fmax(atol, rtol * std::fmax(norm_x, norm_y));
     if (diff <= tol) return 0;
   }
   return 1;
@@ -216,21 +214,20 @@ static int approx_cmp_v(const MinAlignedVector &X, const MinAlignedVector &Y, si
 
 // Structure to represent multi-dimensional or decomposed array info
 typedef struct {
-  MFFTELEM *data;
+  MFFTELEM* data;
   int64_t dims[MAX_DIMS];
   int64_t total_size;
   int32_t ndims;
 } MDArray;
 
-static inline MDArray create_mdarray(MFFTELEM *data,
-                                     const int64_t *__restrict__ dims,
+static inline MDArray create_mdarray(MFFTELEM* data, const int64_t* __restrict__ dims,
                                      int32_t ndims) {
   MDArray arr;
   arr.data = data;
   arr.ndims = ndims;
 
   int64_t total_size = 1;
-  int64_t *arr_dims = arr.dims;
+  int64_t* arr_dims = arr.dims;
 
   for (int64_t i = 0; i < ndims; i++) {
     int64_t d = dims[i];
@@ -243,46 +240,45 @@ static inline MDArray create_mdarray(MFFTELEM *data,
 }
 
 // fft_func_t: tag for do_fft
-typedef void (*fft_func_t)(MFFTELEM **Y, MFFTELEM **X, const int64_t N,
-                           const int32_t e1, const int64_t bp,
-                           const int64_t stride, const int32_t flags);
+typedef void (*fft_func_t)(MFFTELEM** Y, MFFTELEM** X, const int64_t N, const int32_t e1,
+                           const int64_t bp, const int64_t stride, const int32_t flags);
 
 typedef struct MinimalPlan MinimalPlan;
 
-void do_fft_planned(const MinimalPlan *P, MDArray *oy, MDArray *ix, int32_t r);
+void do_fft_planned(const MinimalPlan* P, MDArray* oy, MDArray* ix, int32_t r);
 
 template <typename Func>
-void do_fft(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
-            const int64_t bp, const int64_t stride, const int32_t flags,
-            const fft_func_t *fs, const int64_t *params, const int32_t r);
+void do_fft(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, const int64_t bp,
+            const int64_t stride, const int32_t flags, const fft_func_t* fs, const int64_t* params,
+            const int32_t r);
 
 template <bool Inverse>
-void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, const int32_t flags);
+void fftr2(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, const int32_t flags);
+void fftr3(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, const int32_t flags);
+void fftr4(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, const int32_t flags);
+void fftr5(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, const int32_t flags);
+void fftr7(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, const int32_t flags);
+void fftr8(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-           const int64_t bp, const int64_t stride, const int32_t flags);
+void fftr9(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+           const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-                const int64_t bp, const int64_t stride, const int32_t flags);
+void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+                const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-               const int64_t bp, const int64_t stride, const int32_t flags);
+void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+               const int64_t stride, const int32_t flags);
 
 bool small_available(const int64_t N);
 
@@ -292,53 +288,48 @@ void small_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, 
 
 static const int SMALL_SZ = 28;
 
-static const fft_func_t dispatch[] = {nullptr, nullptr, &fftr2<false>, &fftr3<false>, &fftr4<false>,
-                                &fftr5<false>, nullptr, &fftr7<false>, &fftr8<false>, &fftr9<false>};
-static const fft_func_t dispatch_inverse[] = {nullptr, nullptr, &fftr2<true>, &fftr3<true>, &fftr4<true>,
-                                &fftr5<true>, nullptr, &fftr7<true>, &fftr8<true>, &fftr9<true>};
+static const fft_func_t dispatch[] = {nullptr,       nullptr,       &fftr2<false>, &fftr3<false>,
+                                      &fftr4<false>, &fftr5<false>, nullptr,       &fftr7<false>,
+                                      &fftr8<false>, &fftr9<false>};
+static const fft_func_t dispatch_inverse[] = {
+    nullptr,      nullptr, &fftr2<true>, &fftr3<true>, &fftr4<true>,
+    &fftr5<true>, nullptr, &fftr7<true>, &fftr8<true>, &fftr9<true>};
 
 static const int DISPATCH_SZ = sizeof(dispatch) / sizeof(dispatch[0]);
 
-void prime_factor_2(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
-                    const int32_t *es, const int64_t bp, const int64_t stride,
-                    const int32_t flags, const fft_func_t *fs,
-                    const int64_t *params);
+void prime_factor_2(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
 typedef struct {
 } pfa2_t;  // tag for do_fft
 
-void prime_factor_3(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
-                    const int32_t *es, const int64_t bp, const int64_t stride,
-                    const int32_t flags, const fft_func_t *fs,
-                    const int64_t *params);
+void prime_factor_3(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
 typedef struct {
 } pfa3_t;  // tag for do_fft
 
-typedef void (*parent_fn_t)(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
-                            const int32_t *es, const int64_t bp,
-                            const int64_t stride, const int32_t flags,
-                            const fft_func_t *fs,
-                            const int64_t *params);  // for casts
+typedef void (*parent_fn_t)(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                            const int64_t bp, const int64_t stride, const int32_t flags,
+                            const fft_func_t* fs,
+                            const int64_t* params);  // for casts
 
-void pfa_extend_4(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
-                  const int32_t *es, const int64_t bp, const int64_t stride,
-                  const int32_t flags, const fft_func_t *fs,
-                  const int64_t *params);
+void pfa_extend_4(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                  const int64_t bp, const int64_t stride, const int32_t flags, const fft_func_t* fs,
+                  const int64_t* params);
 
-void pfa_extend_5(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
-                  const int32_t *es, const int64_t bp, const int64_t stride,
-                  int32_t flags, const fft_func_t *fs, const int64_t *params);
+void pfa_extend_5(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                  const int64_t bp, const int64_t stride, int32_t flags, const fft_func_t* fs,
+                  const int64_t* params);
 
-void pfa_extend_6(MFFTELEM **YY, MFFTELEM **XX, const int64_t *Ns,
-                  const int32_t *es, const int64_t bp, const int64_t stride,
-                  int32_t flags, const fft_func_t *fs, const int64_t *params);
+void pfa_extend_6(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                  const int64_t bp, const int64_t stride, int32_t flags, const fft_func_t* fs,
+                  const int64_t* params);
 
-void generate_pfa_params(int32_t factor_count, const int64_t *Ns,
-                         int64_t *params);
+void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* params);
 
-static inline int64_t count_leading_zeros(uint64_t x) {
-  return __builtin_clzll(x);
-}
+static inline int64_t count_leading_zeros(uint64_t x) { return __builtin_clzll(x); }
 
 #endif  // CMINIMALFFT_H

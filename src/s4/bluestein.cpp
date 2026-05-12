@@ -116,11 +116,12 @@ void bluestein_init(int64_t N, int64_t M, int32_t flags) {
   if (init || bs_buff.N != N) {
     MFFTELEM* b_n = bs_buff.b_n;
     if (N < bs_buff.N) memset(b_n + N, 0, (M - 2 * N + 1) * sizeof(MFFTELEM));  // fill hole
-    b_n[0] = (MFFTELEM)1.0;
+    float prescale = 1.0f/M; // prescale needed for better numerical stability
+    b_n[0] = (MFFTELEM)prescale;
     double arg = Inverse ? -M_PI / N : M_PI / N;
     std::complex<double> c_e;
     for (int64_t n = 1; n < N; n++) {
-      c_e = minsincos(arg * n * n);
+      c_e = prescale * minsincos(arg * n * n);
       b_n[n] = (MFFTELEM)c_e;
       b_n[M - n] = (MFFTELEM)c_e;
     }
@@ -136,7 +137,7 @@ void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t disc
   MFFTELEM* __restrict__ x = *XX;
   const int32_t e1 = nextpow2_exp(2 * N - 1);
   const int64_t M = 1 << e1;
-  const auto conj_mask = hn::Load(sp_4, conj_values);
+  const auto conj_mask_v = hn::Load(sp_4, conj_values);
   if constexpr (Inverse)
     bluestein_init<true>(N, M, flags);
   else
@@ -148,7 +149,7 @@ void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t disc
   memset(a_n, 0, M * sizeof(MFFTELEM));
   for (int64_t n = 0; n < N - 1; n += 2) {
     auto bv = hn::Load(sp_4, CCFPTR(&b_n[n]));
-    auto c = hn::Mul(bv, conj_mask);
+    auto c = hn::Mul(bv, conj_mask_v);
     auto x_low = hn::Load(sp_2, CCFPTR(&x[bp + stride * n]));
     auto x_high = hn::Load(sp_2, CCFPTR(&x[bp + stride * (n + 1)]));
     auto xv = hn::Combine(sp_4, x_high, x_low);
@@ -178,19 +179,19 @@ void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t disc
   bs_buff.A_X = A_X;  // rebind
   bs_buff.B_X = B_X;  // rebind
   bs_buff.a_n = a_n;  // rebind
-  auto scale = hn::Set(sp_4, 1.0 / M);
+  float postscale = 1.0f*M; // prescale needed for better numerical stability
+  auto scale_v = hn::Set(sp_4, 1.0f*M*M);
   for (int64_t i = 0; i < N - 1; i += 2) {
     auto BXv = hn::Load(sp_4, CCFPTR(&B_X[i]));
     auto yv = hn::Load(sp_4, CCFPTR(&y[bp + stride * i]));
     yv = hn::MulComplex(yv, BXv);
-    yv = hn::Mul(yv, scale);
+    yv = hn::Mul(yv, scale_v);
     hn::Store(yv, sp_4, CFPTR(&y[bp + stride * i]));
   }
   if (N & 1) {
-    auto BXv = B_X[N - 1];
-    auto yv = y[bp + stride * (N - 1)];
-    yv = (1.0f / M) * (yv * BXv);
-    y[bp + stride * (N - 1)] = yv;
+    MFFTELEM BX = B_X[N - 1];
+    MFFTELEM &Y_ref = y[bp + stride * (N - 1)];
+    Y_ref = Y_ref * BX * (MFFTELEMRI)(M * M);
   }
 }
 

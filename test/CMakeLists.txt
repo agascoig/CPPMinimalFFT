@@ -27,6 +27,7 @@ ${FFTW_LIB}
 ${FFTWF_LIB})
 
 target_include_directories(test17 PRIVATE
+${CMAKE_BINARY_DIR}
 ../src/
 .
 /Users/alexandergascoigne/fft/fftw-install/include

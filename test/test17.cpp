@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <vector>
 #include <cfenv> // for NaN trapping
+#include <buildinfo.h>
 
 #include "CPPMinimalFFT.hpp"
 #include "hmean.hpp"
@@ -222,40 +223,6 @@ void test_fft_kernel(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVe
   }
 }
 
-struct fn_name_s {
-  fft_func_t fn;
-  const char* name;
-} fns_names[] = {{&bluestein<false>, "bluestein"},   {&bluestein<true>, "ibluestein"},
-                 {&direct_dft<false>, "direct_dft"}, {&direct_dft<true>, "idirect_dft"},
-                 {&small_dft<false>, "small_dft"},   {&small_dft<true>, "ismall_dft"},
-                 {&fftr2<false>, "fftr2"}, {&fftr2<true>, "ifftr2"},
-                 {&fftr3<false>, "fftr3"}, {&fftr3<true>, "ifftr3"},
-                 {&fftr4<false>, "fftr4"}, {&fftr4<true>, "ifftr4"},
-                 {&fftr5<false>, "fftr5"}, {&fftr5<true>, "ifftr5"},
-                 {&fftr7<false>, "fftr7"}, {&fftr7<true>, "ifftr7"},
-                 {&fftr8<false>, "fftr8"}, {&fftr8<true>, "ifftr8"},
-                 {&fftr9<false>, "fftr9"}, {&fftr9<true>, "ifftr9"}
-              };
-
-void print_fns(char* buf, fft_func_t* fns) {
-  char fn_str[256];
-  buf[0] = '\0';
-  fn_str[0] = '\0';
-  if (fns == nullptr) return;
-  for (int i = 0; i < MAX_FACTORS; ++i) {
-    fft_func_t func = fns[i];
-    if (func == nullptr) continue;
-    for (int j = 0; j < sizeof(fns_names) / sizeof(fn_name_s); ++j) {
-      if (func == fns_names[j].fn) {
-        snprintf(fn_str, sizeof(fn_str), "%s ", fns_names[j].name);
-        strcat(buf, fn_str);
-        break;
-      }
-    }
-  }
-  if (strlen(buf)) buf[strlen(buf) - 1] = 0;  // remove last space
-}
-
 void print_result(const char* preamble, const char* name, int64_t N, int num_factors, int64_t* Ns,
                   int bm, double t_ref_s, double t_s, fft_func_t* fns, double std_dev) {
   char timing_str[256];
@@ -392,23 +359,27 @@ void print_time() {
   char buf[64];
   buf[0] = '\0';
   strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", t);
-  printf("# %s\n", buf);
+  printf("# Time Stamp: %s\n", buf);
 }
 
 void print_compiler_ver() {
+  std::cout << "# CXX_COMPILER: " << BUILD_CXX_COMPILER << " ";
 #ifdef __clang__
-  std::cout << "# Clang " << __clang_major__ << "." << __clang_minor__ << "."
+  std::cout << __clang_major__ << "." << __clang_minor__ << "."
             << __clang_patchlevel__;
 #elif defined(__GNUC__)
-  std::cout << "# GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
+  std::cout << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__;
 #elif defined(_MSC_VER)
-  std::cout << "# MSVC " << _MSC_VER;
+  std::cout << _MSC_VER;
 #else
   std::cout << "Unknown Compiler (" << __VERSION__ << ")";
 #endif
+  std::cout << " CXX_FLAGS: " << BUILD_CXX_FLAGS << std::endl;
+  std::cout << "# BUILD_TYPE: " << BUILD_BUILD_TYPE << std::endl;
+  std::cout << "# BUILD_SYSTEM: " << BUILD_SYSTEM << std::endl;
   int status = 0;
   char* demangled = abi::__cxa_demangle(typeid(MFFTELEM).name(), nullptr, nullptr, &status);
-  std::cout << "\n# " << demangled << std::endl << std::flush;
+  std::cout << "# Vector type: " << demangled << std::endl << std::flush;
   free(demangled);
 }
 
@@ -514,6 +485,10 @@ void enable_fp_exceptions() {
 
 #endif
 
+#ifndef VERSION
+#define VERSION "unknown"
+#endif
+
 int main(int argc, char *argv[]) {
   hashmap_t d;
   std::random_device rd;
@@ -526,6 +501,9 @@ int main(int argc, char *argv[]) {
   int pass = 0, fail = 0;
   int* pc = &pass;
   int* fc = &fail;
+
+  int64_t t_test_start, t_test_end;
+  t_test_start = mingettime();
 
   if (argc<2) {
     std::cerr << "test17: 1 or 0 for timing or no timing\n";
@@ -545,14 +523,12 @@ int main(int argc, char *argv[]) {
 
   hm_init(&hm);
 
+  const char *version = VERSION;
+
+  std::cout << "# test17 - MinimalFFT version: " << version << std::endl;
   print_time();
   print_compiler_ver();
-#ifdef SIMDON
-  std::cout << "# Highway SIMD ON\n";
-#else
-  std::cout << "# Highway SIMD OFF\n";
-#endif
-  
+
     for (int n = 1; n <= SMALL_SZ; ++n) {
       if (small_available(n)) {
         int64_t N = n;
@@ -670,13 +646,19 @@ int main(int argc, char *argv[]) {
     test_fft(RNG, "planner inverse", bm, P_INVERSE, N, pc, fc, 1, nullptr, &P_inv, &N,
              P_inv.get_funcs(region), nullptr);
   }
-  printf("\nPassed %d tests.\n", pass);
-  printf("Failed %d tests.\n", fail);
+  printf("# Passed %d tests.\n", pass);
+  printf("# Failed %d tests.\n", fail);
   if (bm) {
+    t_test_end = mingettime();
+    char timing_str[256];
+    timing_str[0] = '\0';
+    double elapsed = get_s_time(t_test_start,t_test_end);
+
     double hmv = hm_value(&hm);
-    printf("Mean xFFTW = %2.2e\n", m_value(&hm));
-    printf("Harmonic mean xFFTW = %2.2e\n", hmv);
-    printf("Geometric mean xFFTW = %2.2e\n", gm_value(&hm));
+    printf("# Total Time = %2.2e\n",elapsed);
+    printf("# Mean xFFTW = %2.2e\n", m_value(&hm));
+    printf("# Harmonic mean xFFTW = %2.2e\n", hmv);
+    printf("# Geometric mean xFFTW = %2.2e\n", gm_value(&hm));
   }
   fflush(stdout);
 

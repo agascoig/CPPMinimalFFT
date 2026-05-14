@@ -4,25 +4,27 @@ cmake_minimum_required(VERSION 3.10)  # Minimum CMake version
 
 project(CPPMinimalFFT CXX)          # Specify project name and language
 
-set(MINFFT "32") # single precision
-#set(MINFFT "64") # double precision
+set(VERSION "V0.0.1")
+
+#set(MINFFT "32") # single precision
+set(MINFFT "64") # double precision
 
 # set use SIMD code ON, or OFF for regular scalar
-set(SIMD "ON")
-#set(SIMD "OFF")
+#set(SIMD "ON")
+set(SIMD "OFF")
 
 #set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
 set(SANITIZE "")
 
 #set(OPTIMIZE "-O0") # cannot do with SIMD ON
-set(OPTIMIZE "-O1")
-#set(OPTIMIZE "-O3")
+#set(OPTIMIZE "-O1")
+set(OPTIMIZE "-O3")
 
 #set(NDEBUG "-DNDEBUG")
 set(NDEBUG "")
 
 # remove -fPIC
-set(CMAKE_CXX_FLAGS "-march=native -g ${OPTIMIZE} -std=c++23 -DMINFFT=${MINFFT} ${SANITIZE} ${NDEBUG}")
+set(CMAKE_CXX_FLAGS "-march=native -g ${OPTIMIZE} -std=c++23 -DMINFFT=${MINFFT} ${SANITIZE} ${NDEBUG} -DSIMD=\\\"${SIMD}\\\" -DVERSION=\\\"${VERSION}\\\"")
 
 find_library(HIGHWAY_LIB highway HINT /opt/homebrew/opt/highway)
 
@@ -57,6 +59,11 @@ else()
    src/stockham.cpp
    src/bluestein.cpp)
 endif()
+
+configure_file(
+  ${CMAKE_SOURCE_DIR}/buildinfo.h.in
+  ${CMAKE_BINARY_DIR}/buildinfo.h
+  @ONLY)
 
 add_library(CPPMinimalFFT
    ${LIB_SOURCES}

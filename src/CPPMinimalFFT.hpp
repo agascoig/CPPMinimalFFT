@@ -209,6 +209,7 @@ static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, si
   return 1;
 }
 
+static const int MAX_FACTORS = 6;
 #define MAX_DIMS 8
 #define MAX_REGIONS MAX_DIMS
 
@@ -331,5 +332,39 @@ void pfa_extend_6(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t
 void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* params);
 
 static inline int64_t count_leading_zeros(uint64_t x) { return __builtin_clzll(x); }
+
+struct fn_name_s {
+  fft_func_t fn;
+  const char* name;
+} const fns_names[] = {{&bluestein<false>, "bluestein"},   {&bluestein<true>, "ibluestein"},
+                 {&direct_dft<false>, "direct_dft"}, {&direct_dft<true>, "idirect_dft"},
+                 {&small_dft<false>, "small_dft"},   {&small_dft<true>, "ismall_dft"},
+                 {&fftr2<false>, "fftr2"}, {&fftr2<true>, "ifftr2"},
+                 {&fftr3<false>, "fftr3"}, {&fftr3<true>, "ifftr3"},
+                 {&fftr4<false>, "fftr4"}, {&fftr4<true>, "ifftr4"},
+                 {&fftr5<false>, "fftr5"}, {&fftr5<true>, "ifftr5"},
+                 {&fftr7<false>, "fftr7"}, {&fftr7<true>, "ifftr7"},
+                 {&fftr8<false>, "fftr8"}, {&fftr8<true>, "ifftr8"},
+                 {&fftr9<false>, "fftr9"}, {&fftr9<true>, "ifftr9"}
+              };
+
+static void print_fns(char* buf, fft_func_t* fns) {
+  char fn_str[256];
+  buf[0] = '\0';
+  fn_str[0] = '\0';
+  if (fns == nullptr) return;
+  for (int i = 0; i < MAX_FACTORS; ++i) {
+    fft_func_t func = fns[i];
+    if (func == nullptr) continue;
+    for (int j = 0; j < sizeof(fns_names) / sizeof(fn_name_s); ++j) {
+      if (func == fns_names[j].fn) {
+        snprintf(fn_str, sizeof(fn_str), "%s ", fns_names[j].name);
+        strcat(buf, fn_str);
+        break;
+      }
+    }
+  }
+  if (strlen(buf)) buf[strlen(buf) - 1] = 0;  // remove last space
+}
 
 #endif  // CMINIMALFFT_H

@@ -23,29 +23,69 @@ ExtendedEuclidResult extended_euclid(int64_t a, int64_t b) {
   return result;
 }
 
-void Qs(int nf, const int64_t *Ns, int64_t* params) {
+void Qs(int nf, const int64_t* Ns, int64_t* params) {
   int64_t N = 1;
   int64_t y;
   ExtendedEuclidResult r;
-  for (int i=nf-1;i>0;--i) {
+  for (int i = nf - 1; i > 0; --i) {
     N = N * Ns[i];
-    r = extended_euclid(Ns[i-1], N);
-    y = r.y % Ns[i-1];
-    if (y < 0) y += Ns[i-1];
-    params[i-1] = y;
+    r = extended_euclid(Ns[i - 1], N);
+    y = r.y % Ns[i - 1];
+    if (y < 0) y += Ns[i - 1];
+    params[i - 1] = y;
   }
   N = 1;
-  for (int i=2;i<=nf;++i) {
-    N *= Ns[i-2];
-    r = extended_euclid(Ns[i-1],N);
-    y = r.y % Ns[i-1];
-    if (y < 0) y+= Ns[i-1];
-    params[2*nf-i-1] = y;
+  for (int i = 2; i <= nf; ++i) {
+    N *= Ns[i - 2];
+    r = extended_euclid(Ns[i - 1], N);
+    y = r.y % Ns[i - 1];
+    if (y < 0) y += Ns[i - 1];
+    params[2 * nf - i - 1] = y;
   }
 }
 
 // Inline branchless mask mux mod function
 static inline int64_t mask_mux_mod(int64_t a, int64_t B) { return a - (B & -(a >= B)); }
+
+template <typename T>
+void nmap(int nf, T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t stride,
+          const int64_t* Ns, const int64_t* QP) {
+  int64_t buf[MAX_FACTORS * 2 - 1] = {0};
+  int64_t* np = &buf[0];
+  int64_t* R = &buf[MAX_FACTORS];
+
+  int64_t n, N;
+  int64_t rhs_n_stride = bp;
+
+  int64_t np_p = nf - 1;
+
+  while (1) {
+    n = 0;
+    N = 1;
+    for (int i = 0; i < (nf - 1); ++i) {
+      n += N * mask_mux_mod(np[i] + R[i], Ns[i]);
+      R[i] = mask_mux_mod(R[i] + QP[i], Ns[i]);
+      N = N * Ns[i];
+    }
+    n += N * np[nf-1];
+    Y[bp + stride * n] = X[rhs_n_stride];
+    rhs_n_stride += stride;
+
+    np_p = nf - 1;
+    while (np_p >= 0) {
+      np[np_p]++;
+      if (np[np_p] == Ns[np_p]) {
+        if (np_p==0)
+          return;
+        np[np_p] = 0;
+        R[np_p-1] = 0;
+      } else {
+        break;
+      }
+      np_p--;
+    }
+  }
+}
 
 void nmap_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
             const int64_t stride, const int64_t N1, const int64_t N2, const int64_t Q1P) {
@@ -55,7 +95,7 @@ void nmap_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp
     for (int64_t n2p = 0; n2p < N2; n2p++) {
       int64_t n1 = mask_mux_mod(n1p + R1, N1);
       int64_t lhs_n = n1 + N1 * n2p;
- //     minassert(lhs_n >= 0 && lhs_n < N1 * N2, "lhs_n out of bounds");
+      //     minassert(lhs_n >= 0 && lhs_n < N1 * N2, "lhs_n out of bounds");
       Y[bp + stride * lhs_n] = X[rhs_n_stride];
       R1 = mask_mux_mod(R1 + Q1P, N1);
       rhs_n_stride += stride;
@@ -71,7 +111,7 @@ void kmap_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp
     for (int64_t k1p = 0; k1p < N1; k1p++) {
       int64_t k2 = mask_mux_mod(k2p + R1, N2);
       int64_t rhs_k = k1p + k2 * N1;
- //     minassert(rhs_k >= 0 && rhs_k < N1 * N2, "rhs_k out of bounds");
+      //     minassert(rhs_k >= 0 && rhs_k < N1 * N2, "rhs_k out of bounds");
       Y[lhs_k_stride] = X[bp + stride * rhs_k];
       R1 = mask_mux_mod(R1 + Q2P, N2);
       lhs_k_stride += stride;
@@ -112,23 +152,9 @@ void prime_factor_2(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32
 void nmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
             const int64_t stride, const int64_t N1, const int64_t N2, const int64_t N3,
             const int64_t Q1P, const int64_t Q2P) {
-  int64_t rhs_n_stride = bp;
-  for (int64_t n1p = 0; n1p < N1; n1p++) {
-    int64_t R1 = 0;
-    for (int64_t n2p = 0; n2p < N2; n2p++) {
-      int64_t R2 = 0;
-      for (int64_t n3p = 0; n3p < N3; n3p++) {
-        int64_t n1 = mask_mux_mod(n1p + R1, N1);
-        int64_t n2 = mask_mux_mod(n2p + R2, N2);
-        int64_t lhs_n = n1 + N1 * n2 + N1 * N2 * n3p;
- //       minassert(lhs_n >= 0 && lhs_n < N1 * N2 * N3, "lhs_n out of bounds");
-        Y[bp + stride * lhs_n] = X[rhs_n_stride];
-        R1 = mask_mux_mod(R1 + Q1P, N1);
-        R2 = mask_mux_mod(R2 + Q2P, N2);
-        rhs_n_stride += stride;
-      }
-    }
-  }
+  int64_t Ns[3] = {N1, N2, N3};
+  int64_t Qs[2] = {Q1P, Q2P};
+  nmap<MFFTELEM>(3, Y, X, bp, stride, Ns, Qs);
 }
 
 void kmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
@@ -143,7 +169,7 @@ void kmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp
         int64_t k2 = mask_mux_mod(k2p + R1, N2);
         int64_t k3 = mask_mux_mod(k3p + R2, N3);
         int64_t rhs_k = k1p + N1 * k2 + N1 * N2 * k3;
- //       minassert(rhs_k >= 0 && rhs_k < N1 * N2 * N3, "rhs_k out of bounds");
+        //       minassert(rhs_k >= 0 && rhs_k < N1 * N2 * N3, "rhs_k out of bounds");
         Y[lhs_k_stride] = X[bp + stride * rhs_k];
         R1 = mask_mux_mod(R1 + Q4P, N2);
         R2 = mask_mux_mod(R2 + Q3P, N3);
@@ -195,14 +221,14 @@ void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* param
     case 4: {
       const int64_t NsE[] = {Ns[0] * Ns[1], Ns[2] * Ns[3]};
       Qs(2, NsE, params);
-      Qs(2, Ns, params+2);
+      Qs(2, Ns, params + 2);
       Qs(2, Ns + 2, params + 4);
     } break;
     case 5: {
       const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4]};
-      Qs(2,NsE, params);
-      Qs(3, Ns, params+2);
-      Qs(2, Ns + 3, params+6);
+      Qs(2, NsE, params);
+      Qs(3, Ns, params + 2);
+      Qs(2, Ns + 3, params + 6);
     } break;
     case 6: {
       const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4] * Ns[5]};

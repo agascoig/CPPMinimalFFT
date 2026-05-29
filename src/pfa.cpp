@@ -50,9 +50,9 @@ static inline int64_t mask_mux_mod(int64_t a, int64_t B) { return a - (B & -(a >
 template <int nf, typename T>
 void nmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t stride,
           const int64_t* Ns, const int64_t* QP) {
-  int64_t buf[MAX_FACTORS * 2 - 1] = {0};
+  int64_t buf[nf * 2 - 1] = {0};
   int64_t* np = &buf[0];
-  int64_t* R = &buf[MAX_FACTORS];  // only need nf-1
+  int64_t* R = &buf[nf];  // only need nf-1
 
   int64_t n, N;
   int64_t rhs_n_stride = bp;

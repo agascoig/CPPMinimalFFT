@@ -423,6 +423,11 @@ static const int64_t factor_6[][6] = {{17, 4, 5, 7, 9, 11},
                                       {2, 3, 5, 7, 11, 13},
                                       {3, 2, 7, 5, 13, 11}};
 
+static const int64_t factor_7[][7] = {{17, 4, 5, 7, 9, 11, 13},
+                                      {17, 11, 9, 7, 5, 4, 13},
+                                      {2, 3, 5, 7, 11, 13, 17},
+                                      {3, 2, 7, 5, 13, 11, 17}};
+
 /* original test cases                                     
 static const int64_t factor_6[][6] = {{4, 5, 7, 9, 11, 17}, // breaks Bluestein sp
                                       {9, 7, 5, 4, 11, 17}, // breaks Bluestein sp 
@@ -576,22 +581,22 @@ int main(int argc, char *argv[]) {
     RUN_DRIVER(((int[]){8, 3, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 5");
     RUN_DRIVER(((int[]){8, 9, 5, 7}), 1, bm, 1, nullptr, factor_1, "stockham inverse test 6");
     d.clear();
-    RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, 0, 1, prime_factor_2, factor_2,
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, 0, 1, prime_factor<2>, factor_2,
                "prime factor 2 test 0 inverse");
-    RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, bm, 0, prime_factor_2, factor_2,
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 2, bm, 0, prime_factor<2>, factor_2,
                "prime factor 2 test 1 timed");
-    RUN_DRIVER(((int[]){4, 3, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 2");
-    RUN_DRIVER(((int[]){8, 3, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 3");
-    RUN_DRIVER(((int[]){2, 9, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 4");
-    RUN_DRIVER(((int[]){8, 9, 5, 7}), 2, 0, 0, prime_factor_2, factor_2, "prime factor 2 test 5");
+    RUN_DRIVER(((int[]){4, 3, 5, 7}), 2, 0, 0, prime_factor<2>, factor_2, "prime factor 2 test 2");
+    RUN_DRIVER(((int[]){8, 3, 5, 7}), 2, 0, 0, prime_factor<2>, factor_2, "prime factor 2 test 3");
+    RUN_DRIVER(((int[]){2, 9, 5, 7}), 2, 0, 0, prime_factor<2>, factor_2, "prime factor 2 test 4");
+    RUN_DRIVER(((int[]){8, 9, 5, 7}), 2, 0, 0, prime_factor<2>, factor_2, "prime factor 2 test 5");
     d.clear();
-    RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, 0, 1, prime_factor_3, factor_3,
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, 0, 1, prime_factor<3>, factor_3,
                "prime factor 3 test 0 inverse");
-    RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, bm, 0, prime_factor_3, factor_3, "prime factor 3 test 1");
-    RUN_DRIVER(((int[]){4, 3, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 2");
-    RUN_DRIVER(((int[]){8, 3, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 3");
-    RUN_DRIVER(((int[]){2, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 4");
-    RUN_DRIVER(((int[]){8, 9, 5, 7}), 3, 0, 0, prime_factor_3, factor_3, "prime factor 3 test 5");
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 3, bm, 0, prime_factor<3>, factor_3, "prime factor 3 test 1");
+    RUN_DRIVER(((int[]){4, 3, 5, 7}), 3, 0, 0, prime_factor<3>, factor_3, "prime factor 3 test 2");
+    RUN_DRIVER(((int[]){8, 3, 5, 7}), 3, 0, 0, prime_factor<3>, factor_3, "prime factor 3 test 3");
+    RUN_DRIVER(((int[]){2, 9, 5, 7}), 3, 0, 0, prime_factor<3>, factor_3, "prime factor 3 test 4");
+    RUN_DRIVER(((int[]){8, 9, 5, 7}), 3, 0, 0, prime_factor<3>, factor_3, "prime factor 3 test 5");
     d.clear();
     RUN_DRIVER(((int[]){2}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 2 test");
     RUN_DRIVER(((int[]){3}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 3 test");
@@ -601,11 +606,13 @@ int main(int argc, char *argv[]) {
     RUN_DRIVER(((int[]){8}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 8 test");
     RUN_DRIVER(((int[]){9}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 9 test");
     d.clear();
-    RUN_DRIVER(((int[]){2, 3, 5, 7}), 4, 0, 0, pfa_extend_4, factor_4, "prime factor extend 4");
-    RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 5, 0, 0, pfa_extend_5, factor_5,
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 4, 0, 0, prime_factor<4>, factor_4, "prime factor extend 4");
+    RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 5, 0, 0, prime_factor<5>, factor_5,
                "prime factor extend 5");
-    RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, 0, 0, pfa_extend_6, factor_6,
+    RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, 0, 0, prime_factor<6>, factor_6,
                "prime factor extend 6");
+    RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 7, 0, 0, prime_factor<7>, factor_7,
+               "prime factor extend 7");    
     d.clear();
     RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 0, bluestein_test_parent, bluestein_1,
                "bluestein test");

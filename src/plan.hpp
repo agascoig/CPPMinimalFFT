@@ -18,7 +18,7 @@ static const int P_TOO_MANY_FACTORS = 64;
 static const int P_COPY_INPUT = 128;
 
 static const int DIRECT_SZ = 15;
-static const int MAX_PFA_PARAMS = 10;
+static const int MAX_PFA_PARAMS = 12;
 
 // Prime factorization result
 typedef struct {

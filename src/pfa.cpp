@@ -124,46 +124,32 @@ void kmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t 
   }
 }
 
-void nmap_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
-            const int64_t stride, const int64_t N1, const int64_t N2, const int64_t Q1P) {
-  int64_t Ns[] = {N1, N2};
-  int64_t QP[] = {Q1P};
-  nmap<2, MFFTELEM>(Y, X, bp, stride, Ns, QP);
-}
-
-void kmap_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
-            const int64_t stride, const int64_t N1, const int64_t N2, const int64_t Q2P) {
-  int64_t Ns[] = {N1, N2};
-  int64_t Qs[] = {0, Q2P};
-  kmap<2, MFFTELEM>(Y, X, bp, stride, Ns, Qs);
-}
-
 template <int nf>
 void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
                     const fft_func_t* fs, const int64_t* params) {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
-
+  
   nmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params);
 
   MDArray YMD = create_mdarray(Y, Ns, nf);
   MDArray XMD = create_mdarray(X, Ns, nf);
 
   for (int i=0;i<nf;++i) {
-    if (i&1==0)
-      do_fft<fft_func_t>(&X2D, &Y2D, Ns, es, bp, stride, flags, fs, nullptr, i);
+    if ((i&1)==0)
+      do_fft(&XMD, &YMD, Ns, es, bp, stride, flags, fs, nullptr, i);
     else
-      do_fft<fft_func_t>(&Y2D, &X2D, Ns, es, bp, stride, flags, fs, nullptr, i);
+      do_fft(&YMD, &XMD, Ns, es, bp, stride, flags, fs, nullptr, i);
   }
 
-  if (nf&1==1) {
-    Y = Y2D.data;
-    X = X2D.data;
+  if ((nf&1)==1) {
+    Y = YMD.data;
+    X = XMD.data;
   }
   else {
-    Y = X2D.data;
-    X = Y2D.data;
+    Y = XMD.data;
+    X = YMD.data;
   }
 
   kmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params);
@@ -172,189 +158,32 @@ void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t
   *XX = X;
 }
 
-// Two-factor prime factor algorithm
-void prime_factor_2(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params) {
-  MFFTELEM* __restrict__ Y = *YY;
-  MFFTELEM* __restrict__ X = *XX;
-
-  int64_t N1 = Ns[0];
-  int64_t N2 = Ns[1];
-  int64_t N = N1 * N2;
-
-  nmap_2(Y, X, bp, stride, N1, N2, params[0]);
-
-  // Create 2D arrays for FFT operations
-  MDArray Y2D = create_mdarray(Y, Ns, 2);
-  MDArray X2D = create_mdarray(X, Ns, 2);
-
-  // Perform FFTs
-  do_fft<fft_func_t>(&X2D, &Y2D, Ns, es, bp, stride, flags, fs, nullptr, 0);
-  do_fft<fft_func_t>(&Y2D, &X2D, Ns, es, bp, stride, flags, fs, nullptr, 1);
-
-  // Rebind X and Y
-  Y = Y2D.data;
-  X = X2D.data;
-
-  kmap_2(X, Y, bp, stride, N1, N2, params[1]);
-
-  *YY = X;
-  *XX = Y;
-}
-
-void nmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
-            const int64_t stride, const int64_t N1, const int64_t N2, const int64_t N3,
-            const int64_t Q1P, const int64_t Q2P) {
-  int64_t Ns[3] = {N1, N2, N3};
-  int64_t Qs[2] = {Q1P, Q2P};
-  nmap<3, MFFTELEM>(Y, X, bp, stride, Ns, Qs);
-}
-
-void kmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
-            const int64_t stride, const int64_t N1, const int64_t N2, const int64_t N3,
-            const int64_t Q3P, const int64_t Q4P) {
-  int64_t Ns[3] = {N1, N2, N3};
-  int64_t Qs[4] = {0, 0, Q3P, Q4P};
-  kmap<3, MFFTELEM>(Y, X, bp, stride, Ns, Qs);
-}
-
-// Three-factor prime factor algorithm
-void prime_factor_3(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params) {
-  MFFTELEM* __restrict__ Y = *YY;
-  MFFTELEM* __restrict__ X = *XX;
-
-  const int64_t N1 = Ns[0];
-  const int64_t N2 = Ns[1];
-  const int64_t N3 = Ns[2];
-  const int64_t N = N1 * N2 * N3;
-
-  // Forward mapping
-  nmap_3(Y, X, bp, stride, N1, N2, N3, params[0], params[1]);
-
-  // Create 3D arrays for FFT operations
-  MDArray Y123 = create_mdarray(Y, Ns, 3);
-  MDArray X123 = create_mdarray(X, Ns, 3);
-
-  // Perform FFTs
-  do_fft<fft_func_t>(&X123, &Y123, Ns, es, bp, stride, flags, fs, nullptr, 0);
-  do_fft<fft_func_t>(&Y123, &X123, Ns, es, bp, stride, flags, fs, nullptr, 1);
-  do_fft<fft_func_t>(&X123, &Y123, Ns, es, bp, stride, flags, fs, nullptr, 2);
-  // Rebind
-  Y = Y123.data;
-  X = X123.data;
-
-  kmap_3(Y, X, bp, stride, N1, N2, N3, params[2], params[3]);
-
-  *YY = Y;
-  *XX = X;
-}
-
 void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* params) {
-  switch (factor_count) {
-    case 2:
-    case 3:
-      Qs(factor_count, Ns, params);
-      break;
-    case 4: {
-      const int64_t NsE[] = {Ns[0] * Ns[1], Ns[2] * Ns[3]};
-      Qs(2, NsE, params);
-      Qs(2, Ns, params + 2);
-      Qs(2, Ns + 2, params + 4);
-    } break;
-    case 5: {
-      const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4]};
-      Qs(2, NsE, params);
-      Qs(3, Ns, params + 2);
-      Qs(2, Ns + 3, params + 6);
-    } break;
-    case 6: {
-      const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4] * Ns[5]};
-      Qs(2, NsE, params);
-      Qs(3, Ns, params + 2);
-      Qs(3, Ns + 3, params + 6);
-    } break;
-    default:
-      minassert(0, "generate_pfa_params only supports 2-6 factors");
-  }
+  Qs(factor_count, Ns, params);
 }
 
-void pfa_extend_4(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                  const int64_t bp, const int64_t stride, const int32_t flags, const fft_func_t* fs,
-                  const int64_t* params) {
-  MFFTELEM* __restrict__ Y = *YY;
-  MFFTELEM* __restrict__ X = *XX;
+template void prime_factor<2>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
-  const int64_t NsE[] = {Ns[0] * Ns[1], Ns[2] * Ns[3]};
+template void prime_factor<3>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
-  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], params[0]);
+template void prime_factor<4>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
-  MDArray Y2D = create_mdarray(Y, NsE, 2);
-  MDArray X2D = create_mdarray(X, NsE, 2);
+template void prime_factor<5>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
-  do_fft<pfa2_t>(&X2D, &Y2D, Ns, es, bp, stride, flags, fs, params + 2, 0);
-  do_fft<pfa2_t>(&Y2D, &X2D, Ns + 2, es + 2, bp, stride, flags, fs + 2, params + 4, 1);
+template void prime_factor<6>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
-  // Rebind X and Y
-  Y = Y2D.data;
-  X = X2D.data;
+template void prime_factor<7>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                    const int64_t bp, const int64_t stride, const int32_t flags,
+                    const fft_func_t* fs, const int64_t* params);
 
-  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], params[1]);
 
-  *YY = X;
-  *XX = Y;
-}
-
-void pfa_extend_5(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                  const int64_t bp, const int64_t stride, const int32_t flags, const fft_func_t* fs,
-                  const int64_t* params) {
-  MFFTELEM* __restrict__ Y = *YY;
-  MFFTELEM* __restrict__ X = *XX;
-
-  const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4]};
-
-  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], params[0]);
-
-  MDArray Y2D = create_mdarray(Y, NsE, 2);
-  MDArray X2D = create_mdarray(X, NsE, 2);
-
-  do_fft<pfa3_t>(&X2D, &Y2D, Ns, es, bp, stride, flags, fs, params + 2, 0);
-  do_fft<pfa2_t>(&Y2D, &X2D, Ns + 3, es + 3, bp, stride, flags, fs + 3, params + 6, 1);
-
-  // Rebind X and Y
-  Y = Y2D.data;
-  X = X2D.data;
-
-  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], params[1]);
-
-  *YY = X;
-  *XX = Y;
-}
-
-void pfa_extend_6(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                  const int64_t bp, const int64_t stride, const int32_t flags, const fft_func_t* fs,
-                  const int64_t* params) {
-  MFFTELEM* __restrict__ Y = *YY;
-  MFFTELEM* __restrict__ X = *XX;
-
-  const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4] * Ns[5]};
-
-  nmap_2(Y, X, bp, stride, NsE[0], NsE[1], params[0]);
-
-  MDArray Y2D = create_mdarray(Y, NsE, 2);
-  MDArray X2D = create_mdarray(X, NsE, 2);
-
-  do_fft<pfa3_t>(&X2D, &Y2D, Ns, es, bp, stride, flags, fs, params + 2, 0);
-  do_fft<pfa3_t>(&Y2D, &X2D, Ns + 3, es + 3, bp, stride, flags, fs + 3, params + 6, 1);
-
-  // Rebind X and Y
-  Y = Y2D.data;
-  X = X2D.data;
-
-  kmap_2(X, Y, bp, stride, NsE[0], NsE[1], params[1]);
-
-  *YY = X;
-  *XX = Y;
-}

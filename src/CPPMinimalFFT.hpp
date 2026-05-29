@@ -209,7 +209,7 @@ static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, si
   return 1;
 }
 
-static const int MAX_FACTORS = 6;
+static const int MAX_FACTORS = 7;
 #define MAX_DIMS 8
 #define MAX_REGIONS MAX_DIMS
 
@@ -248,7 +248,6 @@ typedef struct MinimalPlan MinimalPlan;
 
 void do_fft_planned(const MinimalPlan* P, MDArray* oy, MDArray* ix, int32_t r);
 
-template <typename Func>
 void do_fft(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, const int64_t bp,
             const int64_t stride, const int32_t flags, const fft_func_t* fs, const int64_t* params,
             const int32_t r);
@@ -298,19 +297,10 @@ static const fft_func_t dispatch_inverse[] = {
 
 static const int DISPATCH_SZ = sizeof(dispatch) / sizeof(dispatch[0]);
 
-void prime_factor_2(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
-
-typedef struct {
-} pfa2_t;  // tag for do_fft
-
-void prime_factor_3(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
-
-typedef struct {
-} pfa3_t;  // tag for do_fft
+template <int nf>
+void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
+                  const int64_t bp, const int64_t stride, const int32_t flags,
+                  const fft_func_t* fs, const int64_t* params);
 
 typedef void (*parent_fn_t)(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                             const int64_t bp, const int64_t stride, const int32_t flags,

@@ -160,19 +160,22 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
       f_p[0](YY, XX, n_p[0], e_p[0], bp, stride, flags);
       break;
     case 2:
-      prime_factor_2(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
+      prime_factor<2>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
       break;
     case 3:
-      prime_factor_3(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
+      prime_factor<3>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
       break;
     case 4:
-      pfa_extend_4(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
+      prime_factor<4>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
       break;
     case 5:
-      pfa_extend_5(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
+      prime_factor<5>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
       break;
     case 6:
-      pfa_extend_6(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
+      prime_factor<6>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
+      break;
+    case 7:
+      prime_factor<7>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
       break;
     default:
       minassert(0, "Too many factors, should have planned bluestein.");

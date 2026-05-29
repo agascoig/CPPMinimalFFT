@@ -109,7 +109,6 @@ void do_fft_planned(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r) {
 }
 
 // do_1d function without plan
-template <typename Func>
 void do_1d_func(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
                 int64_t bp, int64_t instride, int32_t flags,
                 const fft_func_t *fs, const int64_t *params, int32_t r) {
@@ -135,16 +134,7 @@ void do_1d_func(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
   const int64_t vlength = oy_dims[r];
 
   while (bp != -1) {
-    if constexpr (std::is_same_v<Func, fft_func_t>) {
-      fsr(YY, XX, vlength, esr, bp, stride, flags);
-    } else if constexpr (std::is_same_v<Func, pfa2_t>) {
-      prime_factor_2(YY, XX, Ns, es, bp, stride, flags, fs, params);
-    } else if constexpr (std::is_same_v<Func, pfa3_t>) {
-      prime_factor_3(YY, XX, Ns, es, bp, stride, flags, fs, params);
-    } else {
-      static_assert(0, "Unsupported function type");
-    }
-
+    fsr(YY, XX, vlength, esr, bp, stride, flags);
     if (*YY != orig_y) {
       orig_y = *YY;
       *YY = *XX;
@@ -162,7 +152,6 @@ void do_1d_func(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
   }
 }
 
-template <typename Func>
 void do_1d_r0_func(MDArray *oy, MDArray *ix, const int64_t *Ns,
                    const int32_t *es, int64_t bp, int64_t stride, int32_t flags,
                    const fft_func_t *fs, const int64_t *params) {
@@ -177,15 +166,7 @@ void do_1d_r0_func(MDArray *oy, MDArray *ix, const int64_t *Ns,
   const int64_t vlength = oy->dims[0];
 
   while (bp < limit) {
-    if constexpr (std::is_same_v<Func, fft_func_t>) {
-      fs0(YY, XX, vlength, es0, bp, stride, flags);
-    } else if constexpr (std::is_same_v<Func, pfa2_t>) {
-      prime_factor_2(YY, XX, Ns, es, bp, stride, flags, fs, params);
-    } else if constexpr (std::is_same_v<Func, pfa3_t>) {
-      prime_factor_3(YY, XX, Ns, es, bp, stride, flags, fs, params);
-    } else {
-      static_assert(0, "Unsupported function type");
-    }
+    fs0(YY, XX, vlength, es0, bp, stride, flags);
 
     if (*YY != orig_y) {
       orig_y = *YY;
@@ -204,29 +185,11 @@ void do_1d_r0_func(MDArray *oy, MDArray *ix, const int64_t *Ns,
 }
 
 // do_fft function
-template <typename Func>
 void do_fft(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
             int64_t bp, const int64_t stride, const int32_t flags,
             const fft_func_t *fs, const int64_t *params, const int32_t r) {
   if (r == 0)
-    do_1d_r0_func<Func>(oy, ix, Ns, es, bp, stride, flags, fs, params);
+    do_1d_r0_func(oy, ix, Ns, es, bp, stride, flags, fs, params);
   else
-    do_1d_func<Func>(oy, ix, Ns, es, bp, stride, flags, fs, params, r);
+    do_1d_func(oy, ix, Ns, es, bp, stride, flags, fs, params, r);
 }
-
-// explicit template instantiations
-
-template void do_fft<fft_func_t>(MDArray *oy, MDArray *ix, const int64_t *Ns,
-                                 const int32_t *es, int64_t bp, int64_t stride,
-                                 int32_t flags, const fft_func_t *fs,
-                                 const int64_t *params, int32_t r);
-
-template void do_fft<pfa2_t>(MDArray *oy, MDArray *ix, const int64_t *Ns,
-                             const int32_t *es, int64_t bp, int64_t stride,
-                             int32_t flags, const fft_func_t *fs,
-                             const int64_t *params, int32_t r);
-
-template void do_fft<pfa3_t>(MDArray *oy, MDArray *ix, const int64_t *Ns,
-                             const int32_t *es, int64_t bp, int64_t stride,
-                             int32_t flags, const fft_func_t *fs,
-                             const int64_t *params, int32_t r);

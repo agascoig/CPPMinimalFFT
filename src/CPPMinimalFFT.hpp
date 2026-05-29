@@ -307,18 +307,6 @@ typedef void (*parent_fn_t)(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, con
                             const fft_func_t* fs,
                             const int64_t* params);  // for casts
 
-void pfa_extend_4(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                  const int64_t bp, const int64_t stride, const int32_t flags, const fft_func_t* fs,
-                  const int64_t* params);
-
-void pfa_extend_5(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                  const int64_t bp, const int64_t stride, int32_t flags, const fft_func_t* fs,
-                  const int64_t* params);
-
-void pfa_extend_6(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                  const int64_t bp, const int64_t stride, int32_t flags, const fft_func_t* fs,
-                  const int64_t* params);
-
 void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* params);
 
 static inline int64_t count_leading_zeros(uint64_t x) { return __builtin_clzll(x); }

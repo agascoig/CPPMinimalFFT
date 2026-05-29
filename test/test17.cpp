@@ -606,13 +606,13 @@ int main(int argc, char *argv[]) {
     RUN_DRIVER(((int[]){8}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 8 test");
     RUN_DRIVER(((int[]){9}), 1, 0, 0, nullptr, high_radix_factor_1, "radix 9 test");
     d.clear();
-    RUN_DRIVER(((int[]){2, 3, 5, 7}), 4, 0, 0, prime_factor<4>, factor_4, "prime factor extend 4");
+    RUN_DRIVER(((int[]){2, 3, 5, 7}), 4, 0, 0, prime_factor<4>, factor_4, "prime factor 4");
     RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 5, 0, 0, prime_factor<5>, factor_5,
-               "prime factor extend 5");
+               "prime factor 5");
     RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, 0, 0, prime_factor<6>, factor_6,
-               "prime factor extend 6");
+               "prime factor 6");
     RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 7, 0, 0, prime_factor<7>, factor_7,
-               "prime factor extend 7");    
+               "prime factor 7");    
     d.clear();
     RUN_DRIVER(((int[]){15, 16, 11, 13, 17}), 1, 0, 0, bluestein_test_parent, bluestein_1,
                "bluestein test");

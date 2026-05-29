@@ -36,7 +36,7 @@ void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1 - 1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
+    if constexpr (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       for (int64_t k = 0; k < m; k++) {
         auto c0 = hn::Load(d, CCDPTR(&X[bp + stride * (k + j * m)]));
@@ -88,7 +88,7 @@ void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
+    if constexpr (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       for (int64_t k = 0; k < m; k++) {
@@ -134,7 +134,7 @@ void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[2 * (e1 - t) - 1]));
-    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
+    if constexpr (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -192,7 +192,7 @@ void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
+    if constexpr (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -272,7 +272,7 @@ void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[e1 - t - 1]));
-    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
+    if constexpr (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -369,7 +369,7 @@ void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[3 * (e1 - t) - 1]));
-    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
+    if constexpr (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);
@@ -472,7 +472,7 @@ void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, cons
   for (int32_t t = 0; t < e1; t++) {
     auto w = hn::Load(d, CCDPTR(&W[0]));
     auto w_l = hn::Load(d, CCDPTR(&W[2 * (e1 - t) - 1]));
-    if (Inverse) w_l = hn::Mul(w_l, conj_mask);
+    if constexpr (Inverse) w_l = hn::Mul(w_l, conj_mask);
     for (int64_t j = 0; j < l; j++) {
       auto w2 = hn::MulComplex(w, w);
       auto w3 = hn::MulComplex(w2, w);

@@ -23,24 +23,25 @@ ExtendedEuclidResult extended_euclid(int64_t a, int64_t b) {
   return result;
 }
 
-void pfa_params_2(const int64_t* Ns, int64_t* params) {
-  const int64_t N1 = Ns[0];
-  const int64_t N2 = Ns[1];
-
-  ExtendedEuclidResult result = extended_euclid(N1, N2);
-  minassert(result.g == 1, "prime_factor N1 and N2 must be coprime");
-
-  int64_t M1 = result.x;
-  int64_t M2 = result.y;
-
-  int64_t Q1P = M2 % N1;
-  if (Q1P < 0) Q1P += N1;
-
-  int64_t Q2P = M1 % N2;
-  if (Q2P < 0) Q2P += N2;
-
-  params[0] = Q1P;
-  params[1] = Q2P;
+void Qs(int nf, const int64_t *Ns, int64_t* params) {
+  int64_t N = 1;
+  int64_t y;
+  ExtendedEuclidResult r;
+  for (int i=nf-1;i>0;--i) {
+    N = N * Ns[i];
+    r = extended_euclid(Ns[i-1], N);
+    y = r.y % Ns[i-1];
+    if (y < 0) y += Ns[i-1];
+    params[i-1] = y;
+  }
+  N = 1;
+  for (int i=2;i<=nf;++i) {
+    N *= Ns[i-2];
+    r = extended_euclid(Ns[i-1],N);
+    y = r.y % Ns[i-1];
+    if (y < 0) y+= Ns[i-1];
+    params[2*nf-i-1] = y;
+  }
 }
 
 // Inline branchless mask mux mod function
@@ -106,42 +107,6 @@ void prime_factor_2(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32
 
   *YY = X;
   *XX = Y;
-}
-
-void pfa_params_3(const int64_t* Ns, int64_t* params) {
-  const int64_t N1 = Ns[0];
-  const int64_t N2 = Ns[1];
-  const int64_t N3 = Ns[2];
-
-  ExtendedEuclidResult r1 = extended_euclid(N1, N2 * N3);
-  ExtendedEuclidResult r2 = extended_euclid(N2, N3);
-  ExtendedEuclidResult r3 = extended_euclid(N3, N1 * N2); 
-  ExtendedEuclidResult r4 = extended_euclid(N2 * N3, N1);
-
-  minassert(r1.g == 1 && r2.g == 1 && r3.g == 1 && r4.g == 1,
-            "prime_factor N1, N2, N3 must be coprime");
-
-  int64_t Q1 = r1.y;
-  int64_t Q2 = r2.y;
-  int64_t Q3 = r3.y;
-  int64_t Q4 = r4.y;
-
-  int64_t Q1P = Q1 % N1;
-  if (Q1P < 0) Q1P += N1;
-
-  int64_t Q2P = Q2 % N2;
-  if (Q2P < 0) Q2P += N2;
-
-  int64_t Q3P = Q3 % N3;
-  if (Q3P < 0) Q3P += N3;
-
-  int64_t Q4P = Q4 % N2;
-  if (Q4P < 0) Q4P += N2;
-
-  params[0] = Q1P;
-  params[1] = Q2P;
-  params[2] = Q3P;
-  params[3] = Q4P;
 }
 
 void nmap_3(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int64_t bp,
@@ -224,28 +189,26 @@ void prime_factor_3(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32
 void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* params) {
   switch (factor_count) {
     case 2:
-      pfa_params_2(Ns, params);
-      break;
     case 3:
-      pfa_params_3(Ns, params);
+      Qs(factor_count, Ns, params);
       break;
     case 4: {
       const int64_t NsE[] = {Ns[0] * Ns[1], Ns[2] * Ns[3]};
-      pfa_params_2(NsE, params);
-      pfa_params_2(Ns, params + 2);
-      pfa_params_2(Ns + 2, params + 4);
+      Qs(2, NsE, params);
+      Qs(2, Ns, params+2);
+      Qs(2, Ns + 2, params + 4);
     } break;
     case 5: {
       const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4]};
-      pfa_params_2(NsE, params);
-      pfa_params_3(Ns, params + 2);
-      pfa_params_2(Ns + 3, params + 6);
+      Qs(2,NsE, params);
+      Qs(3, Ns, params+2);
+      Qs(2, Ns + 3, params+6);
     } break;
     case 6: {
       const int64_t NsE[] = {Ns[0] * Ns[1] * Ns[2], Ns[3] * Ns[4] * Ns[5]};
-      pfa_params_2(NsE, params);
-      pfa_params_3(Ns, params + 2);
-      pfa_params_3(Ns + 3, params + 6);
+      Qs(2, NsE, params);
+      Qs(3, Ns, params + 2);
+      Qs(3, Ns + 3, params + 6);
     } break;
     default:
       minassert(0, "generate_pfa_params only supports 2-6 factors");

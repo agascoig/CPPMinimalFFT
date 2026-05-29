@@ -139,7 +139,7 @@ void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t disc
   }
   fftr2<true>(&B_X, &a_n, M, e1, 0, 1, P_INVERSE);
   bs_buff.A_X = A_X;  // rebind
-  bs_buff.a_n = a_n;  // rebind
+  bs_buff.B_X = B_X;  // rebind
   bs_buff.a_n = a_n;  // rebind
   // Scale by 1/M
   double scale = 1.0 / M;

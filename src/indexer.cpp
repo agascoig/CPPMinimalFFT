@@ -120,6 +120,7 @@ void do_1d_r0_func(MDArray *oy, MDArray *ix, const int64_t *Ns,
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
   MFFTELEM *orig_y = *YY;
+  MFFTELEM *orig_x = *XX;
 
   const int64_t limit = bp + oy->total_size * stride;
 
@@ -128,21 +129,10 @@ void do_1d_r0_func(MDArray *oy, MDArray *ix, const int64_t *Ns,
   const int64_t vlength = oy->dims[0];
 
   while (bp < limit) {
+    *YY = orig_y; // keep pointing back to original data
+    *XX = orig_x; // keep pointing back to original data
     fs0(YY, XX, vlength, es0, bp, stride, flags);
-
-    if (*YY != orig_y) {
-      orig_y = *YY;
-      *YY = *XX;
-      *XX = orig_y;
-      orig_y = nullptr;  // mark flipped
-    }
     bp += stride * vlength;
-  }
-
-  if (orig_y == nullptr) {
-    orig_y = *YY;
-    *YY = *XX;
-    *XX = orig_y;
   }
 }
 

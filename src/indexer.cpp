@@ -99,6 +99,7 @@ void do_1d_func(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
   MFFTELEM *orig_y = *YY;
+  MFFTELEM *orig_x = *XX;
 
   const int64_t stride = strides[r];
   const fft_func_t fsr = fs[r];
@@ -106,21 +107,10 @@ void do_1d_func(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
   const int64_t vlength = oy_dims[r];
 
   while (bp != -1) {
+    *YY = orig_y; // keep pointing back to original data
+    *XX = orig_x; // keep pointer back to original data
     fsr(YY, XX, vlength, esr, bp, stride, flags);
-    if (*YY != orig_y) {
-      orig_y = *YY;
-      *YY = *XX;
-      *XX = orig_y;
-      orig_y = nullptr;  // mark flipped
-    }
-
     bp = indexer_count(r, oy_ndims, counts, strides, bp, oy_dims);
-  }
-
-  if (orig_y == nullptr) {
-    orig_y = *YY;
-    *YY = *XX;
-    *XX = orig_y;
   }
 }
 

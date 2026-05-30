@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.10)  # Minimum CMake version
 
 project(CPPMinimalFFT CXX)          # Specify project name and language
 
-set(VERSION "V0.0.1")
+set(VERSION "V0.0.2")
 
 #set(MINFFT "32") # single precision
 set(MINFFT "64") # double precision

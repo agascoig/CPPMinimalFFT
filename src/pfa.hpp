@@ -7,7 +7,7 @@
 #include "CPPMinimalFFT.hpp"
 
 static const int MAX_FACTORS = 7;
-static const int MAX_MAP_CACHE = 1 << 14;
+static const int MAX_MAP_CACHE = 1 << 12;
 
 using MAP_CACHE_T = uint16_t;
 

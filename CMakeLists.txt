@@ -13,12 +13,12 @@ set(MINFFT "64") # double precision
 set(SIMD "ON")
 #set(SIMD "OFF")
 
-set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
-#set(SANITIZE "")
+#set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
+set(SANITIZE "")
 
 #set(OPTIMIZE "-O0") # cannot do with SIMD ON
-set(OPTIMIZE "-O1")
-#set(OPTIMIZE "-O3")
+#set(OPTIMIZE "-O1")
+set(OPTIMIZE "-O3")
 
 #set(NDEBUG "-DNDEBUG")
 set(NDEBUG "")

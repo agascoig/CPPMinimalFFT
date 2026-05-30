@@ -135,9 +135,9 @@ void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* 
   MFFTELEM* __restrict__ X = *XX;
 
   if (nm != nullptr) {
-    for (int i = 0; i < N; ++i) {
+    for (int64_t i = 0; i < N; ++i) {
       int64_t n = nm[i];
-      Y[bp+stride*i] = X[bp+stride*n];
+      Y[bp + stride * i] = X[bp + stride * n];
     }
   } else
     nmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, QPs);
@@ -161,9 +161,9 @@ void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* 
   }
 
   if (km != nullptr) {
-    for (int i = 0; i < N; ++i) {
+    for (int64_t i = 0; i < N; ++i) {
       int64_t k = km[i];
-      Y[bp+stride*k] = X[bp+stride*i];
+      Y[bp + stride * i] = X[bp + stride * k];
     }
   } else
     kmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, QPs);
@@ -227,6 +227,7 @@ MAP_CACHE_T* generate_nmap(const int nf, const int64_t N, const int64_t* Ns, con
   for (int i = 0; i < N; ++i) {
     X[i] = i;
   }
+
   nmap_fn[nf](Y, X, 0, 1, Ns, QPs);
 
   delete[] X;
@@ -248,11 +249,12 @@ MAP_CACHE_T* generate_kmap(const int nf, const int64_t N, const int64_t* Ns, con
   MAP_CACHE_T* Y = new MAP_CACHE_T[N];
   MAP_CACHE_T* X = new MAP_CACHE_T[N];
 
-  MAP_CACHE_T* Yk = new MAP_CACHE_T[N];
-  kmap_fn[nf](Yk, X, 0, 1, Ns, QPs);
+  for (int i = 0; i < N; ++i) X[i] = i;
+
+  kmap_fn[nf](Y, X, 0, 1, Ns, QPs);
 
   delete[] X;
-  return Yk;
+  return Y;
 }
 
 // explicit template instantiations

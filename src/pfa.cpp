@@ -37,12 +37,12 @@ void Qs(int nf, const int64_t* Ns, int64_t* params) {
     params[i - 1] = y;
   }
   N = 1;
-  for (int i = 2; i <= nf; ++i) {
-    N *= Ns[i - 2];
-    r = extended_euclid(Ns[i - 1], N);
-    y = r.y % Ns[i - 1];
-    if (y < 0) y += Ns[i - 1];
-    params[2 * nf - i - 1] = y;
+  for (int i=0; i < nf-1; ++i) {
+    N *= Ns[i];
+    r = extended_euclid(Ns[i+1], N);
+    y = r.y % Ns[i+1];
+    if (y < 0) y += Ns[i+1];
+    params[nf - 1 + i] = y;
   }
 }
 
@@ -105,7 +105,7 @@ void kmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t 
     N = Ns[0];
     for (int i = 1; i < nf; ++i) {
       k += N * mask_mux_mod(np[i] + R[i - 1], Ns[i]);
-      R[i - 1] = mask_mux_mod(R[i - 1] + QP[2 * nf - 2 - i], Ns[i]);
+      R[i - 1] = mask_mux_mod(R[i - 1] + QP[nf + i - 2], Ns[i]);
       N = N * Ns[i];
     }
     Y[lhs_k_stride] = X[bp + stride * k];

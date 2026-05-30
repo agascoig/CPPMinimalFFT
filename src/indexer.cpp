@@ -47,27 +47,13 @@ void do_1d_plan(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r) {
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
-  MFFTELEM *orig_y = *YY;
 
   const int64_t stride = strides[r];
   int64_t bp = 0;
 
   while (bp != -1) {
     P.execute_plan_no_copy(YY, XX, r, bp, stride);
-
-    if (*YY != orig_y) {
-      orig_y = *YY;
-      *YY = *XX;
-      *XX = orig_y;
-      orig_y = nullptr;  // mark flipped
-    }
     bp = indexer_count(r, ndims, counts, strides, bp, dims_p);
-  }
-
-  if (orig_y == nullptr) {
-    orig_y = *YY;
-    *YY = *XX;
-    *XX = orig_y;
   }
 }
 
@@ -77,26 +63,12 @@ void do_1d_r0(const MinimalPlan &P, MDArray *oy, MDArray *ix) {
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
-  MFFTELEM *orig_y = *YY;
 
   int64_t bp = 0;
 
   while (bp < limit) {
     P.execute_plan_no_copy(YY, XX, 0, bp, 1);
-
-    if (*YY != orig_y) {
-      orig_y = *YY;
-      *YY = *XX;
-      *XX = orig_y;
-      orig_y = nullptr;  // mark flipped
-    }
     bp += vlength;
-  }
-
-  if (orig_y == nullptr) {
-    orig_y = *YY;
-    *YY = *XX;
-    *XX = orig_y;
   }
 }
 

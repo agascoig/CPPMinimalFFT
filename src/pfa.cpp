@@ -135,9 +135,11 @@ void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* 
   MFFTELEM* __restrict__ X = *XX;
 
   if (nm != nullptr) {
+    int64_t lhs_stride = bp;
     for (int64_t i = 0; i < N; ++i) {
       int64_t n = nm[i];
-      Y[bp + stride * i] = X[bp + stride * n];
+      Y[lhs_stride] = X[bp + stride * n];
+      lhs_stride += stride;
     }
   } else
     nmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, QPs);
@@ -161,9 +163,11 @@ void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* 
   }
 
   if (km != nullptr) {
+    int64_t lhs_stride = bp;
     for (int64_t i = 0; i < N; ++i) {
       int64_t k = km[i];
-      Y[bp + stride * i] = X[bp + stride * k];
+      Y[lhs_stride] = X[bp + stride * k];
+      lhs_stride += stride;
     }
   } else
     kmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, QPs);

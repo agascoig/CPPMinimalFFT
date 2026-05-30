@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include "CPPMinimalFFT.hpp"
+#include "pfa.hpp"
 
 // Extended Euclidean algorithm
 typedef struct {
@@ -127,11 +128,21 @@ void kmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t 
 template <int nf>
 void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params) {
+                    const fft_func_t* fs, const PFAParams* params) {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
-  
-  nmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params);
+
+  int64_t N=params->N;
+  auto nm = params->nmap;
+
+  // TBD
+  /*if (nm!=nullptr) {
+    for (int i=0;i<N;++i) {
+      Y[i] = X[nm[i]];
+    }
+  }
+  else */
+    nmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params->Qs);
 
   MDArray YMD = create_mdarray(Y, Ns, nf);
   MDArray XMD = create_mdarray(X, Ns, nf);
@@ -152,38 +163,76 @@ void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t
     X = YMD.data;
   }
 
-  kmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params);
+  auto km = params->kmap;
 
+  // TBD
+ /* if (km!=nullptr) {
+    for (int i=0;i<N;++i) {
+      Y[km[i]]=X[i];
+    }
+  } else */
+    kmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params->Qs);
+  
   *YY = Y;
   *XX = X;
 }
 
-void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* params) {
-  Qs(factor_count, Ns, params);
+typedef void (*map_fn_t)(MAP_CACHE_T * __restrict__ Y, MAP_CACHE_T* __restrict__ X, const int64_t bp, const int64_t stride,
+                         const int64_t* Ns, const int64_t* QP);
+
+void generate_pfa_params(int32_t nf, const int64_t* Ns, PFAParams *p) {
+  Qs(nf, Ns, p->Qs);
+
+  int64_t N = p->N;
+
+  if (N < MAX_MAP_CACHE) {
+    static const map_fn_t nmap_fn[] = {nullptr, nullptr, nmap<2, MAP_CACHE_T>,
+    nmap<3, MAP_CACHE_T>, nmap<4, MAP_CACHE_T>, nmap<5, MAP_CACHE_T>,
+    nmap<6, MAP_CACHE_T>, nmap<7, MAP_CACHE_T>};
+
+    MAP_CACHE_T *Y = new MAP_CACHE_T[N];
+    MAP_CACHE_T *X = new MAP_CACHE_T[N];
+
+    for (int i=0;i<N;++i) {
+      X[i] = i;
+    }
+    nmap_fn[nf](Y, X, 0, 1, Ns, p->Qs);
+    p->nmap = Y;
+
+    static const map_fn_t kmap_fn[] = {nullptr, nullptr, kmap<2, MAP_CACHE_T>,
+    kmap<3, MAP_CACHE_T>, kmap<4, MAP_CACHE_T>, kmap<5, MAP_CACHE_T>,
+    kmap<6, MAP_CACHE_T>, kmap<7, MAP_CACHE_T>};
+
+    MAP_CACHE_T *Yk = new MAP_CACHE_T[N];
+    kmap_fn[nf](Yk, X, 0, 1, Ns, p->Qs);
+    p->kmap = Yk;
+
+    delete []X;
+  }
 }
 
 template void prime_factor<2>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
+                    const fft_func_t* fs, const PFAParams* params);
 
 template void prime_factor<3>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
+                    const fft_func_t* fs, const PFAParams* params);
 
 template void prime_factor<4>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
+                    const fft_func_t* fs, const PFAParams* params);
 
 template void prime_factor<5>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
+                    const fft_func_t* fs, const PFAParams* params);
 
 template void prime_factor<6>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
+                    const fft_func_t* fs, const PFAParams* params);
 
 template void prime_factor<7>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
                     const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const int64_t* params);
+                    const fft_func_t* fs, const PFAParams* params);
 
 

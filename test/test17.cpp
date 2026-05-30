@@ -20,6 +20,7 @@
 #include "CPPMinimalFFT.hpp"
 #include "hmean.hpp"
 #include "plan.hpp"
+#include "pfa.hpp"
 
 static const int NUM_TIMED_TESTS = 20;
 static const int OVERSAMPLE_FACTOR = 40;
@@ -101,7 +102,7 @@ void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinA
                              auto &P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
                              double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns,
                              int32_t* es, void (*parent_fn)(void), int32_t inverse, double* std_dev,
-                             const int64_t* params) {
+                             const PFAParams* params) {
   execute_fftw_plan(P_ref);
   if (P != nullptr) {
     P->execute_plan(Y, X, 0, 0, 1);
@@ -137,7 +138,7 @@ void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAli
                            auto &P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
                            double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns,
                            int32_t* es, void (*parent_fn)(void), int32_t inverse, double* std_dev,
-                           const int64_t* params) {
+                           const PFAParams* params) {
   int64_t t_ref_start = 0, t_ref_end = 0;
   int64_t inner_start = 0, inner_end = 0;
   int64_t t_start = 0, t_end = 0;
@@ -212,7 +213,7 @@ void test_fft_kernel(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVe
                      auto &P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
                      double* t_s, int32_t num_factors, int64_t* Ns, fft_func_t* fns, int32_t* es,
                      void (*parent_fn)(void), int32_t inverse, double* std_dev,
-                     const int64_t* params) {
+                     const PFAParams* params) {
   // dispatch time or untimed
   if (bm) {
     test_fft_kernel_timed(repeat_count, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, t_ref_s, t_s,
@@ -266,11 +267,17 @@ void test_fft(random_normal& RNG, const char* name, int bm, int inverse, int64_t
   auto P_ref = create_fftw_plan(N, X_ref.data(), Y_ref.data(), inverse);
   int test_repeat = bm ? NUM_TIMED_TESTS : 1;
   double std_dev;
-  int64_t params[MAX_PFA_PARAMS] = {0};
   minassert(num_factors <= MAX_FACTORS, "Too many factors in test_fft.");
-  if (num_factors > 1) generate_pfa_params(num_factors, Ns, params);
-  test_fft_kernel(test_repeat, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, &t_ref_s, &t_s,
-                  num_factors, Ns, fns, es, parent_fn, inverse, &std_dev, params);
+  if (num_factors > 1) {
+    PFAParams *p = new PFAParams(N);
+    generate_pfa_params(num_factors, Ns,p);
+    test_fft_kernel(test_repeat, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, &t_ref_s, &t_s,
+                    num_factors, Ns, fns, es, parent_fn, inverse, &std_dev, p);
+    delete p;
+  } else {
+    test_fft_kernel(test_repeat, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm, &t_ref_s, &t_s,
+                    num_factors, Ns, fns, es, parent_fn, inverse, &std_dev, nullptr);   
+  }
   // reporting
   if (bm) hm_add(&hm, t_s / t_ref_s);
   if (approx_cmp_v(Y_ref, Y, N)) {

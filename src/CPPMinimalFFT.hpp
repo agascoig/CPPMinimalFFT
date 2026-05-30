@@ -1,6 +1,6 @@
 
-#ifndef CMINIMALFFT_H
-#define CMINIMALFFT_H
+#ifndef __CMINIMALFFT_H__
+#define __CMINIMALFFT_H__
 
 #include <execinfo.h>
 
@@ -140,6 +140,13 @@ static inline void* minaligned_calloc(size_t alignment, size_t sz, size_t count)
   return p;
 }
 
+static int64_t prod(int nf, const int64_t *Ns) {
+  int64_t N = 1;
+  for (int i=0;i<nf;++i)
+    N *= Ns[i];
+  return N;
+}
+
 static int approx_cmp(MFFTELEM x, MFFTELEM y) {
   // borrowed from Julia: rtol = sqrt(eps(eltype(x)))
   double atol = 0;
@@ -209,7 +216,6 @@ static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, si
   return 1;
 }
 
-static const int MAX_FACTORS = 7;
 #define MAX_DIMS 8
 #define MAX_REGIONS MAX_DIMS
 
@@ -297,18 +303,6 @@ static const fft_func_t dispatch_inverse[] = {
 
 static const int DISPATCH_SZ = sizeof(dispatch) / sizeof(dispatch[0]);
 
-template <int nf>
-void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                  const int64_t bp, const int64_t stride, const int32_t flags,
-                  const fft_func_t* fs, const int64_t* params);
-
-typedef void (*parent_fn_t)(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                            const int64_t bp, const int64_t stride, const int32_t flags,
-                            const fft_func_t* fs,
-                            const int64_t* params);  // for casts
-
-void generate_pfa_params(int32_t factor_count, const int64_t* Ns, int64_t* params);
-
 static inline int64_t count_leading_zeros(uint64_t x) { return __builtin_clzll(x); }
 
 struct fn_name_s {
@@ -326,23 +320,4 @@ struct fn_name_s {
                  {&fftr9<false>, "fftr9"}, {&fftr9<true>, "ifftr9"}
               };
 
-static void print_fns(char* buf, fft_func_t* fns) {
-  char fn_str[256];
-  buf[0] = '\0';
-  fn_str[0] = '\0';
-  if (fns == nullptr) return;
-  for (int i = 0; i < MAX_FACTORS; ++i) {
-    fft_func_t func = fns[i];
-    if (func == nullptr) continue;
-    for (int j = 0; j < sizeof(fns_names) / sizeof(fn_name_s); ++j) {
-      if (func == fns_names[j].fn) {
-        snprintf(fn_str, sizeof(fn_str), "%s ", fns_names[j].name);
-        strcat(buf, fn_str);
-        break;
-      }
-    }
-  }
-  if (strlen(buf)) buf[strlen(buf) - 1] = 0;  // remove last space
-}
-
-#endif  // CMINIMALFFT_H
+#endif  // __CMINIMALFFT_H__

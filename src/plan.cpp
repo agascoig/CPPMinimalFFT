@@ -19,11 +19,13 @@ MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, in
   ns_p = new int64_t[region_end + 1][MAX_FACTORS]();
   func_p = new fft_func_t[region_end + 1][MAX_FACTORS]();
   exp_p = new int32_t[region_end + 1][MAX_FACTORS]();
-  pfa_params_p = new int64_t[region_end + 1][MAX_PFA_PARAMS]();
   total_size = 1;
   for (int i = 0; i < _n_dims; i++) {
     n[i] = _n[i];
     total_size *= n[i];
+  }
+  for (int i = 0; i<=region_end;i++) {
+    pfa_params_p[i] = new PFAParams(total_size);
   }
   gen_inner_plan(flags);
 }
@@ -133,7 +135,9 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
   if (copy_input && !(flags & P_INPLACE)) flags |= P_COPY_INPUT;
   free(p_factors);
 
-  if (num_factors[rd] >= 2) generate_pfa_params(factor_count, ns_p[rd], pfa_params_p[rd]);
+  if (num_factors[rd] >= 2) {
+    generate_pfa_params(factor_count, ns_p[rd], pfa_params_p[rd]);
+  }
 }
 
 void MinimalPlan::gen_inner_plan(int32_t flags) {
@@ -149,7 +153,7 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
   const int64_t* n_p = ns_p[r];
   const fft_func_t* f_p = func_p[r];
   const int32_t* e_p = exp_p[r];
-  const int64_t* params_p = pfa_params_p[r];
+  const PFAParams* params_p = pfa_params_p[r];
 
   int64_t lf = num_factors[r];
   minassert(lf <= MAX_FACTORS, "Too many factors to execute_plan_no_copy.");

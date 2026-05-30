@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "CPPMinimalFFT.hpp"
+#include "pfa.hpp"
 
 static const int P_NONE = 0;
 static const int P_INVERSE = 1;
@@ -18,7 +19,7 @@ static const int P_TOO_MANY_FACTORS = 64;
 static const int P_COPY_INPUT = 128;
 
 static const int DIRECT_SZ = 15;
-static const int MAX_PFA_PARAMS = 12;
+static const int MAX_PFA_PARAMS = (2*(MAX_FACTORS-1));
 
 // Prime factorization result
 typedef struct {
@@ -41,7 +42,10 @@ class MinimalPlan {
     delete[] ns_p;
     delete[] func_p;
     delete[] exp_p;
-    delete[] pfa_params_p;
+    for (int i=0;i<MAX_REGIONS;++i) {
+      if (pfa_params_p[i]!=nullptr)
+         delete pfa_params_p[i];
+    }
   }
 
   void execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
@@ -64,16 +68,13 @@ class MinimalPlan {
   int32_t region_end;
   int32_t flags;
 
-  // pfa parameters
-  int64_t pfa_params[MAX_PFA_PARAMS];
-
   // pointers to regions
   int64_t (*base_p)[MAX_FACTORS] = {nullptr};
   int64_t (*ns_p)[MAX_FACTORS] = {nullptr};
   fft_func_t (*func_p)[MAX_FACTORS] = {nullptr};
   int32_t (*exp_p)[MAX_FACTORS] = {nullptr};
-  int64_t (*pfa_params_p)[MAX_PFA_PARAMS] = {nullptr};
 
+  PFAParams *pfa_params_p[MAX_REGIONS] = {nullptr};
   int32_t num_factors[MAX_REGIONS] = {0};  // zero init number of factors per region
 
   void add_plan_factor(int32_t r, int64_t ns, int64_t base, int32_t exp, fft_func_t func);

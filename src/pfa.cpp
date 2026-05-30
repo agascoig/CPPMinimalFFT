@@ -91,9 +91,9 @@ void nmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t 
 template <int nf, typename T>
 void kmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t stride,
           const int64_t* Ns, const int64_t* QP) {
-  int64_t buf[MAX_FACTORS * 2 - 1] = {0};
+  int64_t buf[nf * 2 - 1] = {0};
   int64_t* np = &buf[0];
-  int64_t* R = &buf[MAX_FACTORS];
+  int64_t* R = &buf[nf];
 
   int64_t k, N;
   int64_t lhs_k_stride = bp;

@@ -37,20 +37,7 @@ class MinimalPlan {
   MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, int32_t _region_end,
               int32_t _flags);
 
-  ~MinimalPlan() {
-    delete[] base_p;
-    delete[] ns_p;
-    delete[] func_p;
-    delete[] exp_p;
-    for (int i=0;i<MAX_REGIONS;++i) {
-      if (QPs_p[i]!=nullptr)
-         delete QPs_p[i];
-      if (nm_p[i]!=nullptr)
-         delete nm_p[i];
-      if (km_p[i]!=nullptr)
-         delete km_p[i];
-    }
-  }
+  ~MinimalPlan();
 
   void execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
                             int64_t stride) const;  // *XX may be destroyed

@@ -30,6 +30,22 @@ MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, in
   gen_inner_plan(flags);
 }
 
+MinimalPlan::~MinimalPlan()
+   {
+    delete[] base_p;
+    delete[] ns_p;
+    delete[] func_p;
+    delete[] exp_p;
+    for (int i=0;i<MAX_REGIONS;++i) {
+      if (QPs_p[i]!=nullptr)
+         delete [] QPs_p[i];
+      if (nm_p[i]!=nullptr)
+         delete [] nm_p[i];
+      if (km_p[i]!=nullptr)
+         delete [] km_p[i];
+    }
+  }
+
 std::ostream& operator<<(std::ostream& os, const MinimalPlan& P) {
   os << "Plan:\n";
   os << "  n_dims: " << P.n_dims << "\n";
@@ -85,15 +101,20 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
   struct sort_factor {
     int64_t n;
     int32_t index;
+    bool bluestein;
   };
 
   sort_factor factors[MAX_FACTORS];
   for (int32_t i = 0; i < nf; i++) {
     factors[i].n = p_factors->n[i];
     factors[i].index = i;
+    factors[i].bluestein = (p_factors->n[i]>DIRECT_SZ && (p_factors->base[i] >= DISPATCH_SZ
+    || dispatch[p_factors->base[i]]==nullptr)) ? true : false;
   }
   std::sort(factors, factors + nf, [](const sort_factor& a, const sort_factor& b) {
-    return a.n > b.n;  // descending by n
+    if (a.bluestein != b.bluestein)
+       return a.bluestein; // give bluestein priority (single-precision SIMD)
+    return a.n > b.n; // descending by n
   });
 
   if (n <= DIRECT_SZ) {
@@ -109,7 +130,7 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
     else
       add_plan_factor(rd, n, 2, exp, inverse ? &fftr2<true> : &fftr2<false>);
   } else if (nf <= MAX_FACTORS) {
-    for (int32_t j = nf - 1; j >= 0; j--) {
+    for (int32_t j = 0; j < nf; j++) {
       int32_t i = factors[j].index;
       int64_t base = p_factors->base[i];
       int32_t exp = p_factors->exponent[i];

@@ -418,7 +418,7 @@ static const int64_t factor_5[][5] = {{3, 5, 7, 11, 13},  {13, 11, 7, 5, 3},   {
 static const int64_t factor_5[][5] = {{3, 5, 7, 11, 13},  {13, 11, 7, 5, 3},   {25, 3, 49, 11, 13},
                                       {49, 9, 25, 11, 1}, {7, 25, 27, 11, 13}, {7, 25, 9, 2, 13},
                                       {9, 5, 7, 8, 13},   {8, 7, 5, 9, 13},
-                                      81, 49, 5, 17, 13}, // breaks Bluestein sp
+                                      81, 49, 5, 17, 13}, // breaks Bluestein single-precision SIMD
                                       {27, 5, 49, 11, 13}};
 */
 
@@ -427,8 +427,8 @@ static const int64_t factor_6[][6] = {
 
 static const int64_t factor_7[][7] = {{17, 4, 5, 7, 9, 11, 13},
                                       {17, 11, 9, 7, 5, 4, 13},
-                                      {2, 3, 5, 7, 11, 13, 17},
-                                      {3, 2, 7, 5, 13, 11, 17}};
+                                      {17, 13, 2, 3, 5, 7, 11},
+                                      {17, 11, 3, 2, 7, 5, 13}};
 
 /* original test cases
 static const int64_t factor_6[][6] = {{4, 5, 7, 9, 11, 17}, // breaks Bluestein sp
@@ -622,6 +622,7 @@ int main(int argc, char* argv[]) {
                                 2 * 3 * 5 * 7 * 11 * 13,
                                 8 * 25 * 7 * 3,
                                 2 * 25 * 49 * 9,
+                                27*2*7*5*11*13*17, // bluestein reorder test 
                                 1 << 20,
                                 1 << 22};
   int64_t* planner_n_inverse = planner_n;

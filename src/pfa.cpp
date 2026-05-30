@@ -1,10 +1,11 @@
 
+#include "pfa.hpp"
+
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 
 #include "CPPMinimalFFT.hpp"
-#include "pfa.hpp"
 
 // Extended Euclidean algorithm
 typedef struct {
@@ -126,113 +127,161 @@ void kmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t 
 }
 
 template <int nf>
-void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const PFAParams* params) {
+void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                  const int32_t* es, const int64_t bp, const int64_t stride, const int32_t flags,
+                  const fft_func_t* fs, const int64_t* QPs, const MAP_CACHE_T* nm,
+                  const MAP_CACHE_T* km) {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
-  int64_t N=params->N;
-  auto nm = params->nmap;
-
-  // TBD
-  /*if (nm!=nullptr) {
-    for (int i=0;i<N;++i) {
-      Y[i] = X[nm[i]];
+  if (nm != nullptr) {
+    for (int i = 0; i < N; ++i) {
+      int64_t n = nm[i];
+      Y[bp+stride*i] = X[bp+stride*n];
     }
-  }
-  else */
-    nmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params->Qs);
+  } else
+    nmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, QPs);
 
   MDArray YMD = create_mdarray(Y, Ns, nf);
   MDArray XMD = create_mdarray(X, Ns, nf);
 
-  for (int i=0;i<nf;++i) {
-    if ((i&1)==0)
+  for (int i = 0; i < nf; ++i) {
+    if ((i & 1) == 0)
       do_fft(&XMD, &YMD, Ns, es, bp, stride, flags, fs, nullptr, i);
     else
       do_fft(&YMD, &XMD, Ns, es, bp, stride, flags, fs, nullptr, i);
   }
 
-  if ((nf&1)==1) {
+  if ((nf & 1) == 1) {
     Y = YMD.data;
     X = XMD.data;
-  }
-  else {
+  } else {
     Y = XMD.data;
     X = YMD.data;
   }
 
-  auto km = params->kmap;
-
-  // TBD
- /* if (km!=nullptr) {
-    for (int i=0;i<N;++i) {
-      Y[km[i]]=X[i];
+  if (km != nullptr) {
+    for (int i = 0; i < N; ++i) {
+      int64_t k = km[i];
+      Y[bp+stride*k] = X[bp+stride*i];
     }
-  } else */
-    kmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, params->Qs);
-  
+  } else
+    kmap<nf, MFFTELEM>(Y, X, bp, stride, Ns, QPs);
+
   *YY = Y;
   *XX = X;
 }
 
-typedef void (*map_fn_t)(MAP_CACHE_T * __restrict__ Y, MAP_CACHE_T* __restrict__ X, const int64_t bp, const int64_t stride,
-                         const int64_t* Ns, const int64_t* QP);
-
-void generate_pfa_params(int32_t nf, const int64_t* Ns, PFAParams *p) {
-  Qs(nf, Ns, p->Qs);
-
-  int64_t N = p->N;
-
-  if (N < MAX_MAP_CACHE) {
-    static const map_fn_t nmap_fn[] = {nullptr, nullptr, nmap<2, MAP_CACHE_T>,
-    nmap<3, MAP_CACHE_T>, nmap<4, MAP_CACHE_T>, nmap<5, MAP_CACHE_T>,
-    nmap<6, MAP_CACHE_T>, nmap<7, MAP_CACHE_T>};
-
-    MAP_CACHE_T *Y = new MAP_CACHE_T[N];
-    MAP_CACHE_T *X = new MAP_CACHE_T[N];
-
-    for (int i=0;i<N;++i) {
-      X[i] = i;
-    }
-    nmap_fn[nf](Y, X, 0, 1, Ns, p->Qs);
-    p->nmap = Y;
-
-    static const map_fn_t kmap_fn[] = {nullptr, nullptr, kmap<2, MAP_CACHE_T>,
-    kmap<3, MAP_CACHE_T>, kmap<4, MAP_CACHE_T>, kmap<5, MAP_CACHE_T>,
-    kmap<6, MAP_CACHE_T>, kmap<7, MAP_CACHE_T>};
-
-    MAP_CACHE_T *Yk = new MAP_CACHE_T[N];
-    kmap_fn[nf](Yk, X, 0, 1, Ns, p->Qs);
-    p->kmap = Yk;
-
-    delete []X;
+void prime_factor(int nf, MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                  const int32_t* es, const int64_t bp, const int64_t stride, const int32_t flags,
+                  const fft_func_t* fs, const int64_t* QPs, const MAP_CACHE_T* nm,
+                  const MAP_CACHE_T* km) {
+  switch (nf) {
+    case 2:
+      prime_factor<2>(YY, XX, N, Ns, es, bp, stride, flags, fs, QPs, nm, km);
+      break;
+    case 3:
+      prime_factor<3>(YY, XX, N, Ns, es, bp, stride, flags, fs, QPs, nm, km);
+      break;
+    case 4:
+      prime_factor<4>(YY, XX, N, Ns, es, bp, stride, flags, fs, QPs, nm, km);
+      break;
+    case 5:
+      prime_factor<5>(YY, XX, N, Ns, es, bp, stride, flags, fs, QPs, nm, km);
+      break;
+    case 6:
+      prime_factor<6>(YY, XX, N, Ns, es, bp, stride, flags, fs, QPs, nm, km);
+      break;
+    case 7:
+      prime_factor<7>(YY, XX, N, Ns, es, bp, stride, flags, fs, QPs, nm, km);
+      break;
+    default:
+      minassert(0, "Too many factors here.");
   }
 }
 
-template void prime_factor<2>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const PFAParams* params);
+typedef void (*map_fn_t)(MAP_CACHE_T* __restrict__ Y, MAP_CACHE_T* __restrict__ X, const int64_t bp,
+                         const int64_t stride, const int64_t* Ns, const int64_t* QPs);
 
-template void prime_factor<3>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const PFAParams* params);
+int64_t* generate_QPs(int32_t nf, const int64_t* Ns) {
+  int64_t* QPs = new int64_t[2 * (nf - 1)];
+  Qs(nf, Ns, QPs);
+  return QPs;
+}
 
-template void prime_factor<4>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const PFAParams* params);
+MAP_CACHE_T* generate_nmap(const int nf, const int64_t N, const int64_t* Ns, const int64_t* QPs) {
+  static const map_fn_t nmap_fn[] = {nullptr,
+                                     nullptr,
+                                     nmap<2, MAP_CACHE_T>,
+                                     nmap<3, MAP_CACHE_T>,
+                                     nmap<4, MAP_CACHE_T>,
+                                     nmap<5, MAP_CACHE_T>,
+                                     nmap<6, MAP_CACHE_T>,
+                                     nmap<7, MAP_CACHE_T>};
 
-template void prime_factor<5>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const PFAParams* params);
+  if (N > MAX_MAP_CACHE) return nullptr;
 
-template void prime_factor<6>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const PFAParams* params);
+  MAP_CACHE_T* Y = new MAP_CACHE_T[N];
+  MAP_CACHE_T* X = new MAP_CACHE_T[N];
 
-template void prime_factor<7>(MFFTELEM** YY, MFFTELEM** XX, const int64_t* Ns, const int32_t* es,
-                    const int64_t bp, const int64_t stride, const int32_t flags,
-                    const fft_func_t* fs, const PFAParams* params);
+  for (int i = 0; i < N; ++i) {
+    X[i] = i;
+  }
+  nmap_fn[nf](Y, X, 0, 1, Ns, QPs);
 
+  delete[] X;
+  return Y;
+}
 
+MAP_CACHE_T* generate_kmap(const int nf, const int64_t N, const int64_t* Ns, const int64_t* QPs) {
+  static const map_fn_t kmap_fn[] = {nullptr,
+                                     nullptr,
+                                     kmap<2, MAP_CACHE_T>,
+                                     kmap<3, MAP_CACHE_T>,
+                                     kmap<4, MAP_CACHE_T>,
+                                     kmap<5, MAP_CACHE_T>,
+                                     kmap<6, MAP_CACHE_T>,
+                                     kmap<7, MAP_CACHE_T>};
+
+  if (N > MAX_MAP_CACHE) return nullptr;
+
+  MAP_CACHE_T* Y = new MAP_CACHE_T[N];
+  MAP_CACHE_T* X = new MAP_CACHE_T[N];
+
+  MAP_CACHE_T* Yk = new MAP_CACHE_T[N];
+  kmap_fn[nf](Yk, X, 0, 1, Ns, QPs);
+
+  delete[] X;
+  return Yk;
+}
+
+// explicit template instantiations
+template void prime_factor<2>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                              const int32_t* es, const int64_t bp, const int64_t stride,
+                              const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+
+template void prime_factor<3>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                              const int32_t* es, const int64_t bp, const int64_t stride,
+                              const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+
+template void prime_factor<4>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                              const int32_t* es, const int64_t bp, const int64_t stride,
+                              const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+
+template void prime_factor<5>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                              const int32_t* es, const int64_t bp, const int64_t stride,
+                              const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+
+template void prime_factor<6>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                              const int32_t* es, const int64_t bp, const int64_t stride,
+                              const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+
+template void prime_factor<7>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
+                              const int32_t* es, const int64_t bp, const int64_t stride,
+                              const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);

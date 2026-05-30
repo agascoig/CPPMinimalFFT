@@ -43,8 +43,12 @@ class MinimalPlan {
     delete[] func_p;
     delete[] exp_p;
     for (int i=0;i<MAX_REGIONS;++i) {
-      if (pfa_params_p[i]!=nullptr)
-         delete pfa_params_p[i];
+      if (QPs_p[i]!=nullptr)
+         delete QPs_p[i];
+      if (nm_p[i]!=nullptr)
+         delete nm_p[i];
+      if (km_p[i]!=nullptr)
+         delete km_p[i];
     }
   }
 
@@ -61,7 +65,7 @@ class MinimalPlan {
  protected:
   void gen_inner_plan(int32_t flags);
 
-  int64_t total_size;
+  int64_t N;
   int64_t n[MAX_REGIONS];  // here: input and output size
   int32_t n_dims;          // number of dimensions
   int32_t region_start;
@@ -74,7 +78,10 @@ class MinimalPlan {
   fft_func_t (*func_p)[MAX_FACTORS] = {nullptr};
   int32_t (*exp_p)[MAX_FACTORS] = {nullptr};
 
-  PFAParams *pfa_params_p[MAX_REGIONS] = {nullptr};
+  int64_t *QPs_p[MAX_REGIONS] = {nullptr};
+  MAP_CACHE_T *nm_p[MAX_REGIONS] = {nullptr};
+  MAP_CACHE_T *km_p[MAX_REGIONS] = {nullptr};
+
   int32_t num_factors[MAX_REGIONS] = {0};  // zero init number of factors per region
 
   void add_plan_factor(int32_t r, int64_t ns, int64_t base, int32_t exp, fft_func_t func);

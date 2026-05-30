@@ -19,13 +19,13 @@ MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, in
   ns_p = new int64_t[region_end + 1][MAX_FACTORS]();
   func_p = new fft_func_t[region_end + 1][MAX_FACTORS]();
   exp_p = new int32_t[region_end + 1][MAX_FACTORS]();
-  total_size = 1;
+  N = 1;
   for (int i = 0; i < _n_dims; i++) {
     n[i] = _n[i];
-    total_size *= n[i];
+    N *= n[i];
   }
   for (int i = 0; i<=region_end;i++) {
-    pfa_params_p[i] = new PFAParams(total_size);
+    QPs_p[i] = new int64_t[MAX_FACTORS];
   }
   gen_inner_plan(flags);
 }
@@ -79,8 +79,8 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
 
   bool copy_input = true;
 
-  const int32_t factor_count = p_factors->count;
-  minassert(factor_count <= MAX_FACTORS, "Too many factors to plan_1d.");
+  const int32_t nf = p_factors->count;
+  minassert(nf <= MAX_FACTORS, "Too many factors to plan_1d.");
 
   struct sort_factor {
     int64_t n;
@@ -88,11 +88,11 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
   };
 
   sort_factor factors[MAX_FACTORS];
-  for (int32_t i = 0; i < factor_count; i++) {
+  for (int32_t i = 0; i < nf; i++) {
     factors[i].n = p_factors->n[i];
     factors[i].index = i;
   }
-  std::sort(factors, factors + factor_count, [](const sort_factor& a, const sort_factor& b) {
+  std::sort(factors, factors + nf, [](const sort_factor& a, const sort_factor& b) {
     return a.n > b.n;  // descending by n
   });
 
@@ -108,8 +108,8 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
       add_plan_factor(rd, n, 4, exp / 2, inverse ? &fftr4<true> : &fftr4<false>);
     else
       add_plan_factor(rd, n, 2, exp, inverse ? &fftr2<true> : &fftr2<false>);
-  } else if (factor_count <= MAX_FACTORS) {
-    for (int32_t j = factor_count - 1; j >= 0; j--) {
+  } else if (nf <= MAX_FACTORS) {
+    for (int32_t j = nf - 1; j >= 0; j--) {
       int32_t i = factors[j].index;
       int64_t base = p_factors->base[i];
       int32_t exp = p_factors->exponent[i];
@@ -136,7 +136,9 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
   free(p_factors);
 
   if (num_factors[rd] >= 2) {
-    generate_pfa_params(factor_count, ns_p[rd], pfa_params_p[rd]);
+    QPs_p[rd] = generate_QPs(nf, ns_p[rd]);
+    nm_p[rd] = generate_nmap(nf, N, ns_p[rd], QPs_p[rd]);
+    km_p[rd] = generate_kmap(nf, N, ns_p[rd], QPs_p[rd]);
   }
 }
 
@@ -153,36 +155,28 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
   const int64_t* n_p = ns_p[r];
   const fft_func_t* f_p = func_p[r];
   const int32_t* e_p = exp_p[r];
-  const PFAParams* params_p = pfa_params_p[r];
+  const int64_t* QPs = QPs_p[r];
+  const MAP_CACHE_T *nm = nm_p[r];
+  const MAP_CACHE_T *km = km_p[r];
 
-  int64_t lf = num_factors[r];
-  minassert(lf <= MAX_FACTORS, "Too many factors to execute_plan_no_copy.");
-  if (!lf) return;
+  int64_t nf = num_factors[r];
+  minassert(nf <= MAX_FACTORS, "Too many factors to execute_plan_no_copy.");
+  if (!nf) return;
 
-  switch (lf) {
+  switch (nf) {
     case 1:
       f_p[0](YY, XX, n_p[0], e_p[0], bp, stride, flags);
       break;
     case 2:
-      prime_factor<2>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
-      break;
     case 3:
-      prime_factor<3>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
-      break;
     case 4:
-      prime_factor<4>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
-      break;
     case 5:
-      prime_factor<5>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
-      break;
     case 6:
-      prime_factor<6>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
-      break;
     case 7:
-      prime_factor<7>(YY, XX, n_p, e_p, bp, stride, flags, f_p, params_p);
+      prime_factor(nf, YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
       break;
     default:
-      minassert(0, "Too many factors, should have planned bluestein.");
+      minassert(0, "Too many factors, should have planned Bluestein.");
   }
 }
 

@@ -24,27 +24,23 @@ MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, in
     n[i] = _n[i];
     N *= n[i];
   }
-  for (int i = 0; i<=region_end;i++) {
+  for (int i = 0; i <= region_end; i++) {
     QPs_p[i] = new int64_t[MAX_FACTORS];
   }
   gen_inner_plan(flags);
 }
 
-MinimalPlan::~MinimalPlan()
-   {
-    delete[] base_p;
-    delete[] ns_p;
-    delete[] func_p;
-    delete[] exp_p;
-    for (int i=0;i<MAX_REGIONS;++i) {
-      if (QPs_p[i]!=nullptr)
-         delete [] QPs_p[i];
-      if (nm_p[i]!=nullptr)
-         delete [] nm_p[i];
-      if (km_p[i]!=nullptr)
-         delete [] km_p[i];
-    }
+MinimalPlan::~MinimalPlan() {
+  delete[] base_p;
+  delete[] ns_p;
+  delete[] func_p;
+  delete[] exp_p;
+  for (int i = 0; i < MAX_REGIONS; ++i) {
+    if (QPs_p[i] != nullptr) delete[] QPs_p[i];
+    if (nm_p[i] != nullptr) delete[] nm_p[i];
+    if (km_p[i] != nullptr) delete[] km_p[i];
   }
+}
 
 std::ostream& operator<<(std::ostream& os, const MinimalPlan& P) {
   os << "Plan:\n";
@@ -61,8 +57,16 @@ std::ostream& operator<<(std::ostream& os, const MinimalPlan& P) {
     const int32_t* e_p = P.exp_p[r];
 
     for (int32_t f = 0; f < P.num_factors[r]; f++) {
-      os << "    Factor " << f << ": base=" << b_p[f] << " exp=" << e_p[f] << " ns=" << n_p[f]
-         << " func=" << (void*)f_p[f] << "\n";
+      os << "    Factor " << f << ": base=" << b_p[f] << " exp=" << e_p[f] << " ns=" << n_p[f];
+// << " func=" << (void*)f_p[f]
+      fft_func_t func = f_p[f];
+      for (int j = 0; j < sizeof(fns_names) / sizeof(fn_name_s); ++j) {
+        if (func == fns_names[j].fn) {
+          os << "func = " << fns_names[j].name;
+          break;
+        }
+      }
+      os << "\n";
     }
   }
   return os;
@@ -108,13 +112,16 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
   for (int32_t i = 0; i < nf; i++) {
     factors[i].n = p_factors->n[i];
     factors[i].index = i;
-    factors[i].bluestein = (p_factors->n[i]>DIRECT_SZ && (p_factors->base[i] >= DISPATCH_SZ
-    || dispatch[p_factors->base[i]]==nullptr)) ? true : false;
+    factors[i].bluestein =
+        (p_factors->n[i] > DIRECT_SZ &&
+         (p_factors->base[i] >= DISPATCH_SZ || dispatch[p_factors->base[i]] == nullptr))
+            ? true
+            : false;
   }
   std::sort(factors, factors + nf, [](const sort_factor& a, const sort_factor& b) {
     if (a.bluestein != b.bluestein)
-       return a.bluestein; // give bluestein priority (single-precision SIMD)
-    return a.n > b.n; // descending by n
+      return a.bluestein;  // give bluestein priority (single-precision SIMD)
+    return a.n > b.n;      // descending by n
   });
 
   if (n <= DIRECT_SZ) {
@@ -177,8 +184,8 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
   const fft_func_t* f_p = func_p[r];
   const int32_t* e_p = exp_p[r];
   const int64_t* QPs = QPs_p[r];
-  const MAP_CACHE_T *nm = nm_p[r];
-  const MAP_CACHE_T *km = km_p[r];
+  const MAP_CACHE_T* nm = nm_p[r];
+  const MAP_CACHE_T* km = km_p[r];
 
   int64_t nf = num_factors[r];
   minassert(nf <= MAX_FACTORS, "Too many factors to execute_plan_no_copy.");
@@ -202,16 +209,48 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
 }
 
 // Execute plan function with input copying if needed
-void MinimalPlan::execute_plan(MinAlignedVector &Y, MinAlignedVector &X, int64_t r, int64_t bp,
+void MinimalPlan::execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t r, int64_t bp,
                                int64_t stride) const {
-  MFFTELEM *Y_data = Y.data();
-  MFFTELEM *X_data = X.data();
-  
+  MFFTELEM* Y_data = Y.data();
+  MFFTELEM* X_data = X.data();
+
   MFFTELEM** YY = &Y_data;
   MFFTELEM** XX = &X_data;
   MinAlignedVector copy_X(X);
-  
+
   execute_plan_no_copy(YY, XX, r, bp, stride);
+
+  if (*YY != Y.data()) {
+    swap(Y, X);
+  }
+  if (X != copy_X) {
+    X = copy_X;
+  }
+}
+
+void MinimalPlan::execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t region_start,
+                               int32_t region_end, int64_t bp, int64_t stride) const {
+  MFFTELEM* Y_data = Y.data();
+  MFFTELEM* X_data = X.data();
+
+  MFFTELEM** YY = &Y_data;
+  MFFTELEM** XX = &X_data;
+  MinAlignedVector copy_X(X);
+
+  int i;
+  for (i=0;i<=region_end-region_start;++i) {
+    if ((i&1)==0)
+      execute_plan_no_copy(YY, XX, region_start+i, bp, stride);
+    else
+      execute_plan_no_copy(XX, YY, region_start+i, bp, stride);
+  }
+
+  if ((i&1)==0) {
+    // last result is in XX, so swap
+    MFFTELEM *tmp=*XX;
+    *XX=*YY;
+    *YY=tmp;
+  }
 
   if (*YY != Y.data()) {
     swap(Y, X);

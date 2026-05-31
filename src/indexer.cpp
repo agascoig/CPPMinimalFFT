@@ -47,11 +47,15 @@ void do_1d_plan(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r) {
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
+  MFFTELEM *orig_y = *YY;
+  MFFTELEM *orig_x = *XX;
 
   const int64_t stride = strides[r];
   int64_t bp = 0;
 
   while (bp != -1) {
+    *YY = orig_y; // keep pointer back to original data
+    *XX = orig_x; // keep pointer back to original data
     P.execute_plan_no_copy(YY, XX, r, bp, stride);
     bp = indexer_count(r, ndims, counts, strides, bp, dims_p);
   }
@@ -63,10 +67,14 @@ void do_1d_r0(const MinimalPlan &P, MDArray *oy, MDArray *ix) {
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
+  MFFTELEM *orig_y = *YY;
+  MFFTELEM *orig_x = *XX;
 
   int64_t bp = 0;
 
   while (bp < limit) {
+    *YY = orig_y; // keep pointer back to original data
+    *XX = orig_x; // keep pointer back to original data
     P.execute_plan_no_copy(YY, XX, 0, bp, 1);
     bp += vlength;
   }

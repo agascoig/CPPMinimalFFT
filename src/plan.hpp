@@ -19,7 +19,7 @@ static const int P_TOO_MANY_FACTORS = 64;
 static const int P_COPY_INPUT = 128;
 
 static const int DIRECT_SZ = 15;
-static const int MAX_PFA_PARAMS = (2*(MAX_FACTORS-1));
+static const int MAX_PFA_PARAMS = (2 * (MAX_FACTORS - 1));
 
 // Prime factorization result
 typedef struct {
@@ -34,6 +34,7 @@ factorization* factorize(int64_t n);
 // Minimal plan structure
 class MinimalPlan {
  public:
+  // _n is the dimension for each region, _n_dims number of dims
   MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, int32_t _region_end,
               int32_t _flags);
 
@@ -41,13 +42,17 @@ class MinimalPlan {
 
   void execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
                             int64_t stride) const;  // *XX may be destroyed
-  void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int64_t r, int64_t bp,
+  void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t r, int64_t bp,
                     int64_t stride) const;  // X preserved if not inplace
+  void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t region_start, 
+                    int32_t region_end, int64_t bp, int64_t stride) const;
   inline bool bt_flags(int32_t flag) { return (flags & flag) != 0; };
 
   friend std::ostream& operator<<(std::ostream& os, const MinimalPlan& P);
 
   fft_func_t* get_funcs(int r) { return func_p[r]; }
+  int32_t get_region_start() { return region_start; }
+  int32_t get_region_end() { return region_end; }
 
  protected:
   void gen_inner_plan(int32_t flags);
@@ -65,9 +70,9 @@ class MinimalPlan {
   fft_func_t (*func_p)[MAX_FACTORS] = {nullptr};
   int32_t (*exp_p)[MAX_FACTORS] = {nullptr};
 
-  int64_t *QPs_p[MAX_REGIONS] = {nullptr};
-  MAP_CACHE_T *nm_p[MAX_REGIONS] = {nullptr};
-  MAP_CACHE_T *km_p[MAX_REGIONS] = {nullptr};
+  int64_t* QPs_p[MAX_REGIONS] = {nullptr};
+  MAP_CACHE_T* nm_p[MAX_REGIONS] = {nullptr};
+  MAP_CACHE_T* km_p[MAX_REGIONS] = {nullptr};
 
   int32_t num_factors[MAX_REGIONS] = {0};  // zero init number of factors per region
 

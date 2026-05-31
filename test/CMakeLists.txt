@@ -13,6 +13,11 @@ add_executable(test17
     hmean.cpp
 )
 
+add_executable(test18
+    test18.cpp
+    hmean.cpp
+)
+
 target_compile_options(test17 PRIVATE ${ASAN_FLAGS})
 target_link_options(test17 PRIVATE ${ASAN_FLAGS})
 
@@ -21,16 +26,22 @@ find_library(FFTWF_LIB fftw3f HINT /usr/lib/aarch64-linux-gnu)
 
 #set(FFTW_LIB "/Users/alexandergascoigne/fft/fftw-install/lib/libfftw3.dylib")
 
-target_link_libraries(test17
+set(COMMON_LIBS PRIVATE
 CPPMinimalFFT
 ${FFTW_LIB}
 ${FFTWF_LIB})
 
-target_include_directories(test17 PRIVATE
+set(COMMON_INCLUDES PRIVATE
 ${CMAKE_BINARY_DIR}
 ../src/
 .
 /Users/alexandergascoigne/fft/fftw-install/include
 /opt/homebrew/include
 )
+
+target_include_directories(test17 PRIVATE ${COMMON_INCLUDES})
+target_include_directories(test18 PRIVATE ${COMMON_INCLUDES})
+
+target_link_libraries(test17 PRIVATE ${COMMON_LIBS})
+target_link_libraries(test18 PRIVATE ${COMMON_LIBS})
 

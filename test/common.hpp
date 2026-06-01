@@ -143,16 +143,16 @@ double get_s_time(int64_t start, int64_t end) {
 void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
                              MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
                              auto& P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
-                             double* t_s, int32_t nf, int64_t* Ns, fft_func_t* fns, int32_t* es,
+                             double* t_s, char nf, int64_t* Ns, fft_func_t* fns, int32_t* es,
                              bool pfa, int32_t inverse, double* std_dev, const int64_t* QPs,
                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km) {
   execute_fftw_plan(P_ref);
   if (P != nullptr) {
     int r_start = P->get_region_start();
     int r_end = P->get_region_end();
-    if (r_end==0)
-      P->execute_plan(Y,X, 0, 0, 1);
-      else
+    if (r_end == 0)
+      P->execute_plan(Y, X, 0, 0, 1);
+    else
       P->execute_multid_plan(Y, X, r_start, r_end, 0, 1);
   } else {
     MFFTELEM* Y_data = Y.data();
@@ -161,8 +161,30 @@ void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinA
     MFFTELEM** XX = &X_data;
     if (!pfa) {
       ((fft_func_t)fns[0])(YY, XX, N, es[0], 0, 1, inverse);
-    } else if (nf <= MAX_FACTORS) {
-      prime_factor(nf, YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+    }
+    else if (nf <= MAX_FACTORS) {
+      switch (nf) {
+        case 2:
+          prime_factor<2>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 3:
+          prime_factor<3>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 4:
+          prime_factor<4>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 5:
+          prime_factor<5>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 6:
+          prime_factor<6>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 7:
+          prime_factor<7>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        default:
+          minassert(0, "Too many factors, should have planned Bluestein.");
+      }
     } else {
       minassert(0, "Too many factors here.");
     }
@@ -183,7 +205,7 @@ void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinA
 void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAlignedVector& Y,
                            MinAlignedVector& X_ref, MinAlignedVector& X, MinAlignedVector& copy_X,
                            auto& P_ref, MinimalPlan* P, int64_t N, int32_t bm, double* t_ref_s,
-                           double* t_s, int32_t nf, int64_t* Ns, fft_func_t* fns, int32_t* es,
+                           double* t_s, char nf, int64_t* Ns, fft_func_t* fns, int32_t* es,
                            bool pfa, int32_t inverse, double* std_dev, const int64_t* QPs,
                            const MAP_CACHE_T* nm, const MAP_CACHE_T* km) {
   int64_t t_ref_start = 0, t_ref_end = 0;
@@ -230,10 +252,35 @@ void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAli
         P->execute_multid_plan(Y, X, r_start, r_end, 0, 1);
       }
     } else {
+      MFFTELEM* Y_data = Y.data();
+      MFFTELEM* X_data = X.data();
+      MFFTELEM** YY = &Y_data;
+      MFFTELEM** XX = &X_data;
       if (!pfa) {
         ((fft_func_t)fns[0])(YY, XX, N, es[0], 0, 1, inverse);
       } else if (nf <= MAX_FACTORS) {
-        prime_factor(nf, YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+      switch (nf) {
+        case 2:
+          prime_factor<2>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 3:
+          prime_factor<3>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 4:
+          prime_factor<4>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 5:
+          prime_factor<5>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 6:
+          prime_factor<6>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        case 7:
+          prime_factor<7>(YY, XX, N, Ns, es, 0, 1, inverse, fns, QPs, nm, km);
+          break;
+        default:
+          minassert(0, "Too many factors, should have planned Bluestein.");
+      }
       } else {
         minassert(0, "Too many factors here.");
       }

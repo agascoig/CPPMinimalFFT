@@ -223,6 +223,7 @@ static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, si
 typedef struct {
   MFFTELEM* data;
   int64_t dims[MAX_DIMS];
+  int64_t strides[MAX_DIMS];
   int64_t total_size;
   int32_t ndims;
 } MDArray;
@@ -234,10 +235,12 @@ static inline MDArray create_mdarray(MFFTELEM* data, const int64_t* __restrict__
   arr.ndims = ndims;
 
   int64_t total_size = 1;
-  int64_t* arr_dims = arr.dims;
+  int64_t *arr_dims = arr.dims;
+  int64_t *strides = &arr.strides[0];
 
   for (int64_t i = 0; i < ndims; i++) {
     int64_t d = dims[i];
+    *strides++ = total_size;
     *arr_dims++ = d;
     total_size *= d;
   }

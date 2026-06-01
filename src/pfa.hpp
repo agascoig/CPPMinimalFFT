@@ -11,7 +11,8 @@ static const int MAX_MAP_CACHE = 1 << 12;
 
 using MAP_CACHE_T = uint16_t;
 
-void prime_factor(int nf, MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns, const int32_t* es,
+template <int nf>
+void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns, const int32_t* es,
                   const int64_t bp, const int64_t stride, const int32_t flags, const fft_func_t* fs,
                   const int64_t *QPs, const MAP_CACHE_T *nm, const MAP_CACHE_T *km);
 

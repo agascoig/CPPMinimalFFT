@@ -56,7 +56,7 @@ class MinimalPlan {
 
   friend std::ostream& operator<<(std::ostream& os, const MinimalPlan& P);
 
-  fft_func_t* get_funcs(int r) { return func_p[r]; }
+  fft_func_t* get_funcs(int r) { return pfunc[r]; }
   int32_t get_region_start() { return region_start; }
   int32_t get_region_end() { return region_end; }
 
@@ -71,10 +71,10 @@ class MinimalPlan {
   int32_t flags;
 
   // pointers to regions
-  int64_t (*base_p)[MAX_FACTORS] = {nullptr};
-  int64_t (*ns_p)[MAX_FACTORS] = {nullptr};
-  fft_func_t (*func_p)[MAX_FACTORS] = {nullptr};
-  int32_t (*exp_p)[MAX_FACTORS] = {nullptr};
+  int64_t pbase[MAX_REGIONS][MAX_FACTORS];
+  int64_t pns[MAX_REGIONS][MAX_FACTORS];
+  fft_func_t pfunc[MAX_REGIONS][MAX_FACTORS];
+  int32_t pexp[MAX_REGIONS][MAX_FACTORS];
 
   int64_t* QPs_p[MAX_REGIONS] = {nullptr};
   MAP_CACHE_T* nm_p[MAX_REGIONS] = {nullptr};

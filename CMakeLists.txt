@@ -10,13 +10,13 @@ set(VERSION "V0.0.2")
 set(MINFFT "64") # double precision
 
 # set use SIMD code ON, or OFF for regular scalar
-#set(SIMD "ON")
-set(SIMD "OFF")
+set(SIMD "ON")
+#set(SIMD "OFF")
 
 #set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
-set(SANITIZE "")
+#set(SANITIZE "")
 
-set(OPTIMIZE "-O0") # cannot do with SIMD ON
+#set(OPTIMIZE "-O0") # cannot do with SIMD ON
 #set(OPTIMIZE "-O1")
 set(OPTIMIZE "-O3")
 

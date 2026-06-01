@@ -15,10 +15,6 @@ MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, in
   minassert(n_dims <= MAX_DIMS, "Too many dimensions");
   minassert(region_end - region_start < MAX_REGIONS, "Too many regions");
 
-  base_p = new int64_t[region_end + 1][MAX_FACTORS]();
-  ns_p = new int64_t[region_end + 1][MAX_FACTORS]();
-  func_p = new fft_func_t[region_end + 1][MAX_FACTORS]();
-  exp_p = new int32_t[region_end + 1][MAX_FACTORS]();
   N = 1;
   for (int i = 0; i < _n_dims; i++) {
     n[i] = _n[i];
@@ -31,10 +27,6 @@ MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, in
 }
 
 MinimalPlan::~MinimalPlan() {
-  delete[] base_p;
-  delete[] ns_p;
-  delete[] func_p;
-  delete[] exp_p;
   for (int i = 0; i < MAX_REGIONS; ++i) {
     if (QPs_p[i] != nullptr) delete[] QPs_p[i];
     if (nm_p[i] != nullptr) delete[] nm_p[i];
@@ -51,10 +43,10 @@ std::ostream& operator<<(std::ostream& os, const MinimalPlan& P) {
   for (int32_t r = P.region_start; r <= P.region_end; r++) {
     os << "  Region " << r << ": n=" << P.n[r] << " num_factors=" << P.num_factors[r] << "\n";
 
-    const int64_t* b_p = P.base_p[r];
-    const int64_t* n_p = P.ns_p[r];
-    const fft_func_t* f_p = P.func_p[r];
-    const int32_t* e_p = P.exp_p[r];
+    const int64_t* b_p = P.pbase[r];
+    const int64_t* n_p = P.pns[r];
+    const fft_func_t* f_p = P.pfunc[r];
+    const int32_t* e_p = P.pexp[r];
 
     for (int32_t f = 0; f < P.num_factors[r]; f++) {
       os << "    Factor " << f << ": base=" << b_p[f] << " exp=" << e_p[f] << " ns=" << n_p[f];
@@ -80,10 +72,10 @@ void MinimalPlan::add_plan_factor(int32_t region, int64_t _ns, int64_t _base, in
   minassert(num_factors[region] < MAX_FACTORS,
             "MinimalPlan::add_plan_factor Exceeded maximum factors per region");
 
-  ns_p[region][factor_idx] = _ns;
-  base_p[region][factor_idx] = _base;
-  exp_p[region][factor_idx] = _exp;
-  func_p[region][factor_idx] = _func;
+  pns[region][factor_idx] = _ns;
+  pbase[region][factor_idx] = _base;
+  pexp[region][factor_idx] = _exp;
+  pfunc[region][factor_idx] = _func;
   num_factors[region]++;
 }
 
@@ -164,9 +156,9 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
   free(p_factors);
 
   if (num_factors[rd] >= 2) {
-    QPs_p[rd] = generate_QPs(nf, ns_p[rd]);
-    nm_p[rd] = generate_nmap(nf, N, ns_p[rd], QPs_p[rd]);
-    km_p[rd] = generate_kmap(nf, N, ns_p[rd], QPs_p[rd]);
+    QPs_p[rd] = generate_QPs(nf, pns[rd]);
+    nm_p[rd] = generate_nmap(nf, N, pns[rd], QPs_p[rd]);
+    km_p[rd] = generate_kmap(nf, N, pns[rd], QPs_p[rd]);
   }
 }
 
@@ -204,24 +196,27 @@ void MinimalPlan::execute_multid_plan(MinAlignedVector& Y, MinAlignedVector& X,
   }
 
   if (YMD.data != Y.data()) {
-    swap(Y, X); // swap input Y and X, so that result is in Y
+    swap(Y, X);  // swap input Y and X, so that result is in Y
   }
-  if (X != copy_X) {
+
+  if (flags & P_INPLACE)
+    X = Y;
+  else if (X != copy_X) {
     X = copy_X;
   }
 }
 
 void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
                                        int64_t stride) const {
-  const int64_t* b_p = base_p[r];
-  const int64_t* n_p = ns_p[r];
-  const fft_func_t* f_p = func_p[r];
-  const int32_t* e_p = exp_p[r];
+  const int64_t* b_p = pbase[r];
+  const int64_t* n_p = pns[r];
+  const fft_func_t* f_p = pfunc[r];
+  const int32_t* e_p = pexp[r];
   const int64_t* QPs = QPs_p[r];
   const MAP_CACHE_T* nm = nm_p[r];
   const MAP_CACHE_T* km = km_p[r];
 
-  int64_t nf = num_factors[r];
+  char nf = num_factors[r];
   minassert(nf <= MAX_FACTORS, "Too many factors to execute_plan_no_copy.");
   if (!nf) return;
 
@@ -230,12 +225,22 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
       f_p[0](YY, XX, n_p[0], e_p[0], bp, stride, flags);
       break;
     case 2:
+      prime_factor<2>(YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
+      break;
     case 3:
+      prime_factor<3>(YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
+      break;
     case 4:
+      prime_factor<4>(YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
+      break;
     case 5:
+      prime_factor<5>(YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
+      break;
     case 6:
+      prime_factor<6>(YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
+      break;
     case 7:
-      prime_factor(nf, YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
+      prime_factor<7>(YY, XX, N, n_p, e_p, bp, stride, flags, f_p, QPs, nm, km);
       break;
     default:
       minassert(0, "Too many factors, should have planned Bluestein.");
@@ -259,8 +264,8 @@ void MinimalPlan::execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t
     swap(Y, X);
   }
 
-  if (flags&P_INPLACE)
+  if (flags & P_INPLACE)
     X = Y;
-  else
+  else if (X != copy_X)
     X = copy_X;
 }

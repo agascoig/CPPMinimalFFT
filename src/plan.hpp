@@ -42,10 +42,16 @@ class MinimalPlan {
 
   void execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
                             int64_t stride) const;  // *XX may be destroyed
-  void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t r, int64_t bp,
-                    int64_t stride) const;  // X preserved if not inplace
-  void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t region_start, 
-                    int32_t region_end, int64_t bp, int64_t stride) const;
+
+  // does all ffts from region_start to region_end
+  void execute_multid_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t region_start,
+                           int32_t region_end, int64_t bp,
+                           int64_t stride) const;  // X preserved if not inplace)
+
+  // X preserved if not inplace, does only a single FFT in region r
+  void execute_plan(
+      MinAlignedVector& Y, MinAlignedVector& X, int32_t r, int64_t bp,
+      int64_t stride) const;
   inline bool bt_flags(int32_t flag) { return (flags & flag) != 0; };
 
   friend std::ostream& operator<<(std::ostream& os, const MinimalPlan& P);

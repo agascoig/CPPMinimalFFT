@@ -58,11 +58,11 @@ std::ostream& operator<<(std::ostream& os, const MinimalPlan& P) {
 
     for (int32_t f = 0; f < P.num_factors[r]; f++) {
       os << "    Factor " << f << ": base=" << b_p[f] << " exp=" << e_p[f] << " ns=" << n_p[f];
-// << " func=" << (void*)f_p[f]
+      // << " func=" << (void*)f_p[f]
       fft_func_t func = f_p[f];
       for (int j = 0; j < sizeof(fns_names) / sizeof(fn_name_s); ++j) {
         if (func == fns_names[j].fn) {
-          os << "func = " << fns_names[j].name;
+          os << " func = " << fns_names[j].name;
           break;
         }
       }
@@ -177,6 +177,40 @@ void MinimalPlan::gen_inner_plan(int32_t flags) {
   }
 }
 
+void MinimalPlan::execute_multid_plan(MinAlignedVector& Y, MinAlignedVector& X,
+                                      int32_t region_start, int32_t region_end, int64_t bp,
+                                      int64_t stride) const {
+  MFFTELEM* Y_data = Y.data();
+  MFFTELEM* X_data = X.data();
+
+  MinAlignedVector copy_X(X);
+
+  MDArray YMD = create_mdarray(Y_data, n, n_dims);
+  MDArray XMD = create_mdarray(X_data, n, n_dims);
+
+  int i;
+  for (i = 0; i <= region_end - region_start; ++i) {
+    if ((i & 1) == 0)
+      do_fft_planned(*this, &YMD, &XMD, region_start + i);
+    else
+      do_fft_planned(*this, &XMD, &YMD, region_start + i);
+  }
+
+  if ((i & 1) == 0) {
+    // last result is in XMD, so swap XMD and YMD
+    MFFTELEM* tmp = XMD.data;
+    XMD.data = YMD.data;
+    YMD.data = tmp;
+  }
+
+  if (YMD.data != Y.data()) {
+    swap(Y, X); // swap input Y and X, so that result is in Y
+  }
+  if (X != copy_X) {
+    X = copy_X;
+  }
+}
+
 void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, int64_t bp,
                                        int64_t stride) const {
   const int64_t* b_p = base_p[r];
@@ -206,6 +240,7 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX, int64_t r, 
     default:
       minassert(0, "Too many factors, should have planned Bluestein.");
   }
+  // *YY and *XX may have flipped
 }
 
 // Execute plan function with input copying if needed
@@ -223,39 +258,9 @@ void MinimalPlan::execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t
   if (*YY != Y.data()) {
     swap(Y, X);
   }
-  if (X != copy_X) {
+
+  if (flags&P_INPLACE)
+    X = Y;
+  else
     X = copy_X;
-  }
-}
-
-void MinimalPlan::execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t region_start,
-                               int32_t region_end, int64_t bp, int64_t stride) const {
-  MFFTELEM* Y_data = Y.data();
-  MFFTELEM* X_data = X.data();
-
-  MFFTELEM** YY = &Y_data;
-  MFFTELEM** XX = &X_data;
-  MinAlignedVector copy_X(X);
-
-  int i;
-  for (i=0;i<=region_end-region_start;++i) {
-    if ((i&1)==0)
-      execute_plan_no_copy(YY, XX, region_start+i, bp, stride);
-    else
-      execute_plan_no_copy(XX, YY, region_start+i, bp, stride);
-  }
-
-  if ((i&1)==0) {
-    // last result is in XX, so swap
-    MFFTELEM *tmp=*XX;
-    *XX=*YY;
-    *YY=tmp;
-  }
-
-  if (*YY != Y.data()) {
-    swap(Y, X);
-  }
-  if (X != copy_X) {
-    X = copy_X;
-  }
 }

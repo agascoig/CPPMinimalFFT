@@ -252,7 +252,7 @@ typedef void (*fft_func_t)(MFFTELEM** Y, MFFTELEM** X, const int64_t N, const in
 
 typedef struct MinimalPlan MinimalPlan;
 
-void do_fft_planned(const MinimalPlan* P, MDArray* oy, MDArray* ix, int32_t r);
+void do_fft_planned(const MinimalPlan &P, MDArray* oy, MDArray* ix, int32_t r);
 
 void do_fft(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, const int64_t bp,
             const int64_t stride, const int32_t flags, const fft_func_t* fs, const int64_t* params,

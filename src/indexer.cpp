@@ -44,6 +44,7 @@ void do_1d_plan(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r) {
     strides[s] = prod;
     prod *= *dims_p++;
   }
+  dims_p = oy->dims;
 
   MFFTELEM **YY = &(oy->data);
   MFFTELEM **XX = &(ix->data);
@@ -54,11 +55,12 @@ void do_1d_plan(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r) {
   int64_t bp = 0;
 
   while (bp != -1) {
-    *YY = orig_y; // keep pointer back to original data
-    *XX = orig_x; // keep pointer back to original data
+    *YY = orig_y; // keep pointing back to original data
+    *XX = orig_x; // keep pointing back to original data
     P.execute_plan_no_copy(YY, XX, r, bp, stride);
     bp = indexer_count(r, ndims, counts, strides, bp, dims_p);
   }
+  // *YY and *XX may have flipped
 }
 
 void do_1d_r0(const MinimalPlan &P, MDArray *oy, MDArray *ix) {
@@ -73,11 +75,12 @@ void do_1d_r0(const MinimalPlan &P, MDArray *oy, MDArray *ix) {
   int64_t bp = 0;
 
   while (bp < limit) {
-    *YY = orig_y; // keep pointer back to original data
-    *XX = orig_x; // keep pointer back to original data
+    *YY = orig_y; // keep pointing back to original data
+    *XX = orig_x; // keep pointing back to original data
     P.execute_plan_no_copy(YY, XX, 0, bp, 1);
     bp += vlength;
   }
+  // *YY and *XX may have flipped
 }
 
 // do_fft_planned function
@@ -116,7 +119,7 @@ void do_1d_func(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es,
 
   while (bp != -1) {
     *YY = orig_y; // keep pointing back to original data
-    *XX = orig_x; // keep pointer back to original data
+    *XX = orig_x; // keep pointing back to original data
     fsr(YY, XX, vlength, esr, bp, stride, flags);
     bp = indexer_count(r, oy_ndims, counts, strides, bp, oy_dims);
   }

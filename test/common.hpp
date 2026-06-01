@@ -153,7 +153,7 @@ void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref, MinA
     if (r_end==0)
       P->execute_plan(Y,X, 0, 0, 1);
       else
-      P->execute_plan(Y, X, r_start, r_end, 0, 1);
+      P->execute_multid_plan(Y, X, r_start, r_end, 0, 1);
   } else {
     MFFTELEM* Y_data = Y.data();
     MFFTELEM* X_data = X.data();
@@ -227,7 +227,7 @@ void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref, MinAli
       if (r_end == 0)
         P->execute_plan(Y, X, 0, 0, 1);
       else {
-        P->execute_plan(Y, X, r_start, r_end, 0, 1);
+        P->execute_multid_plan(Y, X, r_start, r_end, 0, 1);
       }
     } else {
       if (!pfa) {
@@ -318,7 +318,6 @@ void test_fft(random_normal& RNG, const char* name, int bm, int inverse, int64_t
   fftw_plan P_ref;
   if (dims > 1) {
     P_ref = create_fftw_multid_plan(dims, Ns, X_ref.data(), Y_ref.data(), inverse);
-    std::cerr << "Created multi-dimensional plan.\n";
   } else
     P_ref = create_fftw_plan(N, X_ref.data(), Y_ref.data(), inverse);
   int test_repeat = bm ? NUM_TIMED_TESTS : 1;

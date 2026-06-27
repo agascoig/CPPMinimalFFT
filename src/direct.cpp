@@ -21,8 +21,6 @@ void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
-  minassert(N > 0 && N <= DIRECT_SZ, "N too large for direct DFT");
-
   auto* __restrict__ W =
       reinterpret_cast<const std::complex<MFFTELEMRI>* __restrict__>(DIRECT_COEFFS[N]);
 

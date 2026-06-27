@@ -200,6 +200,15 @@ int main() {
   gen_cossin(preamble + "3[] = {\n", 3, EXP_LIMIT);
   gen_cossin(preamble + "5[] = {\n", 5, EXP_LIMIT);
   gen_cossin(preamble + "7[] = {\n", 7, EXP_LIMIT);
+  gen_cossin(preamble + "11[] = {\n", 11, 10);
+  gen_cossin(preamble + "13[] = {\n", 13, 10);
+  gen_cossin(preamble + "17[] = {\n", 17, 10);
+  gen_cossin(preamble + "19[] = {\n", 19, 10);
+  gen_cossin(preamble + "23[] = {\n", 23, 10);
+  gen_cossin(preamble + "29[] = {\n", 29, 10);
+  gen_cossin(preamble + "31[] = {\n", 31, 10);
+  gen_cossin(preamble + "37[] = {\n", 37, 10);
+  gen_cossin(preamble + "41[] = {\n", 41, 10);
 
   std::cout << "\n";
 

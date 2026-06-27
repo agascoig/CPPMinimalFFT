@@ -55,6 +55,7 @@ static void print_fns(char* buf, fft_func_t* fns) {
   buf[0] = '\0';
   fn_str[0] = '\0';
   if (fns == nullptr) return;
+  strcat(buf, "(");
   for (int i = 0; i < MAX_FACTORS; ++i) {
     fft_func_t func = fns[i];
     if (func == nullptr) continue;
@@ -67,6 +68,7 @@ static void print_fns(char* buf, fft_func_t* fns) {
     }
   }
   if (strlen(buf)) buf[strlen(buf) - 1] = 0;  // remove last space
+  strcat(buf, ")");
 }
 
 fftwf_plan create_fftw_plan(int n, std::complex<float>* in, std::complex<float>* out, int inverse) {
@@ -343,10 +345,10 @@ void print_result(const char* preamble, const char* name, int64_t N, int nf, int
     snprintf(factors_str + strlen(factors_str), sizeof(factors_str), "%" PRId64 "%c", Ns[i], comma);
   }
   if (bm) {
-    printf("%s %s %s %s] std_dev=%2.2es (%s)\n", preamble, name, timing_str, factors_str, std_dev,
+    printf("%s %s %s %s] std_dev=%2.2es %s\n", preamble, name, timing_str, factors_str, std_dev,
            fn_str);
   } else {
-    printf("%s %s %s %s] (%s)\n", preamble, name, timing_str, factors_str, fn_str);
+    printf("%s %s %s %s] %s\n", preamble, name, timing_str, factors_str, fn_str);
   }
   fflush(stdout);
 }
@@ -425,7 +427,7 @@ int64_t prod(int64_t* arr, int len) {
 
 void driver(random_normal& RNG, hashmap_t& d, int* radix, int radix_count, int nf, int bm, int* pc,
             int* fc, int32_t inverse, bool pfa, const int64_t* N_vals, int N_val_count,
-            const char* name) {
+            const char* name, int64_t direct_sz) {
   int64_t bs[MAX_FACTORS];
   int32_t es[MAX_FACTORS];
   fft_func_t fns[MAX_FACTORS];
@@ -447,7 +449,7 @@ void driver(random_normal& RNG, hashmap_t& d, int* radix, int radix_count, int n
           bs[i] = r;
           if ((r < DISPATCH_SZ) && (dispatch[r]))
             fns[i] = inverse ? dispatch_inverse[r] : dispatch[r];
-          else if (factor < DIRECT_SZ)
+          else if (factor < direct_sz)
             fns[i] = inverse ? &direct_dft<true> : &direct_dft<false>;
           else
             fns[i] = inverse ? &bluestein<true> : &bluestein<false>;

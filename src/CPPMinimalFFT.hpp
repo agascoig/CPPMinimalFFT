@@ -26,7 +26,8 @@ typedef std::complex<MFFTELEMRI> MFFTELEM;
 
 #if !defined(__APPLE__)
 // linux
-static inline uint64_t clock_gettime_nsec_np(clockid_t clk_id) {
+static inline uint64_t clock_gettime_nsec_np(clockid_t clk_id)
+{
   struct timespec ts;
   clock_gettime(clk_id, &ts);
   return (uint64_t)ts.tv_sec * 1000000000ull + ts.tv_nsec;
@@ -35,33 +36,71 @@ static inline uint64_t clock_gettime_nsec_np(clockid_t clk_id) {
 
 static inline uint64_t mingettime() { return clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW); }
 
-void minsincos(double x, double* s, double* c);  // need for Bluestein
+void minsincos(double x, double *s, double *c); // need for Bluestein
 
-inline MFFTELEM minsincos(double angle) {
+inline MFFTELEM minsincos(double angle)
+{
   double zi, zr;
-  minsincos(angle, &zi, &zr);  // calling openlibm
+  minsincos(angle, &zi, &zr); // calling openlibm
   return std::complex<MFFTELEMRI>(zr, zi);
 }
 
-template <bool Inverse>
-static inline std::complex<MFFTELEMRI> times_pmim(std::complex<MFFTELEMRI> z) {
-  if constexpr (Inverse) {
-    return std::complex<MFFTELEMRI>(-std::imag(z), std::real(z));
-  } else {
-    return std::complex<MFFTELEMRI>(std::imag(z), -std::real(z));
-  }
+static inline std::complex<MFFTELEMRI> times_im(std::complex<MFFTELEMRI> z)
+{
+  return std::complex<MFFTELEMRI>(-std::imag(z), std::real(z));
 }
 
-static void print_stacktrace(void) {
-  void* buffer[100];
+static inline std::complex<MFFTELEMRI> times_nim(std::complex<MFFTELEMRI> z)
+{
+  return std::complex<MFFTELEMRI>(std::imag(z), -std::real(z));
+}
+
+template <typename T>
+inline T MUL_I_CPX(T x)
+{
+  return T(-std::imag(x), std::real(x));
+}
+
+template <typename T>
+inline T MUL_NI_CPX(T x)
+{
+  return T(std::imag(x), -std::real(x));
+}
+
+template <typename T>
+inline T MUL_IM_CPX(MFFTELEMRI a, T x)
+{
+  return a * MUL_I_CPX(x);
+}
+
+template <typename T>
+inline T MUL_NIM_CPX(MFFTELEMRI a, T x)
+{
+  return a * MUL_NI_CPX(x);
+}
+
+// (a+ ia)*(b+ic)
+template <typename T>
+inline T MUL_RI_CPX(MFFTELEMRI a, T x)
+{
+  MFFTELEMRI b = std::real(x);
+  MFFTELEMRI c = std::imag(x);
+  return T(a*(b-c), a*(b+c));
+}
+
+static void print_stacktrace(void)
+{
+  void *buffer[100];
   int nptrs = backtrace(buffer, 100);
-  char** strings = backtrace_symbols(buffer, nptrs);
-  if (strings == NULL) {
+  char **strings = backtrace_symbols(buffer, nptrs);
+  if (strings == NULL)
+  {
     perror("backtrace_symbols");
     exit(EXIT_FAILURE);
   }
   fprintf(stderr, "Stacktrace:\n");
-  for (int i = 0; i < nptrs; i++) {
+  for (int i = 0; i < nptrs; i++)
+  {
     fprintf(stderr, "%s\n", strings[i]);
   }
   free(strings);
@@ -71,8 +110,10 @@ static void print_stacktrace(void) {
 #define minassert(cond, msg) ((void)0)
 #else
 #define minassert(cond, msg)                          \
-  do {                                                \
-    if (!(cond)) {                                    \
+  do                                                  \
+  {                                                   \
+    if (!(cond))                                      \
+    {                                                 \
       fprintf(stderr, "Assertion failed: %s\n", msg); \
       print_stacktrace();                             \
       exit(EXIT_FAILURE);                             \
@@ -80,59 +121,68 @@ static void print_stacktrace(void) {
   } while (0)
 #endif
 
-static const int ALIGN_SZ = 16;  // 8 for single-precision will not work
+static const int ALIGN_SZ = 16; // 8 for single-precision will not work
 
 template <typename T>
-class MinAlignedAllocator {
- public:
+class MinAlignedAllocator
+{
+public:
   using value_type = T;
 
   MinAlignedAllocator() noexcept = default;
   template <typename U>
-  MinAlignedAllocator(const MinAlignedAllocator<U>&) noexcept {}
+  MinAlignedAllocator(const MinAlignedAllocator<U> &) noexcept {}
 
-  [[nodiscard]] T* allocate(std::size_t n) {
+  [[nodiscard]] T *allocate(std::size_t n)
+  {
     // Calculate the size needed for n elements
 
     std::size_t size = n * sizeof(T);
     // Allocate memory with alignment of T
     //    void *ptr =
     //        aligned_alloc(sizeof(T), size);
-    void* ptr = std::aligned_alloc(sizeof(T), size);  // simd: 16 byte alignment
+    void *ptr = std::aligned_alloc(sizeof(T), size); // simd: 16 byte alignment
     // std::cerr << "Alloc: " << ptr << std::endl;
-    if (!ptr) {
+    if (!ptr)
+    {
       throw std::bad_alloc();
     }
-    return static_cast<T*>(ptr);
+    return static_cast<T *>(ptr);
   }
 
-  void deallocate(T* p, std::size_t) noexcept {
+  void deallocate(T *p, std::size_t) noexcept
+  {
     // std::cerr << "Free: " << p << std::endl;
     std::free(p);
   }
 };
 
 template <typename T, typename U>
-bool operator==(const MinAlignedAllocator<T>&, const MinAlignedAllocator<U>&) noexcept {
+bool operator==(const MinAlignedAllocator<T> &, const MinAlignedAllocator<U> &) noexcept
+{
   return true;
 }
 
 template <typename T, typename U>
-bool operator!=(const MinAlignedAllocator<T>&, const MinAlignedAllocator<U>&) noexcept {
+bool operator!=(const MinAlignedAllocator<T> &, const MinAlignedAllocator<U> &) noexcept
+{
   return false;
 }
 
 using MinAlignedVector = std::vector<MFFTELEM, MinAlignedAllocator<MFFTELEM>>;
 
-static inline void* minaligned_alloc(size_t alignment, size_t sz, size_t count) {
-  void* p = aligned_alloc(alignment, sz * count);
+static inline void *minaligned_alloc(size_t alignment, size_t sz, size_t count)
+{
+  void *p = aligned_alloc(alignment, sz * count);
   minassert(p, "Memory allocation failed.");
   return p;
 }
 
-static inline void* minaligned_calloc(size_t alignment, size_t sz, size_t count) {
-  void* p = aligned_alloc(alignment, sz * count);
-  if (!p) {
+static inline void *minaligned_calloc(size_t alignment, size_t sz, size_t count)
+{
+  void *p = aligned_alloc(alignment, sz * count);
+  if (!p)
+  {
     print_stacktrace();
   }
   minassert(p, "Memory allocation failed.");
@@ -140,38 +190,45 @@ static inline void* minaligned_calloc(size_t alignment, size_t sz, size_t count)
   return p;
 }
 
-static int64_t prod(int nf, const int64_t *Ns) {
+static int64_t prod(int nf, const int64_t *Ns)
+{
   int64_t N = 1;
-  for (int i=0;i<nf;++i)
+  for (int i = 0; i < nf; ++i)
     N *= Ns[i];
   return N;
 }
 
-static int approx_cmp(MFFTELEM x, MFFTELEM y) {
+static int approx_cmp(MFFTELEM x, MFFTELEM y)
+{
   // borrowed from Julia: rtol = sqrt(eps(eltype(x)))
   double atol = 0;
   double rtol = sizeof(MFFTELEM) == 2 * 8   ? 1.4901161193847656e-8
                 : sizeof(MFFTELEM) == 2 * 4 ? 0.00034526698
                                             : 0.03125;
 
-  if (x == y) return 0;
+  if (x == y)
+    return 0;
 
   // Check for finite values
   if (std::isfinite(std::real(x)) && std::isfinite(std::imag(x)) && std::isfinite(std::real(y)) &&
-      std::isfinite(std::imag(y))) {
+      std::isfinite(std::imag(y)))
+  {
     double diff = std::abs(x - y);
     double norm_x = std::abs(x);
     double norm_y = std::abs(y);
     double tol = std::fmax(atol, rtol * std::fmax(norm_x, norm_y));
-    if (diff <= tol) return 0;
+    if (diff <= tol)
+      return 0;
   }
 
   return 1;
 }
 
-static double norm_v(const MinAlignedVector& X, size_t n) {
+static double norm_v(const MinAlignedVector &X, size_t n)
+{
   double sum = 0.0;
-  for (size_t i = 0; i < n; ++i) {
+  for (size_t i = 0; i < n; ++i)
+  {
     double zr = std::real(X[i]);
     double zi = std::imag(X[i]);
     sum += zr * zr + zi * zi;
@@ -179,30 +236,37 @@ static double norm_v(const MinAlignedVector& X, size_t n) {
   return sqrt(sum);
 }
 
-static int is_finite(const MinAlignedVector& X, size_t n) {
-  for (size_t i = 0; i < n; ++i) {
-    if (!std::isfinite(std::real(X[i])) || !std::isfinite(std::imag(X[i]))) {
-//      std::cerr << "not finite at n=" << i << std::endl;
+static int is_finite(const MinAlignedVector &X, size_t n)
+{
+  for (size_t i = 0; i < n; ++i)
+  {
+    if (!std::isfinite(std::real(X[i])) || !std::isfinite(std::imag(X[i])))
+    {
+      //      std::cerr << "not finite at n=" << i << std::endl;
       return 0;
     }
   }
   return 1;
 }
 
-static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, size_t n) {
+static int approx_cmp_v(const MinAlignedVector &X, const MinAlignedVector &Y, size_t n)
+{
   double atol = 0;
   double rtol = sizeof(MFFTELEM) == 2 * 8   ? 1.4901161193847656e-8
                 : sizeof(MFFTELEM) == 2 * 4 ? 0.00034526698
                                             : 0.03125;
 
-  if (X == Y) return 0;
+  if (X == Y)
+    return 0;
 
   double diff = 0.0;
   double tol = 0.0;
 
   // Check for finite values
-  if (is_finite(X, n) && is_finite(Y, n)) {
-    for (int i = 0; i < n; ++i) {
+  if (is_finite(X, n) && is_finite(Y, n))
+  {
+    for (int i = 0; i < n; ++i)
+    {
       double zr = std::real(X[i] - Y[i]);
       double zi = std::imag(X[i] - Y[i]);
       diff += zr * zr + zi * zi;
@@ -211,7 +275,8 @@ static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, si
     double norm_x = norm_v(X, n);
     double norm_y = norm_v(X, n);
     tol = std::fmax(atol, rtol * std::fmax(norm_x, norm_y));
-    if (diff <= tol) return 0;
+    if (diff <= tol)
+      return 0;
   }
   return 1;
 }
@@ -220,16 +285,18 @@ static int approx_cmp_v(const MinAlignedVector& X, const MinAlignedVector& Y, si
 #define MAX_REGIONS MAX_DIMS
 
 // Structure to represent multi-dimensional or decomposed array info
-typedef struct {
-  MFFTELEM* data;
+typedef struct
+{
+  MFFTELEM *data;
   int64_t dims[MAX_DIMS];
   int64_t strides[MAX_DIMS];
   int64_t total_size;
   int32_t ndims;
 } MDArray;
 
-static inline MDArray create_mdarray(MFFTELEM* data, const int64_t* __restrict__ dims,
-                                     int32_t ndims) {
+static inline MDArray create_mdarray(MFFTELEM *data, const int64_t *__restrict__ dims,
+                                     int32_t ndims)
+{
   MDArray arr;
   arr.data = data;
   arr.ndims = ndims;
@@ -238,7 +305,8 @@ static inline MDArray create_mdarray(MFFTELEM* data, const int64_t* __restrict__
   int64_t *arr_dims = arr.dims;
   int64_t *strides = &arr.strides[0];
 
-  for (int64_t i = 0; i < ndims; i++) {
+  for (int64_t i = 0; i < ndims; i++)
+  {
     int64_t d = dims[i];
     *strides++ = total_size;
     *arr_dims++ = d;
@@ -250,77 +318,210 @@ static inline MDArray create_mdarray(MFFTELEM* data, const int64_t* __restrict__
 }
 
 // fft_func_t: tag for do_fft
-typedef void (*fft_func_t)(MFFTELEM** Y, MFFTELEM** X, const int64_t N, const int32_t e1,
+typedef void (*fft_func_t)(MFFTELEM **Y, MFFTELEM **X, const int64_t N, const int32_t e1,
                            const int64_t bp, const int64_t stride, const int32_t flags);
 
 typedef struct MinimalPlan MinimalPlan;
 
-void do_fft_planned(const MinimalPlan &P, MDArray* oy, MDArray* ix, int32_t r);
+void do_fft_planned(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r);
 
-void do_fft(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, const int64_t bp,
-            const int64_t stride, const int32_t flags, const fft_func_t* fs, const int64_t* params,
+void do_fft(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es, const int64_t bp,
+            const int64_t stride, const int32_t flags, const fft_func_t *fs, const int64_t *params,
             const int32_t r);
 
 template <bool Inverse>
-void fftr2(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, const int32_t flags);
+template <>
+void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+template <>
+void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                 const int64_t stride, const int32_t flags);
+
 template <bool Inverse>
-void fftr3(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, const int32_t flags);
+template <>
+void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+template <>
+void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                 const int64_t stride, const int32_t flags);
+
 template <bool Inverse>
-void fftr4(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, const int32_t flags);
+template <>
+void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+template <>
+void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                 const int64_t stride, const int32_t flags);
+
 template <bool Inverse>
-void fftr5(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, const int32_t flags);
+template <>
+void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+template <>
+void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                 const int64_t stride, const int32_t flags);
+
 template <bool Inverse>
-void fftr7(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, const int32_t flags);
+template <>
+void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+template <>
+void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                 const int64_t stride, const int32_t flags);
+
 template <bool Inverse>
-void fftr8(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, const int32_t flags);
+template <>
+void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+template <>
+void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                 const int64_t stride, const int32_t flags);
+
 template <bool Inverse>
-void fftr9(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
            const int64_t stride, const int32_t flags);
+template <>
+void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+template <>
+void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                 const int64_t stride, const int32_t flags);
+
 template <bool Inverse>
-void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void fftr11(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void fftr13(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void fftr16(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void fftr17(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void fftr19(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void fftr23(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void fftr29(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void fftr31(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+            const int64_t stride, const int32_t flags);
+template <>
+void fftr31<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                   const int64_t stride, const int32_t flags);
+template <>
+void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
+                  const int64_t stride, const int32_t flags);
+
+template <bool Inverse>
+void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
                 const int64_t stride, const int32_t flags);
 template <bool Inverse>
-void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
                const int64_t stride, const int32_t flags);
 
 bool small_available(const int64_t N);
 
 template <bool Inverse>
-void small_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
+void small_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
                const int64_t stride, const int32_t flags);
 
 static const int SMALL_SZ = 28;
 
-static const fft_func_t dispatch[] = {nullptr,       nullptr,       &fftr2<false>, &fftr3<false>,
-                                      &fftr4<false>, &fftr5<false>, nullptr,       &fftr7<false>,
-                                      &fftr8<false>, &fftr9<false>};
+static const fft_func_t dispatch[] = {
+    nullptr, nullptr, &fftr2<false>, &fftr3<false>,
+    &fftr4<false>, &fftr5<false>, nullptr, &fftr7<false>,
+    &fftr8<false>, &fftr9<false>,
+    nullptr, &fftr11<false>, nullptr,
+    &fftr13<false>, nullptr, nullptr, &fftr16<false>,
+    &fftr17<false>, nullptr, &fftr19<false>,
+    nullptr, nullptr, nullptr, &fftr23<false>,
+    nullptr, nullptr, nullptr, nullptr, nullptr,
+    &fftr29<false>, nullptr, &fftr31<false>};
 static const fft_func_t dispatch_inverse[] = {
-    nullptr,      nullptr, &fftr2<true>, &fftr3<true>, &fftr4<true>,
-    &fftr5<true>, nullptr, &fftr7<true>, &fftr8<true>, &fftr9<true>};
+    nullptr, nullptr, &fftr2<true>, &fftr3<true>, &fftr4<true>,
+    &fftr5<true>, nullptr, &fftr7<true>, &fftr8<true>, &fftr9<true>,
+    nullptr, &fftr11<true>, nullptr,
+    &fftr13<true>, nullptr, nullptr, &fftr16<true>,
+    &fftr17<true>, nullptr, &fftr19<true>,
+    nullptr, nullptr, nullptr, &fftr23<true>,
+    nullptr, nullptr, nullptr, nullptr, nullptr,
+    &fftr29<true>, nullptr, &fftr31<true>};
 
 static const int DISPATCH_SZ = sizeof(dispatch) / sizeof(dispatch[0]);
 
 static inline int64_t count_leading_zeros(uint64_t x) { return __builtin_clzll(x); }
 
-struct fn_name_s {
+struct fn_name_s
+{
   fft_func_t fn;
-  const char* name;
-} const fns_names[] = {{&bluestein<false>, "bluestein"},   {&bluestein<true>, "ibluestein"},
-                 {&direct_dft<false>, "direct_dft"}, {&direct_dft<true>, "idirect_dft"},
-                 {&small_dft<false>, "small_dft"},   {&small_dft<true>, "ismall_dft"},
-                 {&fftr2<false>, "fftr2"}, {&fftr2<true>, "ifftr2"},
-                 {&fftr3<false>, "fftr3"}, {&fftr3<true>, "ifftr3"},
-                 {&fftr4<false>, "fftr4"}, {&fftr4<true>, "ifftr4"},
-                 {&fftr5<false>, "fftr5"}, {&fftr5<true>, "ifftr5"},
-                 {&fftr7<false>, "fftr7"}, {&fftr7<true>, "ifftr7"},
-                 {&fftr8<false>, "fftr8"}, {&fftr8<true>, "ifftr8"},
-                 {&fftr9<false>, "fftr9"}, {&fftr9<true>, "ifftr9"}
-              };
+  const char *name;
+} const fns_names[] = {{&bluestein<false>, "bluestein"}, {&bluestein<true>, "ibluestein"}, {&direct_dft<false>, "direct_dft"}, {&direct_dft<true>, "idirect_dft"}, {&small_dft<false>, "small_dft"}, {&small_dft<true>, "ismall_dft"}, {&fftr2<false>, "fftr2"}, {&fftr2<true>, "ifftr2"}, {&fftr3<false>, "fftr3"}, {&fftr3<true>, "ifftr3"}, {&fftr4<false>, "fftr4"}, {&fftr4<true>, "ifftr4"}, {&fftr5<false>, "fftr5"}, {&fftr5<true>, "ifftr5"}, {&fftr7<false>, "fftr7"}, {&fftr7<true>, "ifftr7"}, {&fftr8<false>, "fftr8"}, {&fftr8<true>, "ifftr8"}, {&fftr9<false>, "fftr9"}, {&fftr9<true>, "ifftr9"}, {&fftr11<false>, "fftr11"}, {&fftr11<true>, "fftr11i"}, {&fftr13<false>, "fftr13"}, {&fftr13<true>, "fftr13i"}, {&fftr17<false>, "fftr17"}, {&fftr17<true>, "fftr13i"}, {&fftr19<false>, "fftr19"}, {&fftr19<true>, "fftr19i"}, {&fftr23<false>, "fftr23"}, {&fftr23<true>, "fftr23i"}, {&fftr29<false>, "fftr29"}, {&fftr29<true>, "fftr29i"}, {&fftr31<false>, "fftr31"}, {&fftr31<true>, "fftr31i"}};
 
-#endif  // __CMINIMALFFT_H__
+#endif // __CMINIMALFFT_H__

@@ -8,6 +8,11 @@ if (SIMD STREQUAL ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSIMDON")
 endif()
 
+add_executable(test1
+    test1.cpp
+    hmean.cpp
+)
+
 add_executable(test17
     test17.cpp
     hmean.cpp
@@ -21,8 +26,8 @@ add_executable(test18
 target_compile_options(test17 PRIVATE ${ASAN_FLAGS})
 target_link_options(test17 PRIVATE ${ASAN_FLAGS})
 
-find_library(FFTW_LIB fftw3 HINT /usr/lib/aarch64-linux-gnu)
-find_library(FFTWF_LIB fftw3f HINT /usr/lib/aarch64-linux-gnu)
+find_library(FFTW_LIB fftw3 HINTS /usr/local/lib /usr/lib/aarch64-linux-gnu)
+find_library(FFTWF_LIB fftw3f HINTS /usr/local/lib /usr/lib/aarch64-linux-gnu)
 
 #set(FFTW_LIB "/Users/alexandergascoigne/fft/fftw-install/lib/libfftw3.dylib")
 
@@ -39,9 +44,11 @@ ${CMAKE_BINARY_DIR}
 /opt/homebrew/include
 )
 
+target_include_directories(test1 PRIVATE ${COMMON_INCLUDES})
 target_include_directories(test17 PRIVATE ${COMMON_INCLUDES})
 target_include_directories(test18 PRIVATE ${COMMON_INCLUDES})
 
+target_link_libraries(test1 PRIVATE ${COMMON_LIBS})
 target_link_libraries(test17 PRIVATE ${COMMON_LIBS})
 target_link_libraries(test18 PRIVATE ${COMMON_LIBS})
 

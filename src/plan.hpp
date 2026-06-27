@@ -18,7 +18,8 @@ static const int P_SCALED = 32;
 static const int P_TOO_MANY_FACTORS = 64;
 static const int P_COPY_INPUT = 128;
 
-static const int DIRECT_SZ = 15;
+static const int DEFAULT_DIRECT_SZ = 15;
+static const int DEFAULT_SMALL_SZ = 28;
 static const int MAX_PFA_PARAMS = (2 * (MAX_FACTORS - 1));
 
 // Prime factorization result
@@ -36,7 +37,7 @@ class MinimalPlan {
  public:
   // _n is the dimension for each region, _n_dims number of dims
   MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, int32_t _region_end,
-              int32_t _flags);
+              int32_t _flags, int64_t _direct_sz=DEFAULT_DIRECT_SZ, int64_t _small_sz=DEFAULT_SMALL_SZ);
 
   ~MinimalPlan();
 
@@ -69,6 +70,8 @@ class MinimalPlan {
   int32_t region_start;
   int32_t region_end;
   int32_t flags;
+  int64_t direct_sz;
+  int64_t small_sz;
 
   // pointers to regions
   int64_t pbase[MAX_REGIONS][MAX_FACTORS];

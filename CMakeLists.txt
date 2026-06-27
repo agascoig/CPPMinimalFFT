@@ -4,14 +4,14 @@ cmake_minimum_required(VERSION 3.10)  # Minimum CMake version
 
 project(CPPMinimalFFT CXX)          # Specify project name and language
 
-set(VERSION "V0.0.2")
+set(VERSION "V0.0.3")
 
 #set(MINFFT "32") # single precision
 set(MINFFT "64") # double precision
 
 # set use SIMD code ON, or OFF for regular scalar
-set(SIMD "ON")
-#set(SIMD "OFF")
+#set(SIMD "ON")
+set(SIMD "OFF")
 
 #set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
 #set(SANITIZE "")
@@ -26,7 +26,7 @@ set(NDEBUG "")
 # remove -fPIC
 set(CMAKE_CXX_FLAGS "-march=native -g ${OPTIMIZE} -std=c++23 -DMINFFT=${MINFFT} ${SANITIZE} ${NDEBUG} -DSIMD=\\\"${SIMD}\\\" -DVERSION=\\\"${VERSION}\\\"")
 
-find_library(HIGHWAY_LIB highway HINT /opt/homebrew/opt/highway)
+find_library(HIGHWAY_LIB highway HINTS /opt/homebrew/opt/highway)
 
 SET(LIB_SOURCES
    src/pfa.cpp
@@ -56,7 +56,8 @@ else()
    message(STATUS "Building non-SIMD precision=${MINFFT}")
    list(APPEND LIB_SOURCES
    src/direct.cpp
-   src/stockham.cpp
+#   src/stockham.cpp
+   src/spiral.cpp
    src/bluestein.cpp)
 endif()
 
@@ -76,5 +77,6 @@ src/)
 
 add_subdirectory(test)
 add_subdirectory(assembly)
+#add_subdirectory(testv)
 
 add_dependencies(CPPMinimalFFT assembly)

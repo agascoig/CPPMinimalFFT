@@ -4,8 +4,9 @@
 static const int64_t DIRECT_SZ = 15;
 
 static const int64_t factor_1[][1] = {{8},       {4},       {25},           {27},      {16},
-                                      {125},     {49},      {64},           {81},      {9 * 9 * 9},
-                                      {256},     {11 * 11}, {11 * 11 * 11}, {13 * 13}, {17 * 17},
+                                      {125},     {49},      {64},           {81},      {9 * 9 * 9}};
+
+static const int64_t factor_1_high_radix[][1] = {{256}, {11 * 11}, {11 * 11 * 11}, {13 * 13}, {17 * 17},
                                       {19 * 19}, {23 * 23}, {29 * 29},      {31 * 31}};
 
 static const int64_t factor_2[][2] = {{4, 25}, {25, 4}, {4, 49}, {8, 9}, {256, 25}, {16, 5},
@@ -168,13 +169,16 @@ int main(int argc, char* argv[]) {
   RUN_DRIVER(((int[]){7}), 1, bm, 0, false, factor_1, "timed stockham test 4");
   RUN_DRIVER(((int[]){8}), 1, bm, 0, false, factor_1, "timed stockham test 5");
   RUN_DRIVER(((int[]){9}), 1, bm, 0, false, factor_1, "timed stockham test 6");
-  RUN_DRIVER(((int[]){11}), 1, bm, 0, false, factor_1, "timed stockham test 7");
-  RUN_DRIVER(((int[]){13}), 1, bm, 0, false, factor_1, "timed stockham test 8");
-  RUN_DRIVER(((int[]){17}), 1, bm, 0, false, factor_1, "timed stockham test 9");
-  RUN_DRIVER(((int[]){19}), 1, bm, 0, false, factor_1, "timed stockham test 10");
-  RUN_DRIVER(((int[]){23}), 1, bm, 0, false, factor_1, "timed stockham test 11");
-  RUN_DRIVER(((int[]){29}), 1, bm, 0, false, factor_1, "timed stockham test 12");
-  RUN_DRIVER(((int[]){31}), 1, bm, 0, false, factor_1, "timed stockham test 13");
+
+  d.clear();
+  RUN_DRIVER(((int[]){11}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 1");
+  RUN_DRIVER(((int[]){13}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 2");
+  RUN_DRIVER(((int[]){16}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 3");
+  RUN_DRIVER(((int[]){17}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 4");
+  RUN_DRIVER(((int[]){19}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 5");
+  RUN_DRIVER(((int[]){23}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 6");
+  RUN_DRIVER(((int[]){29}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 7");
+  RUN_DRIVER(((int[]){31}), 1, bm, 0, false, factor_1_high_radix, "timed high radix test 8");
 
   d.clear();
   RUN_DRIVER(((int[]){2, 3, 5, 7}), 1, bm, 1, false, factor_1, "stockham inverse test 0");

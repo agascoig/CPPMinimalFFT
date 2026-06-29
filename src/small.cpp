@@ -7,13 +7,13 @@
 template <bool Inverse>
 static inline void butterfly_3_1(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* n_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_3_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* n_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   const MFFTELEMRI c30 = 0.5;
   const MFFTELEMRI c31 = 0.8660254037844386;  // sin(M_PI / 3.0);
   for (int8_t i = 0; i < N2; ++i) {
@@ -34,7 +34,7 @@ template <>
 inline void butterfly_3_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                         const int8_t* n_map, const int64_t N1, const int64_t N2,
                                         const int64_t bp, const int64_t stride,
-                                        const int32_t flags) {
+                                        const int32_t flags) noexcept {
   const MFFTELEMRI c30 = 0.5;
   const MFFTELEMRI c31 = 0.8660254037844386;  // sin(M_PI / 3.0);
   for (int8_t i = 0; i < N2; ++i) {
@@ -54,13 +54,13 @@ inline void butterfly_3_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 template <bool Inverse>
 static inline void butterfly_4_1(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* n_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_4_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* n_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   for (int8_t i = 0; i < N2; ++i) {
     const int8_t iN1 = i * N1;
     auto c0 = X[bp + stride * n_map[iN1]];
@@ -82,7 +82,7 @@ template <>
 inline void butterfly_4_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* n_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   for (int8_t i = 0; i < N2; ++i) {
     const int8_t iN1 = i * N1;
     auto c0 = X[bp + stride * n_map[iN1]];
@@ -103,13 +103,13 @@ inline void butterfly_4_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 template <bool Inverse>
 static inline void butterfly_5_1(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* n_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_5_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* n_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   const MFFTELEMRI c50 = 0.25;
   const MFFTELEMRI c51 = 0.9510565162951535;  // sin(2.0 * M_PI / 5.0);
   const MFFTELEMRI c52 = 0.5590169943749475;  // sqrt(5.0) / 4.0;
@@ -144,7 +144,7 @@ template <>
 inline void butterfly_5_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                         const int8_t* n_map, const int64_t N1, const int64_t N2,
                                         const int64_t bp, const int64_t stride,
-                                        const int32_t flags) {
+                                        const int32_t flags) noexcept {
   const MFFTELEMRI c50 = 0.25;
   const MFFTELEMRI c51 = 0.9510565162951535;  // sin(2.0 * M_PI / 5.0);
   const MFFTELEMRI c52 = 0.5590169943749475;  // sqrt(5.0) / 4.0;
@@ -178,13 +178,13 @@ inline void butterfly_5_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 template <bool Inverse>
 static inline void butterfly_7_1(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* n_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_7_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* n_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   const MFFTELEMRI c71 = 0.1666666666666666;    // -(cos(u) + cos(2 * u) + cos(3 * u)) / 3.0;
   const MFFTELEMRI c72 = 0.7901564685254002;    // (2 * cos(u) - cos(2 * u) - cos(3 * u)) / 3.0;
   const MFFTELEMRI c73 = 0.05585426728964774;   // (cos(u) - 2 * cos(2 * u) + cos(3 * u)) / 3.0;
@@ -244,12 +244,12 @@ inline void butterfly_7_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__
 template <bool Inverse>
 static inline void butterfly_7_1(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* n_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 template <>
 inline void butterfly_7_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                         const int8_t* n_map, const int64_t N1, const int64_t N2,
                                         const int64_t bp, const int64_t stride,
-                                        const int32_t flags) {
+                                        const int32_t flags) noexcept {
   const MFFTELEMRI c71 = 0.1666666666666666;    // -(cos(u) + cos(2 * u) + cos(3 * u)) / 3.0;
   const MFFTELEMRI c72 = 0.7901564685254002;    // (2 * cos(u) - cos(2 * u) - cos(3 * u)) / 3.0;
   const MFFTELEMRI c73 = 0.05585426728964774;   // (cos(u) - 2 * cos(2 * u) + cos(3 * u)) / 3.0;
@@ -309,11 +309,11 @@ inline void butterfly_7_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 template <bool Inverse>
 void butterfly_8_1(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int8_t* n_map,
                    const int64_t N1, const int64_t N2, const int64_t bp, const int64_t stride,
-                   const int32_t flags);
+                   const int32_t flags) noexcept;
 template <>
 void butterfly_8_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int8_t* n_map,
                          const int64_t N1, const int64_t N2, const int64_t bp, const int64_t stride,
-                         const int32_t flags) {
+                         const int32_t flags) noexcept {
   const double c81 = 0.7071067811865476;  // sqrt(2.0) / 2.0;
   for (int8_t i = 0; i < N2; ++i) {
     const int8_t iN1 = i * N1;
@@ -357,7 +357,7 @@ void butterfly_8_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, con
 template <>
 void butterfly_8_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int8_t* n_map,
                           const int64_t N1, const int64_t N2, const int64_t bp,
-                          const int64_t stride, const int32_t flags) {
+                          const int64_t stride, const int32_t flags) noexcept {
   const double c81 = 0.7071067811865476;  // sqrt(2.0) / 2.0;
   for (int8_t i = 0; i < N2; ++i) {
     const int8_t iN1 = i * N1;
@@ -401,12 +401,12 @@ void butterfly_8_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, co
 template <bool Inverse>
 static void butterfly_9_1(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X, const int8_t* n_map,
                           const int64_t N1, const int64_t N2, const int64_t bp,
-                          const int64_t stride, const int32_t flags);
+                          const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_9_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                 const int8_t* n_map, const int64_t N1, const int64_t N2,
-                                const int64_t bp, const int64_t stride, const int32_t flags) {
+                                const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   const double c90 = 0.5;
   const double c91 = 3.0 / 2.0;
   const double c93 = 0.766044443118978;    // (2 * cos(u) - cos(2 * u) - cos(4 * u)) / 3.0;
@@ -482,7 +482,7 @@ inline void butterfly_9_1<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__
 template <>
 inline void butterfly_9_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* n_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags) {
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   const double c90 = 0.5;
   const double c91 = 3.0 / 2.0;
   const double c93 = 0.766044443118978;    // (2 * cos(u) - cos(2 * u) - cos(4 * u)) / 3.0;
@@ -558,13 +558,13 @@ inline void butterfly_9_1<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 template <bool Inverse>
 static inline void butterfly_2_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* k_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_2_2<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* k_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   for (int8_t i = 0; i < N1; ++i) {
     auto c0 = X[bp + stride * (i)];
     auto c1 = X[bp + stride * (i + N1)];
@@ -577,7 +577,7 @@ template <>
 inline void butterfly_2_2<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                         const int8_t* k_map, const int64_t N1, const int64_t N2,
                                         const int64_t bp, const int64_t stride,
-                                        const int32_t flags) {
+                                        const int32_t flags) noexcept {
   for (int8_t i = 0; i < N1; ++i) {
     auto c0 = X[bp + stride * (i)];
     auto c1 = X[bp + stride * (i + N1)];
@@ -589,13 +589,13 @@ inline void butterfly_2_2<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 template <bool Inverse>
 static inline void butterfly_3_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* k_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_3_2<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* k_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   const MFFTELEMRI c30 = 0.5;
   const MFFTELEMRI c31 = 0.8660254037844386;  // sin(M_PI / 3.0);
   for (int8_t i = 0; i < N1; ++i) {
@@ -615,7 +615,7 @@ template <>
 inline void butterfly_3_2<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                         const int8_t* k_map, const int64_t N1, const int64_t N2,
                                         const int64_t bp, const int64_t stride,
-                                        const int32_t flags) {
+                                        const int32_t flags) noexcept {
   const MFFTELEMRI c30 = 0.5;
   const MFFTELEMRI c31 = 0.8660254037844386;  // sin(M_PI / 3.0);
   for (int8_t i = 0; i < N1; ++i) {
@@ -634,13 +634,13 @@ inline void butterfly_3_2<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 template <bool Inverse>
 static inline void butterfly_4_2(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                  const int8_t* k_map, const int64_t N1, const int64_t N2,
-                                 const int64_t bp, const int64_t stride, const int32_t flags);
+                                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 inline void butterfly_4_2<true>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                        const int8_t* k_map, const int64_t N1, const int64_t N2,
                                        const int64_t bp, const int64_t stride,
-                                       const int32_t flags) {
+                                       const int32_t flags) noexcept {
   for (int8_t i = 0; i < N1; ++i) {
     auto c0 = X[bp + stride * i];
     auto c1 = X[bp + stride * (i + N1)];
@@ -661,7 +661,7 @@ template <>
 inline void butterfly_4_2<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict__ X,
                                         const int8_t* k_map, const int64_t N1, const int64_t N2,
                                         const int64_t bp, const int64_t stride,
-                                        const int32_t flags) {
+                                        const int32_t flags) noexcept {
   for (int8_t i = 0; i < N1; ++i) {
     auto c0 = X[bp + stride * i];
     auto c1 = X[bp + stride * (i + N1)];
@@ -680,11 +680,11 @@ inline void butterfly_4_2<false>(MFFTELEM* __restrict__ Y, MFFTELEM* __restrict_
 
 template <bool Inverse>
 void small_1(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_1<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -693,7 +693,7 @@ void small_1<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_1<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -702,11 +702,11 @@ void small_1<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_2(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_2<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -716,7 +716,7 @@ void small_2<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_2<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -726,11 +726,11 @@ void small_2<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_3(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_3<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -740,7 +740,7 @@ void small_3<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_3<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -750,11 +750,11 @@ void small_3<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_4(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_4<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -764,7 +764,7 @@ void small_4<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_4<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -774,11 +774,11 @@ void small_4<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_5(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_5<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -788,7 +788,7 @@ void small_5<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_5<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -798,11 +798,11 @@ void small_5<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_6(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_6<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 2, 4, 3, 5, 1};
@@ -815,7 +815,7 @@ void small_6<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_6<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 2, 4, 3, 5, 1};
@@ -828,11 +828,11 @@ void small_6<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_7(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_7<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 1, 2, 3, 4, 5, 6};
@@ -841,7 +841,7 @@ void small_7<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_7<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 1, 2, 3, 4, 5, 6};
@@ -850,11 +850,11 @@ void small_7<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_8(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_8<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -863,7 +863,7 @@ void small_8<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_8<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 1, 2, 3, 4, 5, 6, 7};
@@ -872,10 +872,10 @@ void small_8<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_9(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-             const int64_t stride, const int32_t flags);
+             const int64_t stride, const int32_t flags) noexcept;
 template <>
 void small_9<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                   const int64_t bp, const int64_t stride, const int32_t flags) {
+                   const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -884,7 +884,7 @@ void small_9<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
 
 template <>
 void small_9<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
@@ -893,10 +893,10 @@ void small_9<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <bool Inverse>
 void small_10(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 template <>
 void small_10<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 2, 4, 6, 8, 5, 7, 9, 1, 3};
@@ -909,7 +909,7 @@ void small_10<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_10<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 2, 4, 6, 8, 5, 7, 9, 1, 3};
@@ -922,10 +922,10 @@ void small_10<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_12(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 template <>
 void small_12<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 3, 6, 9, 4, 7, 10, 1, 8, 11, 2, 5};
@@ -938,7 +938,7 @@ void small_12<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_12<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
   const int8_t n_map[] = {0, 3, 6, 9, 4, 7, 10, 1, 8, 11, 2, 5};
@@ -951,10 +951,10 @@ void small_12<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_14(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 template <>
 void small_14<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -969,7 +969,7 @@ void small_14<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_14<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -984,11 +984,11 @@ void small_14<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_15(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_15<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1003,7 +1003,7 @@ void small_15<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_15<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1018,10 +1018,10 @@ void small_15<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_18(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 template <>
 void small_18<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   // butterfly 9, 2
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
@@ -1036,7 +1036,7 @@ void small_18<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_18<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   // butterfly 9, 2
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
@@ -1051,11 +1051,11 @@ void small_18<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_20(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_20<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1069,7 +1069,7 @@ void small_20<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_20<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1083,11 +1083,11 @@ void small_20<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_21(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_21<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1101,7 +1101,7 @@ void small_21<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_21<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1115,11 +1115,11 @@ void small_21<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_24(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_24<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1135,7 +1135,7 @@ void small_24<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_24<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1151,11 +1151,11 @@ void small_24<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_
 
 template <bool Inverse>
 void small_28(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-              const int64_t stride, const int32_t flags);
+              const int64_t stride, const int32_t flags) noexcept;
 
 template <>
 void small_28<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                    const int64_t bp, const int64_t stride, const int32_t flags) {
+                    const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1171,7 +1171,7 @@ void small_28<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t
 
 template <>
 void small_28<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                     const int64_t bp, const int64_t stride, const int32_t flags) {
+                     const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -1205,7 +1205,7 @@ bool small_available(const int64_t N) { return (N <= SMALL_SZ) && small_funcs[N]
 
 template <bool Inverse>
 void small_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-               const int64_t stride, const int32_t flags) {
+               const int64_t stride, const int32_t flags) noexcept {
   minassert(N <= SMALL_SZ, "small_dft limited to N <= SMALL_SZ");
   if constexpr (Inverse) {
     small_funcs_inverse[N](YY, XX, N, e1, bp, stride, flags);
@@ -1215,6 +1215,6 @@ void small_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, 
 }
 
 template void small_dft<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                               const int64_t bp, const int64_t stride, const int32_t flags);
+                               const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 template void small_dft<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
-                              const int64_t bp, const int64_t stride, const int32_t flags);
+                              const int64_t bp, const int64_t stride, const int32_t flags) noexcept;

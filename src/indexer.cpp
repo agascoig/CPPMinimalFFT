@@ -9,7 +9,7 @@
 
 static inline int64_t indexer_count(const int32_t ndims, int64_t* __restrict__ counts,
                                     const int64_t* __restrict__ strides, int64_t bp,
-                                    const int64_t* __restrict__ dims) {
+                                    const int64_t* __restrict__ dims) noexcept {
   int32_t i = 0;
 
   // r dimension removed here
@@ -32,7 +32,7 @@ static inline int64_t indexer_count(const int32_t ndims, int64_t* __restrict__ c
   return -1;
 }
 
-void do_1d_plan(const MinimalPlan& P, MDArray* oy, MDArray* ix, int32_t r) {
+void do_1d_plan(const MinimalPlan& P, MDArray* oy, MDArray* ix, int32_t r) noexcept {
   int64_t counts[MAX_DIMS] = {0};
 
   int32_t ndims = oy->ndims;
@@ -70,7 +70,7 @@ void do_1d_plan(const MinimalPlan& P, MDArray* oy, MDArray* ix, int32_t r) {
   // *YY and *XX may have flipped
 }
 
-void do_1d_r0(const MinimalPlan& P, MDArray* oy, MDArray* ix) {
+void do_1d_r0(const MinimalPlan& P, MDArray* oy, MDArray* ix) noexcept {
   const int64_t vlength = oy->dims[0];
   const int64_t limit = oy->total_size;
 
@@ -91,7 +91,7 @@ void do_1d_r0(const MinimalPlan& P, MDArray* oy, MDArray* ix) {
 }
 
 // do_fft_planned function
-void do_fft_planned(const MinimalPlan& P, MDArray* oy, MDArray* ix, int32_t r) {
+void do_fft_planned(const MinimalPlan& P, MDArray* oy, MDArray* ix, int32_t r) noexcept {
   if (r == 0)
     do_1d_r0(P, oy, ix);
   else
@@ -101,7 +101,7 @@ void do_fft_planned(const MinimalPlan& P, MDArray* oy, MDArray* ix, int32_t r) {
 // do_1d function without plan
 void do_1d_func(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, int64_t bp,
                 int64_t instride, int32_t flags, const fft_func_t* fs, const int64_t* params,
-                int32_t r) {
+                int32_t r) noexcept {
   int64_t counts[MAX_DIMS] = {0};
 
   int32_t ndims = oy->ndims;
@@ -142,7 +142,7 @@ void do_1d_func(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, 
 }
 
 void do_1d_r0_func(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, int64_t bp,
-                   int64_t stride, int32_t flags, const fft_func_t* fs, const int64_t* params) {
+                   int64_t stride, int32_t flags, const fft_func_t* fs, const int64_t* params) noexcept {
   MFFTELEM** YY = &(oy->data);
   MFFTELEM** XX = &(ix->data);
   MFFTELEM* orig_y = *YY;
@@ -166,7 +166,7 @@ void do_1d_r0_func(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* e
 // do_fft function
 void do_fft(MDArray* oy, MDArray* ix, const int64_t* Ns, const int32_t* es, int64_t bp,
             const int64_t stride, const int32_t flags, const fft_func_t* fs, const int64_t* params,
-            const int32_t r) {
+            const int32_t r) noexcept {
   if (r == 0)
     do_1d_r0_func(oy, ix, Ns, es, bp, stride, flags, fs, params);
   else

@@ -319,178 +319,178 @@ static inline MDArray create_mdarray(MFFTELEM *data, const int64_t *__restrict__
 
 // fft_func_t: tag for do_fft
 typedef void (*fft_func_t)(MFFTELEM **Y, MFFTELEM **X, const int64_t N, const int32_t e1,
-                           const int64_t bp, const int64_t stride, const int32_t flags);
+                           const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 
 typedef struct MinimalPlan MinimalPlan;
 
-void do_fft_planned(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r);
+void do_fft_planned(const MinimalPlan &P, MDArray *oy, MDArray *ix, int32_t r) noexcept;
 
 void do_fft(MDArray *oy, MDArray *ix, const int64_t *Ns, const int32_t *es, const int64_t bp,
             const int64_t stride, const int32_t flags, const fft_func_t *fs, const int64_t *params,
-            const int32_t r);
+            const int32_t r) noexcept;
 
 template <bool Inverse>
 void fftr2(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-           const int64_t stride, const int32_t flags);
+           const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                 const int64_t stride, const int32_t flags);
+                 const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr3(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-           const int64_t stride, const int32_t flags);
+           const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                 const int64_t stride, const int32_t flags);
+                 const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr4(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-           const int64_t stride, const int32_t flags);
+           const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                 const int64_t stride, const int32_t flags);
+                 const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr5(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-           const int64_t stride, const int32_t flags);
+           const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                 const int64_t stride, const int32_t flags);
+                 const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr7(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-           const int64_t stride, const int32_t flags);
+           const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                 const int64_t stride, const int32_t flags);
+                 const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr8(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-           const int64_t stride, const int32_t flags);
+           const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                 const int64_t stride, const int32_t flags);
+                 const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr9(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-           const int64_t stride, const int32_t flags);
+           const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                 const int64_t stride, const int32_t flags);
+                 const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr11(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr13(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr16(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr17(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr19(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr23(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr29(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void fftr31(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-            const int64_t stride, const int32_t flags);
+            const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr31<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                   const int64_t stride, const int32_t flags);
+                   const int64_t stride, const int32_t flags) noexcept;
 template <>
 void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                  const int64_t stride, const int32_t flags);
+                  const int64_t stride, const int32_t flags) noexcept;
 
 template <bool Inverse>
 void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-                const int64_t stride, const int32_t flags);
+                const int64_t stride, const int32_t flags) noexcept;
 template <bool Inverse>
 void bluestein(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-               const int64_t stride, const int32_t flags);
+               const int64_t stride, const int32_t flags) noexcept;
 
 bool small_available(const int64_t N);
 
 template <bool Inverse>
 void small_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1, const int64_t bp,
-               const int64_t stride, const int32_t flags);
+               const int64_t stride, const int32_t flags) noexcept;
 
 static const int SMALL_SZ = 28;
 

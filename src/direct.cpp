@@ -17,7 +17,7 @@ static inline int32_t rev_mask_mux_mod(const int32_t a, const int32_t B) {
 // Direct DFT implementation: good for small N<=DIRECT_SZ
 template <bool Inverse>
 void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1, const int64_t bp,
-                const int64_t stride, const int32_t flags) {
+                const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -64,6 +64,6 @@ void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
 }
 
 template void direct_dft<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-                 const int64_t bp, const int64_t stride, const int32_t flags);
+                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;
 template void direct_dft<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-                 const int64_t bp, const int64_t stride, const int32_t flags);
+                 const int64_t bp, const int64_t stride, const int32_t flags) noexcept;

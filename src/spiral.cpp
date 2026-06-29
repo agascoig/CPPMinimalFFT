@@ -12,7 +12,7 @@
 template <>
 void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                  const int32_t e1, const int64_t bp, const int64_t stride,
-                 int32_t flags) {
+                 int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -62,7 +62,7 @@ void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -112,7 +112,7 @@ void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                  const int32_t e1, const int64_t bp, const int64_t stride,
-                 int32_t flags) {
+                 int32_t flags) noexcept {
   // seed = 559890676
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -175,7 +175,7 @@ void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 669218162
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -238,7 +238,7 @@ void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                  const int32_t e1, const int64_t bp, const int64_t stride,
-                 int32_t flags) {
+                 int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -306,7 +306,7 @@ void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -374,7 +374,7 @@ void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                  const int32_t e1, const int64_t bp, const int64_t stride,
-                 int32_t flags) {
+                 int32_t flags) noexcept {
   // seed = 617312448
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -460,7 +460,7 @@ void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 904596995
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -546,7 +546,7 @@ void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                  const int32_t e1, const int64_t bp, const int64_t stride,
-                 int32_t flags) {
+                 int32_t flags) noexcept {
   // seed = 524027353
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -668,7 +668,7 @@ void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 202958358
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -790,7 +790,7 @@ void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                  const int32_t e1, const int64_t bp, const int64_t stride,
-                 int32_t flags) {
+                 int32_t flags) noexcept {
   // seed = 925609631
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -904,7 +904,7 @@ void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 825775473
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -1018,7 +1018,7 @@ void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                  const int32_t e1, const int64_t bp, const int64_t stride,
-                 int32_t flags) {
+                 int32_t flags) noexcept {
   // seed = 778209504
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -1162,7 +1162,7 @@ void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 71044605
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -1306,7 +1306,7 @@ void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 878589796
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -1521,7 +1521,7 @@ void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 1031391098
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -1736,7 +1736,7 @@ void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 29240509
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -2008,7 +2008,7 @@ void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 959539012
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -2280,7 +2280,7 @@ void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 535208284
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -2502,7 +2502,7 @@ void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 353675101
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -2723,7 +2723,7 @@ void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 1028982639
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -3097,7 +3097,7 @@ void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 329212340
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -3470,7 +3470,7 @@ void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 989974070
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -3960,7 +3960,7 @@ void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 945424893
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -4450,7 +4450,7 @@ void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 611636414
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -5213,7 +5213,7 @@ void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 680398029
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -5986,7 +5986,7 @@ void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 920688534
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -6815,7 +6815,7 @@ void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 710194625
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -7690,7 +7690,7 @@ void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                   const int32_t e1, const int64_t bp, const int64_t stride,
-                  int32_t flags) {
+                  int32_t flags) noexcept {
   // seed = 531823296
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;
@@ -8625,7 +8625,7 @@ void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
 template <>
 void fftr31<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
                    const int32_t e1, const int64_t bp, const int64_t stride,
-                   int32_t flags) {
+                   int32_t flags) noexcept {
   // seed = 1057548887
   MFFTELEM *__restrict__ Y = *YY;
   MFFTELEM *__restrict__ X = *XX;

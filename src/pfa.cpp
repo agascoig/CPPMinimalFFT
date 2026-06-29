@@ -25,7 +25,7 @@ ExtendedEuclidResult extended_euclid(int64_t a, int64_t b) {
   return result;
 }
 
-void Qs(int nf, const int64_t* Ns, int64_t* params) {
+void Qs(int nf, const int64_t* Ns, int64_t* params) noexcept {
   int64_t N = 1;
   int64_t y;
   ExtendedEuclidResult r;
@@ -51,7 +51,7 @@ static inline int64_t mask_mux_mod(int64_t a, int64_t B) { return a - (B & -(a >
 
 template <int nf, typename T>
 void nmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t stride,
-          const int64_t* Ns, const int64_t* QP) {
+          const int64_t* Ns, const int64_t* QP) noexcept {
   int64_t buf[nf * 2 - 1] = {0};
   int64_t* np = &buf[0];
   int64_t* R = &buf[nf];  // only need nf-1
@@ -90,7 +90,7 @@ void nmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t 
 
 template <int nf, typename T>
 void kmap(T* __restrict__ Y, T* __restrict__ X, const int64_t bp, const int64_t stride,
-          const int64_t* Ns, const int64_t* QP) {
+          const int64_t* Ns, const int64_t* QP) noexcept {
   int64_t buf[nf * 2 - 1] = {0};
   int64_t* np = &buf[0];
   int64_t* R = &buf[nf];
@@ -130,7 +130,7 @@ template <int nf>
 void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                   const int32_t* es, const int64_t bp, const int64_t stride, const int32_t flags,
                   const fft_func_t* fs, const int64_t* QPs, const MAP_CACHE_T* nm,
-                  const MAP_CACHE_T* km) {
+                  const MAP_CACHE_T* km) noexcept {
   MFFTELEM* __restrict__ Y = *YY;
   MFFTELEM* __restrict__ X = *XX;
 
@@ -179,7 +179,7 @@ void prime_factor(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* 
 void prime_factor(int nf, MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                   const int32_t* es, const int64_t bp, const int64_t stride, const int32_t flags,
                   const fft_func_t* fs, const int64_t* QPs, const MAP_CACHE_T* nm,
-                  const MAP_CACHE_T* km) {
+                  const MAP_CACHE_T* km) noexcept {
   switch (nf) {
     case 2:
       prime_factor<2>(YY, XX, N, Ns, es, bp, stride, flags, fs, QPs, nm, km);
@@ -205,15 +205,15 @@ void prime_factor(int nf, MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const i
 }
 
 typedef void (*map_fn_t)(MAP_CACHE_T* __restrict__ Y, MAP_CACHE_T* __restrict__ X, const int64_t bp,
-                         const int64_t stride, const int64_t* Ns, const int64_t* QPs);
+                         const int64_t stride, const int64_t* Ns, const int64_t* QPs) noexcept;
 
-int64_t* generate_QPs(int32_t nf, const int64_t* Ns) {
+int64_t* generate_QPs(int32_t nf, const int64_t* Ns) noexcept {
   int64_t* QPs = new int64_t[2 * (nf - 1)];
   Qs(nf, Ns, QPs);
   return QPs;
 }
 
-MAP_CACHE_T* generate_nmap(const int nf, const int64_t N, const int64_t* Ns, const int64_t* QPs) {
+MAP_CACHE_T* generate_nmap(const int nf, const int64_t N, const int64_t* Ns, const int64_t* QPs) noexcept {
   static const map_fn_t nmap_fn[] = {nullptr,
                                      nullptr,
                                      nmap<2, MAP_CACHE_T>,
@@ -238,7 +238,7 @@ MAP_CACHE_T* generate_nmap(const int nf, const int64_t N, const int64_t* Ns, con
   return Y;
 }
 
-MAP_CACHE_T* generate_kmap(const int nf, const int64_t N, const int64_t* Ns, const int64_t* QPs) {
+MAP_CACHE_T* generate_kmap(const int nf, const int64_t N, const int64_t* Ns, const int64_t* QPs) noexcept {
   static const map_fn_t kmap_fn[] = {nullptr,
                                      nullptr,
                                      kmap<2, MAP_CACHE_T>,
@@ -265,29 +265,29 @@ MAP_CACHE_T* generate_kmap(const int nf, const int64_t N, const int64_t* Ns, con
 template void prime_factor<2>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                               const int32_t* es, const int64_t bp, const int64_t stride,
                               const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
-                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km) noexcept; 
 
 template void prime_factor<3>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                               const int32_t* es, const int64_t bp, const int64_t stride,
                               const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
-                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km) noexcept;
 
 template void prime_factor<4>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                               const int32_t* es, const int64_t bp, const int64_t stride,
                               const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
-                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km) noexcept;
 
 template void prime_factor<5>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                               const int32_t* es, const int64_t bp, const int64_t stride,
                               const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
-                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km) noexcept;
 
 template void prime_factor<6>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                               const int32_t* es, const int64_t bp, const int64_t stride,
                               const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
-                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km) noexcept;
 
 template void prime_factor<7>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int64_t* Ns,
                               const int32_t* es, const int64_t bp, const int64_t stride,
                               const int32_t flags, const fft_func_t* fs, const int64_t* QPs,
-                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km);
+                              const MAP_CACHE_T* nm, const MAP_CACHE_T* km) noexcept;

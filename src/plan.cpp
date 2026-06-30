@@ -9,14 +9,11 @@
 
 #include "CPPMinimalFFT.hpp"
 
+struct MinimalPlanConfig MinPlanConfig;
+
 MinimalPlan::MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, int32_t _region_end,
-                         int32_t _flags, int64_t _direct_sz, int64_t _small_sz)
-    : n_dims(_n_dims),
-      region_start(_region_start),
-      region_end(_region_end),
-      flags(_flags),
-      direct_sz(_direct_sz),
-      small_sz(_small_sz) {
+                         int32_t _flags)
+    : n_dims(_n_dims), region_start(_region_start), region_end(_region_end), flags(_flags) {
   minassert(n_dims <= MAX_DIMS, "Too many dimensions");
   minassert(region_end - region_start < MAX_REGIONS, "Too many regions");
 
@@ -110,7 +107,7 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
     factors[i].n = p_factors->n[i];
     factors[i].index = i;
     factors[i].bluestein =
-        (p_factors->n[i] > direct_sz &&
+        (p_factors->n[i] > MinPlanConfig.direct_sz &&
          (p_factors->base[i] >= DISPATCH_SZ || dispatch[p_factors->base[i]] == nullptr))
             ? true
             : false;
@@ -121,7 +118,7 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
     return a.n > b.n;      // descending by n
   });
 
-  if (n <= direct_sz) {
+  if (n <= MinPlanConfig.direct_sz) {
     add_plan_factor(rd, n, n, 1, inverse ? &direct_dft<true> : &direct_dft<false>);
     copy_input = false;
   } else if ((n & (n - 1)) == 0) {
@@ -142,7 +139,7 @@ void MinimalPlan::plan_1d(int64_t n, int32_t rd, int32_t flags) {
       int32_t exp = p_factors->exponent[i];
       int32_t nf = p_factors->n[i];
       fft_func_t func;
-      if (nf <= direct_sz) {
+      if (nf <= MinPlanConfig.direct_sz) {
         func = inverse ? &direct_dft<true> : &direct_dft<false>;
       } else {
         if ((base == 3) && ((exp & 1) == 0)) {

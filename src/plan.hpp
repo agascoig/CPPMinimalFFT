@@ -32,12 +32,18 @@ typedef struct {
 
 factorization* factorize(int64_t n);
 
+// Plan parameter control MinPlanConfig
+struct MinimalPlanConfig {
+  int64_t direct_sz = DEFAULT_DIRECT_SZ;
+  int64_t small_sz = DEFAULT_SMALL_SZ;
+};
+
 // Minimal plan structure
 class MinimalPlan {
  public:
   // _n is the dimension for each region, _n_dims number of dims
   MinimalPlan(int64_t* _n, int32_t _n_dims, int32_t _region_start, int32_t _region_end,
-              int32_t _flags, int64_t _direct_sz=DEFAULT_DIRECT_SZ, int64_t _small_sz=DEFAULT_SMALL_SZ);
+              int32_t _flags);
 
   ~MinimalPlan();
 
@@ -50,9 +56,8 @@ class MinimalPlan {
                            int64_t stride) const;  // X preserved if not inplace)
 
   // X preserved if not inplace, does only a single FFT in region r
-  void execute_plan(
-      MinAlignedVector& Y, MinAlignedVector& X, int32_t r, int64_t bp,
-      int64_t stride) const;
+  void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, int32_t r, int64_t bp,
+                    int64_t stride) const;
   inline bool bt_flags(int32_t flag) { return (flags & flag) != 0; };
 
   friend std::ostream& operator<<(std::ostream& os, const MinimalPlan& P);
@@ -70,8 +75,6 @@ class MinimalPlan {
   int32_t region_start;
   int32_t region_end;
   int32_t flags;
-  int64_t direct_sz;
-  int64_t small_sz;
 
   // pointers to regions
   int64_t pbase[MAX_REGIONS][MAX_FACTORS];

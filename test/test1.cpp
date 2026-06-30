@@ -4,6 +4,8 @@
 #include "common.hpp"
 #include <vector>
 
+extern struct MinimalPlanConfig MinPlanConfig;
+
 bool test_column(bool inverse, MinimalPlan& P, int64_t N, int column) {
   MinAlignedVector X(N);
   MinAlignedVector Y(N);
@@ -39,6 +41,9 @@ int main(int argc, char* argv[]) {
   int* pc = &pass;
   int* fc = &fail;
 
+  MinPlanConfig.direct_sz = 0;
+  MinPlanConfig.small_sz = 0;
+  
   const char* version = VERSION;
 
   std::cout << "# test1 - MinimalFFT version: " << version << std::endl;
@@ -52,7 +57,7 @@ int main(int argc, char* argv[]) {
   int num_tests = sizeof(planner_n) / sizeof(planner_n[0]);
   for (int i = 0; i < num_tests; ++i) {
     int64_t N = planner_n[i];
-    MinimalPlan P(&N, 1, 0, 0, P_NONE, 0, 0);
+    MinimalPlan P(&N, 1, 0, 0, P_NONE);
     std::cout << "--------\nP=" << P << std::endl;
     bool success = true;
     for (int column = 0; column < N; ++column) {
@@ -72,7 +77,7 @@ int main(int argc, char* argv[]) {
     }
 
     success = true;
-    MinimalPlan P_inv(&N, 1, 0, 0, P_INVERSE, 0, 0);
+    MinimalPlan P_inv(&N, 1, 0, 0, P_INVERSE);
     std::cout << "--------\nP_inv=" << P_inv << std::endl;
     for (int column = 0; column < N; ++column) {
       bool result = test_column(true, P_inv, N, column);

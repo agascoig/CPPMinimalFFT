@@ -10,8 +10,8 @@ set(VERSION "V0.0.3")
 set(MINFFT "64") # double precision
 
 # set use SIMD code ON, or OFF for regular scalar
-#set(SIMD "ON")
-set(SIMD "OFF")
+set(SIMD "ON")
+#set(SIMD "OFF")
 
 #set(SANITIZE "-fsanitize=address, -fno-omit-frame-pointer")
 #set(SANITIZE "")
@@ -49,14 +49,13 @@ if(SIMD STREQUAL "ON")
     message(STATUS "Building SIMD double-precision")
     list(APPEND LIB_SOURCES
     src/d2/direct.cpp
-    src/d2/stockham.cpp
+    src/d2/spiral.cpp
     src/d2/bluestein.cpp)
   endif()
 else()
    message(STATUS "Building non-SIMD precision=${MINFFT}")
    list(APPEND LIB_SOURCES
    src/direct.cpp
-#   src/stockham.cpp
    src/spiral.cpp
    src/bluestein.cpp)
 endif()

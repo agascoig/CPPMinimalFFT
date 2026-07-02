@@ -21,7 +21,6 @@ void fftr2<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -32,6 +31,7 @@ void fftr2<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
       Y[base_xy] = (x0 + x1);
       Y[base_xy + 1 * step_y] = (x0 - x1);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -68,7 +68,6 @@ void fftr2<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -79,6 +78,7 @@ void fftr2<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy] = (x0 + x1);
       Y[base_xy + 1 * step_y] = (x0 - x1);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -117,7 +117,6 @@ void fftr3<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -133,6 +132,7 @@ void fftr3<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
       Y[base_xy + 1 * step_y] = (t22 + s4);
       Y[base_xy + 2 * step_y] = (t22 - s4);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -177,7 +177,6 @@ void fftr3<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -193,6 +192,7 @@ void fftr3<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 1 * step_y] = (s9 + s10);
       Y[base_xy + 2 * step_y] = (s9 - s10);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -235,7 +235,6 @@ void fftr4<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[2 * (e1 - t) - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -254,6 +253,7 @@ void fftr4<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
       Y[base_xy + 1 * step_y] = (t25 + s4);
       Y[base_xy + 3 * step_y] = (t25 - s4);
     }
+    const auto w_l = conj(W[2 * (e1 - t) - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -300,7 +300,6 @@ void fftr4<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[2 * (e1 - t) - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -319,6 +318,7 @@ void fftr4<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 1 * step_y] = (t25 + s4);
       Y[base_xy + 3 * step_y] = (t25 - s4);
     }
+    const auto w_l = W[2 * (e1 - t) - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -370,7 +370,6 @@ void fftr5<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_5);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -395,6 +394,7 @@ void fftr5<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
       Y[base_xy + 2 * step_y] = (s16 + s18);
       Y[base_xy + 3 * step_y] = (s16 - s18);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -453,7 +453,6 @@ void fftr5<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_5);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -478,6 +477,7 @@ void fftr5<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 2 * step_y] = (s16 + s18);
       Y[base_xy + 3 * step_y] = (s16 - s18);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -539,7 +539,6 @@ void fftr7<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_7);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -575,6 +574,7 @@ void fftr7<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
       Y[base_xy + 2 * step_y] = (s23 + s26);
       Y[base_xy + 5 * step_y] = (s23 - s26);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -649,7 +649,6 @@ void fftr7<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_7);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -685,6 +684,7 @@ void fftr7<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 2 * step_y] = (s23 + s26);
       Y[base_xy + 5 * step_y] = (s23 - s26);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -753,7 +753,6 @@ void fftr8<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[3 * (e1 - t) - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -792,6 +791,7 @@ void fftr8<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
       Y[base_xy + 3 * step_y] = (t75 + s20);
       Y[base_xy + 7 * step_y] = (t75 - s20);
     }
+    const auto w_l = conj(W[3 * (e1 - t) - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -864,7 +864,6 @@ void fftr8<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[3 * (e1 - t) - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -903,6 +902,7 @@ void fftr8<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 3 * step_y] = (t75 + s20);
       Y[base_xy + 7 * step_y] = (t75 - s20);
     }
+    const auto w_l = W[3 * (e1 - t) - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -978,7 +978,6 @@ void fftr9<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[2 * (e1 - t) - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -1030,6 +1029,7 @@ void fftr9<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1
       Y[base_xy + 5 * step_y] = (s57 + s58);
       Y[base_xy + 8 * step_y] = (s57 - s58);
     }
+    const auto w_l = conj(W[2 * (e1 - t) - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -1119,7 +1119,6 @@ void fftr9<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_3);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[2 * (e1 - t) - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -1171,6 +1170,7 @@ void fftr9<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 5 * step_y] = (t118 - s40);
       Y[base_xy + 8 * step_y] = (t118 + s40);
     }
+    const auto w_l = W[2 * (e1 - t) - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -1269,7 +1269,6 @@ void fftr11<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_11);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -1342,6 +1341,7 @@ void fftr11<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 5 * step_y] = (s37 + s42);
       Y[base_xy + 6 * step_y] = (s37 - s42);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -1463,7 +1463,6 @@ void fftr11<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_11);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -1536,6 +1535,7 @@ void fftr11<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 5 * step_y] = (s37 + s42);
       Y[base_xy + 6 * step_y] = (s37 - s42);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -1660,7 +1660,6 @@ void fftr13<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_13);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -1757,6 +1756,7 @@ void fftr13<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 6 * step_y] = (s44 + s50);
       Y[base_xy + 7 * step_y] = (s44 - s50);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -1907,7 +1907,6 @@ void fftr13<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_13);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -2004,6 +2003,7 @@ void fftr13<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 6 * step_y] = (s44 + s50);
       Y[base_xy + 7 * step_y] = (s44 - s50);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -2143,7 +2143,6 @@ void fftr16<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[4 * (e1 - t) - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -2230,6 +2229,7 @@ void fftr16<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 7 * step_y] = (t197 + s68);
       Y[base_xy + 15 * step_y] = (t197 - s68);
     }
+    const auto w_l = conj(W[4 * (e1 - t) - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -2361,7 +2361,6 @@ void fftr16<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_2);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[4 * (e1 - t) - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -2448,6 +2447,7 @@ void fftr16<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 7 * step_y] = (t197 + s68);
       Y[base_xy + 15 * step_y] = (t197 - s68);
     }
+    const auto w_l = W[4 * (e1 - t) - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -2597,7 +2597,6 @@ void fftr17<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_17);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -2751,6 +2750,7 @@ void fftr17<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 11 * step_y] = (t406 + s196);
       Y[base_xy + 6 * step_y] = (t406 - s196);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -2967,7 +2967,6 @@ void fftr17<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_17);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -3121,6 +3120,7 @@ void fftr17<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 11 * step_y] = (t406 + s196);
       Y[base_xy + 6 * step_y] = (t406 - s196);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -3344,7 +3344,6 @@ void fftr19<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_19);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -3552,6 +3551,7 @@ void fftr19<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 15 * step_y] = (s327 + s328);
       Y[base_xy + 10 * step_y] = (s327 - s328);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -3831,7 +3831,6 @@ void fftr19<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_19);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -4039,6 +4038,7 @@ void fftr19<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 15 * step_y] = (s416 - s417);
       Y[base_xy + 10 * step_y] = (s416 + s417);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -4335,7 +4335,6 @@ void fftr23<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_23);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -4630,6 +4629,7 @@ void fftr23<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 22 * step_y] = (s331 + s336);
       Y[base_xy + 21 * step_y] = (s331 - s336);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -5017,7 +5017,6 @@ void fftr23<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_23);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -5317,6 +5316,7 @@ void fftr23<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 22 * step_y] = (s331 + s336);
       Y[base_xy + 21 * step_y] = (s331 - s336);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -5713,7 +5713,6 @@ void fftr29<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_29);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -6039,6 +6038,7 @@ void fftr29<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 14 * step_y] = (t637 + s529);
       Y[base_xy + 15 * step_y] = (t637 - s529);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -6465,7 +6465,6 @@ void fftr29<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_29);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -6791,6 +6790,7 @@ void fftr29<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 18 * step_y] = (s516 + s519);
       Y[base_xy + 10 * step_y] = (s516 - s519);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -7223,7 +7223,6 @@ void fftr31<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_31);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = conj(W[e1 - t - 1]);
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -7629,6 +7628,7 @@ void fftr31<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e
       Y[base_xy + 22 * step_y] = (t976 + s739);
       Y[base_xy + 11 * step_y] = (t976 - s739);
     }
+    const auto w_l = conj(W[e1 - t - 1]);
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;
@@ -8142,7 +8142,6 @@ void fftr31<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
   const std::complex<double>* __restrict__ W =
       reinterpret_cast<const std::complex<double>*>(COS_SIN_31);
   for (int32_t t = 0; t < e1; t++) {
-    const auto w_l = W[e1 - t - 1];
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     for (int64_t k = 0; k < m; k++) {
@@ -8518,6 +8517,7 @@ void fftr31<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t 
       Y[base_xy + 22 * step_y] = (s739 + s741);
       Y[base_xy + 11 * step_y] = (s739 - s741);
     }
+    const auto w_l = W[e1 - t - 1];
     auto w = W[0];
     for (int64_t j = 1; j < l; j++) {
       w = w * w_l;

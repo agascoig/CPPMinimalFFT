@@ -34,7 +34,7 @@ typedef struct {
 static bs_buffer_t bs_buff = {nullptr, nullptr, nullptr, nullptr, 0, 0, 0};
 
 // Cleanup function to free global buffer
-void free_bluestein_buffer(void) {
+void free_bluestein_buffer(void) noexcept {
   if (bs_buff.N != 0) {
     free(bs_buff.a_n);
     free(bs_buff.b_n);
@@ -49,7 +49,7 @@ void free_bluestein_buffer(void) {
   }
 }
 
-static inline int64_t nextpow2_exp(uint64_t n) {
+static inline int64_t nextpow2_exp(uint64_t n) noexcept {
   if (n == 0) return 0;
   if (n == 1) return 2;
   int64_t high_bit = 63 - count_leading_zeros(n);
@@ -58,7 +58,7 @@ static inline int64_t nextpow2_exp(uint64_t n) {
 }
 
 template <bool Inverse>
-static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
+static void bluestein_init(int64_t N, int64_t M, int32_t flags) noexcept {
   bool init = bs_buff.M == 0;
   if (!init) {
     if (bs_buff.M != M) {
@@ -106,7 +106,7 @@ static void bluestein_init(int64_t N, int64_t M, int32_t flags) {
 // Bluestein FFT implementation
 template <bool Inverse>
 void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t discard_e1,
-               const int64_t bp, const int64_t stride, const int32_t flags) {
+               const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM* __restrict__ y = *YY;
   MFFTELEM* __restrict__ x = *XX;
   const int32_t e1 = nextpow2_exp(2 * N - 1);
@@ -152,12 +152,12 @@ void bluestein(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t disc
   }
 }
 
-template void bluestein_init<false>(int64_t N, int64_t M, int32_t flags);
-template void bluestein_init<true>(int64_t N, int64_t M, int32_t flags);
+template void bluestein_init<false>(int64_t N, int64_t M, int32_t flags) noexcept;
+template void bluestein_init<true>(int64_t N, int64_t M, int32_t flags) noexcept;
 
 template void bluestein<false>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N,
                                const int32_t discard_e1, const int64_t bp, const int64_t stride,
-                               const int32_t flags);
+                               const int32_t flags) noexcept;
 template void bluestein<true>(MFFTELEM** YY, MFFTELEM** XX, const int64_t N,
                               const int32_t discard_e1, const int64_t bp, const int64_t stride,
-                              const int32_t flags);
+                              const int32_t flags) noexcept;

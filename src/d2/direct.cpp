@@ -32,10 +32,10 @@ static inline int32_t rev_mask_mux_mod(const int32_t a, const int32_t B) {
 // Direct DFT implementation: good for small N<=DIRECT_SZ
 template <bool Inverse>
 void direct_dft(MFFTELEM **YY, MFFTELEM **XX, const int64_t N, const int32_t e1,
-                const int64_t bp, const int64_t stride, const int32_t flags) {
+                const int64_t bp, const int64_t stride, const int32_t flags) noexcept {
   MFFTELEM *__restrict__ y = *YY;
   MFFTELEM *__restrict__ x = *XX;
-  minassert(N > 0 && N <= DIRECT_SZ, "N too large for direct DFT");
+  minassert(N > 0 && N <= DEFAULT_DIRECT_SZ, "N too large for direct DFT");
   D d;
   const auto *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(DIRECT_COEFFS[N]);

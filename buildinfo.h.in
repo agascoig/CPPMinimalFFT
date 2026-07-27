@@ -1,0 +1,9 @@
+
+#pragma once
+
+// pass cmake compiler information to preprocessor variables
+
+#define BUILD_CXX_COMPILER "@CMAKE_CXX_COMPILER@"
+#define BUILD_CXX_FLAGS "@CMAKE_CXX_FLAGS@"
+#define BUILD_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+#define BUILD_SYSTEM "@CMAKE_SYSTEM_NAME@"

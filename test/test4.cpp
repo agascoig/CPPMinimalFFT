@@ -1,5 +1,5 @@
 
-// test4.cpp - do simplest (N=2) FFT for profiling planner overhead
+// test4.cpp - do FFT repeatedly comparing to FFTW
 
 #include "common.hpp"
 #include <vector>

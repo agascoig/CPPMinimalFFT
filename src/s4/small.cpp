@@ -57,7 +57,7 @@ HWY_INLINE void StoreComplexGroup(auto y, E d, auto *__restrict__ YC1,
     return;
   } else if HWY_LANES_CONSTEXPR (L == 4) {
     hn::Store(hn::LowerHalf(y), sp_2, Y1);
-    hn::Store(hn::UpperHalf(d, y), sp_2, Y2);
+    hn::Store(hn::UpperHalf(sp_2, y), sp_2, Y2);
     return;
   } else {
     static_assert(0, "Unsupported lane count");

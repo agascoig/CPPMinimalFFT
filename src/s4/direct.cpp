@@ -78,7 +78,7 @@ void direct_dft(MFFTELEM** YY, MFFTELEM** XX, const int64_t N, const int32_t e1,
       sc = hn::MulComplex(v, sc);
     }
     sc = hn::Add(sc, hn::LowerHalf(s));
-    sc = hn::Add(sc, hn::UpperHalf(sp_4, s));
+    sc = hn::Add(sc, hn::UpperHalf(sp_2, s));
     hn::Store(sc, sp_2, CFPTR(&y[bp + stride * k]));
   }
 }

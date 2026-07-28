@@ -50,7 +50,7 @@ HWY_INLINE void StoreComplexGroup(E d, auto y, auto* __restrict__ YC, int64_t st
   } else if HWY_LANES_CONSTEXPR (L == 4) {
        const int64_t istride = stride * 2;
        hn::Store(hn::LowerHalf(y), sp_2, Y);
-       hn::Store(hn::UpperHalf(d, y), sp_2, Y + istride);
+       hn::Store(hn::UpperHalf(sp_2, y), sp_2, Y + istride);
        return;
   } else {
     static_assert(0, "Unsupported lane count");
@@ -58,7 +58,7 @@ HWY_INLINE void StoreComplexGroup(E d, auto y, auto* __restrict__ YC, int64_t st
 }
 
 static HWY_INLINE auto Convert(sp_4_t dnew, dp_2_t dold, auto w) {
-  auto w_demoted = hn::DemoteTo(sp_4, w);  // half size
+  auto w_demoted = hn::DemoteTo(sp_2, w);  // half size
   return hn::Combine(dnew, w_demoted, w_demoted);
 }
 

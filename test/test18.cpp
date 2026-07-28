@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
   std::random_device rd;
   random_normal RNG(rd(), 0.0, 1.0);
 
-#ifdef __linux__
+#if defined(__linux__) && defined(__aarch64__)
   enable_fp_exceptions();
 #endif
 

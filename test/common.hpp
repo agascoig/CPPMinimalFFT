@@ -589,7 +589,7 @@ void print_compiler_ver() {
   free(demangled);
 }
 
-#ifdef __linux__
+#if defined(__linux__) && defined(__aarch64__)
 
 #include <arm_neon.h>
 #include <fenv.h>

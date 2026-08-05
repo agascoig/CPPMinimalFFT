@@ -94,18 +94,17 @@ static void fftr2i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                 const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                 const int64_t bp, const int64_t stride,
                  int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 2;
+  l = l / 2;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -113,7 +112,7 @@ void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr2i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -130,9 +129,7 @@ void fftr2<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 2;
     m *= 2;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -168,18 +165,17 @@ static void fftr2_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 2;
+  l = l / 2;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -187,7 +183,7 @@ void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr2_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                    stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -203,9 +199,7 @@ void fftr2<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 2;
     m *= 2;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -266,18 +260,17 @@ static void fftr3i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                 const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                 const int64_t bp, const int64_t stride,
                  int32_t flags) noexcept {
   // seed = 559890676
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 3;
+  l = l / 3;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -285,7 +278,7 @@ void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr3i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -303,9 +296,7 @@ void fftr3<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 3;
     m *= 3;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -366,18 +357,17 @@ static void fftr3_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 669218162
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 3;
+  l = l / 3;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -385,7 +375,7 @@ void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr3_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                    stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -403,9 +393,7 @@ void fftr3<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 3;
     m *= 3;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -472,18 +460,17 @@ static void fftr4i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                 const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                 const int64_t bp, const int64_t stride,
                  int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 4;
+  l = l / 4;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -491,8 +478,7 @@ void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr4i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l =
-        hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[2 * (e1 - t) - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[2 * e1 + 1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -512,9 +498,7 @@ void fftr4<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 4;
     m *= 4;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -575,18 +559,17 @@ static void fftr4_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 0
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 4;
+  l = l / 4;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -594,7 +577,7 @@ void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr4_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                    stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[2 * (e1 - t) - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[2 * e1 + 1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -613,9 +596,7 @@ void fftr4<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 4;
     m *= 4;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -722,18 +703,17 @@ static void fftr5i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                 const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                 const int64_t bp, const int64_t stride,
                  int32_t flags) noexcept {
   // seed = 617312448
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 5;
+  l = l / 5;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_5);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -741,7 +721,7 @@ void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr5i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -762,9 +742,7 @@ void fftr5<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 5;
     m *= 5;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -871,18 +849,17 @@ static void fftr5_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 904596995
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 5;
+  l = l / 5;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_5);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -890,7 +867,7 @@ void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr5_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                    stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -911,9 +888,7 @@ void fftr5<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 5;
     m *= 5;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -1079,18 +1054,17 @@ static void fftr7i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                 const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                 const int64_t bp, const int64_t stride,
                  int32_t flags) noexcept {
   // seed = 524027353
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 7;
+  l = l / 7;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_7);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -1098,7 +1072,7 @@ void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr7i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -1122,9 +1096,7 @@ void fftr7<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 7;
     m *= 7;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -1290,18 +1262,17 @@ static void fftr7_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 202958358
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 7;
+  l = l / 7;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_7);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -1309,7 +1280,7 @@ void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr7_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                    stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -1333,9 +1304,7 @@ void fftr7<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 7;
     m *= 7;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -1475,18 +1444,17 @@ static void fftr8i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                 const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                 const int64_t bp, const int64_t stride,
                  int32_t flags) noexcept {
   // seed = 925609631
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 8;
+  l = l / 8;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -1494,8 +1462,7 @@ void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr8i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l =
-        hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[3 * (e1 - t) - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[3 * e1 + 2])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -1520,9 +1487,7 @@ void fftr8<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 8;
     m *= 8;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -1652,18 +1617,17 @@ static void fftr8_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 825775473
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 8;
+  l = l / 8;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -1671,7 +1635,7 @@ void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr8_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                    stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[3 * (e1 - t) - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[3 * e1 + 2]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -1696,9 +1660,7 @@ void fftr8<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 8;
     m *= 8;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -1890,18 +1852,17 @@ static void fftr9i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                 const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                 const int64_t bp, const int64_t stride,
                  int32_t flags) noexcept {
   // seed = 778209504
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 9;
+  l = l / 9;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -1909,8 +1870,7 @@ void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr9i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l =
-        hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[2 * (e1 - t) - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[2 * e1 + 1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -1937,9 +1897,7 @@ void fftr9<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 9;
     m *= 9;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -2131,18 +2089,17 @@ static void fftr9_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 71044605
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 9;
+  l = l / 9;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_3);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -2150,7 +2107,7 @@ void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr9_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                    stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[2 * (e1 - t) - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[2 * e1 + 1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -2177,9 +2134,7 @@ void fftr9<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 9;
     m *= 9;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -2514,18 +2469,17 @@ static void fftr11i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 878589796
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 11;
+  l = l / 11;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_11);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -2533,7 +2487,7 @@ void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr11i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -2563,9 +2517,7 @@ void fftr11<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 11;
     m *= 11;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -2900,18 +2852,17 @@ static void fftr11_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 1031391098
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 11;
+  l = l / 11;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_11);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -2919,7 +2870,7 @@ void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr11_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -2949,9 +2900,7 @@ void fftr11<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 11;
     m *= 11;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -3396,18 +3345,17 @@ static void fftr13i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 29240509
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 13;
+  l = l / 13;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_13);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -3415,7 +3363,7 @@ void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr13i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -3448,9 +3396,7 @@ void fftr13<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 13;
     m *= 13;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -3895,18 +3841,17 @@ static void fftr13_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 959539012
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 13;
+  l = l / 13;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_13);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -3914,7 +3859,7 @@ void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr13_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -3947,9 +3892,7 @@ void fftr13<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 13;
     m *= 13;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -4259,18 +4202,17 @@ static void fftr16i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 535208284
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 16;
+  l = l / 16;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -4278,8 +4220,7 @@ void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr16i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l =
-        hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[4 * (e1 - t) - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[4 * e1 + 3])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -4316,9 +4257,7 @@ void fftr16<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 16;
     m *= 16;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -4602,18 +4541,17 @@ static void fftr16_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 353675101
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 16;
+  l = l / 16;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_2);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -4621,7 +4559,7 @@ void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr16_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[4 * (e1 - t) - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[4 * e1 + 3]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -4658,9 +4596,7 @@ void fftr16<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 16;
     m *= 16;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -5218,18 +5154,17 @@ static void fftr17i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 1028982639
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 17;
+  l = l / 17;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_17);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -5237,7 +5172,7 @@ void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr17i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -5275,9 +5210,7 @@ void fftr17<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 17;
     m *= 17;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -5827,18 +5760,17 @@ static void fftr17_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 329212340
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 17;
+  l = l / 17;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_17);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -5846,7 +5778,7 @@ void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr17_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -5884,9 +5816,7 @@ void fftr17<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 17;
     m *= 17;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -6647,18 +6577,17 @@ static void fftr19i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 989974070
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 19;
+  l = l / 19;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_19);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -6666,7 +6595,7 @@ void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr19i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -6708,9 +6637,7 @@ void fftr19<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 19;
     m *= 19;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -7471,18 +7398,17 @@ static void fftr19_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 945424893
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 19;
+  l = l / 19;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_19);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -7490,7 +7416,7 @@ void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr19_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -7532,9 +7458,7 @@ void fftr19<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 19;
     m *= 19;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -8834,18 +8758,17 @@ static void fftr23i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 611636414
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 23;
+  l = l / 23;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_23);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -8853,7 +8776,7 @@ void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr23i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -8900,9 +8823,7 @@ void fftr23<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 23;
     m *= 23;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -10225,18 +10146,17 @@ static void fftr23_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 680398029
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 23;
+  l = l / 23;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_23);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -10244,7 +10164,7 @@ void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr23_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -10291,9 +10211,7 @@ void fftr23<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 23;
     m *= 23;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -11632,18 +11550,17 @@ static void fftr29i_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 920688534
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 29;
+  l = l / 29;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_29);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -11651,7 +11568,7 @@ void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr29i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -11707,9 +11624,7 @@ void fftr29<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 29;
     m *= 29;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -13064,18 +12979,17 @@ static void fftr29_kernel_w(auto d, MFFTELEM *__restrict__ Y,
 }
 
 template <>
-void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 710194625
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 29;
+  l = l / 29;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_29);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -13083,7 +12997,7 @@ void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr29_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -13139,9 +13053,7 @@ void fftr29<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 29;
     m *= 29;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -14581,18 +14493,17 @@ fftr31i_kernel_w(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
 }
 
 template <>
-void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                  const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                  const int64_t bp, const int64_t stride,
                   int32_t flags) noexcept {
   // seed = 531823296
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 31;
+  l = l / 31;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_31);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -14600,7 +14511,7 @@ void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr31i_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                      stride * (m - 1), step_y);
-    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1 - t - 1])));
+    const auto w_l = hn::ComplexConj(hn::Load(dp_2, CCDPTR(&W[e1])));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -14659,9 +14570,7 @@ void fftr31<true>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 31;
     m *= 31;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;
@@ -16121,18 +16030,17 @@ fftr31_kernel_w(auto d, MFFTELEM *__restrict__ Y, MFFTELEM *__restrict__ X,
 }
 
 template <>
-void fftr31<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
-                   const int32_t e1, const int64_t bp, const int64_t stride,
+void fftr31<false>(MFFTELEM **YY, MFFTELEM **XX, int64_t l, int32_t e1,
+                   const int64_t bp, const int64_t stride,
                    int32_t flags) noexcept {
   // seed = 1057548887
   MFFTELEM *__restrict__ Y = *YY + bp;
   MFFTELEM *__restrict__ X = *XX + bp;
-  int64_t l = N / 31;
+  l = l / 31;
   int64_t m = 1;
-  MFFTELEM *__restrict__ tmp;
   const std::complex<double> *__restrict__ W =
       reinterpret_cast<const std::complex<double> *>(COS_SIN_31);
-  for (int32_t t = 0; t < e1; t++) {
+  while (e1-- > 0) {
     const auto step_x = stride * m * l;
     const auto step_y = stride * m;
     if (m > 1)
@@ -16140,7 +16048,7 @@ void fftr31<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     if (m & 1)
       fftr31_kernel(sp_2, Y, X, stride, 1, stride * (m - 1), step_x,
                     stride * (m - 1), step_y);
-    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1 - t - 1]));
+    const auto w_l = hn::Load(dp_2, CCDPTR(&W[e1]));
     auto w = hn::Load(dp_2, CCDPTR(&W[0]));
     for (int64_t j = 1; j < l; j++) {
       w = hn::MulComplex(w, w_l);
@@ -16199,9 +16107,7 @@ void fftr31<false>(MFFTELEM **YY, MFFTELEM **XX, const int64_t N,
     }
     l /= 31;
     m *= 31;
-    tmp = X;
-    X = Y;
-    Y = tmp;
+    std::swap(Y, X);
   }
   *XX = Y - bp;
   *YY = X - bp;

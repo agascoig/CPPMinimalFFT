@@ -270,9 +270,7 @@ void MinimalPlan::execute_multid_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX,
       do_fft_planned(*this, XX, YY, region_start + i);
   }
   if ((i & 1) == 0) {
-    MFFTELEM* tmp = *XX;
-    *YY = *XX;
-    *XX = tmp;
+    std::swap(*YY, *XX);
   }
 }
 
@@ -287,17 +285,26 @@ void MinimalPlan::execute_multid_plan_no_copy(
   if (*YY != Y.data()) {
     swap(Y, X);
   }
-  if (flags & P_INPLACE) X = Y;
 }
 
+// For in-place plans, Y==X (X is copied internally)
 void MinimalPlan::execute_multid_plan(MinAlignedVector& Y, MinAlignedVector& X,
                                       const int32_t region_start,
                                       const int32_t region_end,
                                       const int64_t bp,
                                       const int64_t stride) const {
   MinAlignedVector copy_X(X);
-  execute_multid_plan_no_copy(Y, X, region_start, region_end, bp, stride);
-  if (X != copy_X) X = copy_X;
+  MFFTELEM* Y_data = Y.data();
+  MFFTELEM* copy_X_data = copy_X.data();
+  MFFTELEM** YY = &Y_data;
+  MFFTELEM** XX = &copy_X_data;
+  execute_multid_plan_no_copy(YY, XX, region_start, region_end, bp, stride);
+  if (*YY != Y.data()) {
+    if (Y==X)
+       Y = copy_X;
+    else
+       swap(Y, copy_X);   
+  }
 }
 
 void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX,
@@ -305,7 +312,6 @@ void MinimalPlan::execute_plan_no_copy(MFFTELEM** YY, MFFTELEM** XX,
                                        const int64_t stride) const {
   const auto& rd = regions[region - region_start];
   const int32_t nf = rd.num_factors;
-  minassert(nf <= MAX_FACTORS, "Too many factors to execute_plan_no_copy.");
   if (nf == 1) {
     rd.func[0](YY, XX, rd.ns[0], rd.exp[0], bp, stride, flags);
     return;
@@ -325,14 +331,23 @@ void MinimalPlan::execute_plan_no_copy(MinAlignedVector& Y, MinAlignedVector& X,
   if (*YY != Y.data()) {
     swap(Y, X);
   }
-  if (flags & P_INPLACE) X = Y;
 }
 
-// Execute plan function with input copying if needed
+// Execute plan function with input copying
+// For in-place plans, Y==X (X is copied internally)
 void MinimalPlan::execute_plan(MinAlignedVector& Y, MinAlignedVector& X,
                                const int32_t region, const int64_t bp,
                                const int64_t stride) const {
   MinAlignedVector copy_X(X);
-  execute_plan_no_copy(Y, X, region, bp, stride);
-  if (X != copy_X) X = copy_X;
+  MFFTELEM *Y_data = Y.data();
+  MFFTELEM *copy_X_data = copy_X.data();
+  MFFTELEM** YY = &Y_data;
+  MFFTELEM** XX = &copy_X_data;
+  execute_plan_no_copy(YY, XX, region, bp, stride);
+  if (*YY != Y.data()) {
+    if (Y==X)
+       Y = copy_X;
+    else
+       swap(Y, copy_X);   
+  }
 }

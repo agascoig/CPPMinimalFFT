@@ -3,11 +3,12 @@
 
 static const int64_t DIRECT_SZ = 15;
 
-static const int64_t factor_1[][1] = {{8},       {4},       {25},           {27},      {16},
-                                      {125},     {49},      {64},           {81},      {9 * 9 * 9}};
+static const int64_t factor_1[][1] = {{8},   {4},  {25}, {27}, {16},
+                                      {125}, {49}, {64}, {81}, {9 * 9 * 9}};
 
-static const int64_t factor_1_high_radix[][1] = {{256}, {11 * 11}, {11 * 11 * 11}, {13 * 13}, {17 * 17},
-                                      {19 * 19}, {23 * 23}, {29 * 29},      {31 * 31}};
+static const int64_t factor_1_high_radix[][1] = {{256},     {11 * 11}, {11 * 11 * 11},
+                                                 {13 * 13}, {17 * 17}, {19 * 19},
+                                                 {23 * 23}, {29 * 29}, {31 * 31}};
 
 static const int64_t factor_2[][2] = {{4, 25}, {25, 4}, {4, 49}, {8, 9}, {256, 25}, {16, 5},
                                       {8, 7},  {11, 8}, {49, 3}, {9, 8}, {25, 256}, {1, 256}};
@@ -171,15 +172,15 @@ int main(int argc, char* argv[]) {
   RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 6, bm, 0, true, factor_6, "prime factor 6");
   RUN_DRIVER(((int[]){2, 3, 5, 7, 11, 13, 17}), 7, bm, 0, true, factor_7, "prime factor 7");
 
-  for (int i=0;i<sizeof(bluestein_1)/sizeof(bluestein_1[0]);++i) {
+  for (int i = 0; i < sizeof(bluestein_1) / sizeof(bluestein_1[0]); ++i) {
     int64_t N = bluestein_1[i][0];
     fft_func_t fns[MAX_FACTORS] = {nullptr};
     fns[0] = &bluestein<false>;
     int32_t es = 1;
-    test_fft(RNG, "bluestein", bm, 0, N, pc, fc, 1, 1, false, nullptr, &N, fns, &N, &es);
+    test_fft(RNG, "bluestein", bm, false, N, pc, fc, 1, 1, false, nullptr, &N, fns, &N, &es);
     fns[0] = &bluestein<true>;
-    test_fft(RNG, "bluestein inverse", bm, P_INVERSE, N, pc, fc, 1, 1, false, nullptr, &N,
-             fns, &N, &es);
+    test_fft(RNG, "bluestein inverse", bm, true, N, pc, fc, 1, 1, false, nullptr, &N, fns, &N,
+             &es);
   }
 
   static int64_t planner_n[] = {4,
@@ -210,11 +211,24 @@ int main(int argc, char* argv[]) {
     int64_t* N_p = &N;
     const int32_t region = 0;
     MinimalPlan P(N_p, 1, region, region, P_NONE);
-    test_fft(RNG, "planner", bm, P_NONE, N, pc, fc, 1, 1, false, &P, &N, P.get_funcs(region),
+    test_fft(RNG, "planner", bm, false, N, pc, fc, 1, 1, false, &P, &N, P.get_funcs(region),
              nullptr, nullptr);
     MinimalPlan P_inv(N_p, 1, region, region, P_INVERSE);
-    test_fft(RNG, "planner inverse", bm, P_INVERSE, N, pc, fc, 1, 1, false, &P_inv, &N,
+    test_fft(RNG, "planner inverse", bm, true, N, pc, fc, 1, 1, false, &P_inv, &N,
              P_inv.get_funcs(region), nullptr, nullptr);
+  }
+
+  // in-place tests
+  {
+    int64_t N = 30;
+    int64_t* N_p = &N;
+    const int32_t region = 0;
+    MinimalPlan P(N_p, 1, region, region, P_NONE | P_INPLACE);
+    test_fft(RNG, "planner in-place", bm, false, N, pc, fc, 1, 1, false, &P, &N,
+             P.get_funcs(region), nullptr, nullptr);
+    MinimalPlan P_inv(N_p, 1, region, region, P_INVERSE | P_INPLACE);
+    test_fft(RNG, "planner inverse in-place", bm, true, N, pc, fc, 1, 1, false,
+             &P_inv, &N, P_inv.get_funcs(region), nullptr, nullptr);
   }
 
   printf("# Passed %d tests.\n", pass);

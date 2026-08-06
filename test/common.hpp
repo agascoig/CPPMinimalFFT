@@ -73,7 +73,7 @@ static void print_fns(char* buf, fft_func_t* fns) {
 }
 
 fftwf_plan create_fftw_plan(int n, std::complex<float>* in,
-                            std::complex<float>* out, int inverse) {
+                            std::complex<float>* out, bool inverse) {
   auto dir = inverse ? FFTW_BACKWARD : FFTW_FORWARD;
   auto P = fftwf_plan_dft_1d(n, (fftwf_complex*)in, (fftwf_complex*)out, dir,
                              FFTW_ESTIMATE);
@@ -82,7 +82,7 @@ fftwf_plan create_fftw_plan(int n, std::complex<float>* in,
 }
 
 fftw_plan create_fftw_plan(int n, std::complex<double>* in,
-                           std::complex<double>* out, int inverse) {
+                           std::complex<double>* out, bool inverse) {
   auto dir = inverse ? FFTW_BACKWARD : FFTW_FORWARD;
   auto P = fftw_plan_dft_1d(n, (fftw_complex*)in, (fftw_complex*)out, dir,
                             FFTW_ESTIMATE);
@@ -93,7 +93,7 @@ fftw_plan create_fftw_plan(int n, std::complex<double>* in,
 fftwf_plan create_fftw_multid_plan(int dims, int64_t* Ns,
                                    std::complex<float>* in,
                                    std::complex<float>* out, int region_start,
-                                   int region_end, int inverse) {
+                                   int region_end, bool inverse) {
   auto dir = inverse ? FFTW_BACKWARD : FFTW_FORWARD;
   if (region_start == 0 && region_end == dims - 1) {
     int* Ns_rev = new int[dims];  // reverse for row-major FFTW
@@ -144,7 +144,7 @@ fftwf_plan create_fftw_multid_plan(int dims, int64_t* Ns,
 fftw_plan create_fftw_multid_plan(int dims, int64_t* Ns,
                                   std::complex<double>* in,
                                   std::complex<double>* out, int region_start,
-                                  int region_end, int inverse) {
+                                  int region_end, bool inverse) {
   auto dir = inverse ? FFTW_BACKWARD : FFTW_FORWARD;
   if (region_start == 0 && region_end == dims - 1) {
     int* Ns_rev = new int[dims];  // reverse for row-major FFTW
@@ -268,8 +268,9 @@ void test_fft_kernel_untimed(int64_t repeat_count, MinAlignedVector& Y_ref,
                              const int64_t* QPs, const MAP_CACHE_T* nm,
                              const MAP_CACHE_T* km) {
   execute_fftw_plan(P_ref);
-  if (P)
+  if (P) {
     execute_minimal_test_planned(P, Y, X);
+  }
   else {
     execute_minimal_test_unplanned(Y, X, pfa, N, Ns, nf, fns, base, es, QPs, nm,
                                    km, inverse);
@@ -323,8 +324,8 @@ void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref,
   else
     execute_minimal_test_unplanned(Y, X, pfa, N, Ns, nf, fns, base, es, QPs, nm,
                                    km, inverse);
-  X = copy_X;
 
+  X = copy_X;
   double mu = 0;  // Welford's algorithm for running variance
   double M2 = 0;
   double delta, delta2;
@@ -332,14 +333,16 @@ void test_fft_kernel_timed(int64_t repeat_count, MinAlignedVector& Y_ref,
   n = 0;
   while (n++ < repeat_count) {
     inner_start = mingettime();
-    if (P)
+    if (P) {
       execute_minimal_test_planned(P, Y, X);
-    else {
+    } else {
       execute_minimal_test_unplanned(Y, X, pfa, N, Ns, nf, fns, base, es, QPs,
                                      nm, km, inverse);
-      X = copy_X;  // restore input for next test
+      X = copy_X;
     }
     inner_end = mingettime();
+    if (P && P->bt_flags(P_INPLACE) && (n<repeat_count))
+      X = copy_X;
     double x = get_s_time(inner_start, inner_end);
     delta = x - mu;
     mu += delta / (n + 1);
@@ -436,6 +439,7 @@ void test_fft(random_normal& RNG, const char* name, int bm, int inverse,
   MinAlignedVector X_ref(RNG.get_rv(N));
   MinAlignedVector X(X_ref);
   MinAlignedVector copy_X(X_ref);
+  MinAlignedVector &Y_test = (P && P->bt_flags(P_INPLACE)) ? X : Y;
   print_test("Testing", name, N, nf, Ns, fns);
 #if MINFFT == 64
   fftw_plan P_ref;
@@ -452,7 +456,7 @@ void test_fft(random_normal& RNG, const char* name, int bm, int inverse,
   minassert(nf <= MAX_FACTORS, "Too many factors in test_fft.");
   if (nf > 1) {
     if (P) {
-      test_fft_kernel(test_repeat, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm,
+      test_fft_kernel(test_repeat, Y_ref, Y_test, X_ref, X, copy_X, P_ref, P, N, bm,
                       &t_ref_s, &t_s, nf, Ns, fns, base, es, true, inverse,
                       &std_dev, nullptr, nullptr, nullptr);
     } else {
@@ -464,20 +468,20 @@ void test_fft(random_normal& RNG, const char* name, int bm, int inverse,
       MAP_CACHE_T* km =
           (N <= MinPlanConfig.max_map_cache ? generate_kmap(nf, N, Ns, params)
                                             : nullptr);
-      test_fft_kernel(test_repeat, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm,
+      test_fft_kernel(test_repeat, Y_ref, Y_test, X_ref, X, copy_X, P_ref, P, N, bm,
                       &t_ref_s, &t_s, nf, Ns, fns, base, es, true, inverse,
                       &std_dev, params, nm, km);
       if (nm) delete[] nm;
       if (km) delete[] km;
     }
   } else {
-    test_fft_kernel(test_repeat, Y_ref, Y, X_ref, X, copy_X, P_ref, P, N, bm,
+    test_fft_kernel(test_repeat, Y_ref, Y_test, X_ref, X, copy_X, P_ref, P, N, bm,
                     &t_ref_s, &t_s, nf, Ns, fns, base, es, false, inverse,
                     &std_dev, nullptr, nullptr, nullptr);
   }
   // reporting
   if (bm) hm_add(&hm, t_s / t_ref_s);
-  if (approx_cmp_v(Y_ref, Y, N)) {
+  if ((P && !P->bt_flags(P_INPLACE) && (X!=X_ref)) || (approx_cmp_v(Y_ref, Y_test, N))) {
     print_result("Failed for", name, N, nf, Ns, bm, t_ref_s, t_s, fns, std_dev);
     (*fc)++;
   } else {

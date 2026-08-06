@@ -62,14 +62,29 @@ int main(int argc, char* argv[]) {
     const int32_t region_end = dims-1;
     MinimalPlan P(Ns, dims, region_start, region_end, P_NONE);
     std::cout << "P: " << P << std::endl;
-    test_fft(RNG, "planner multid", bm, P_NONE, N, pc, fc, 1, dims, false, &P, Ns, nullptr,
+    test_fft(RNG, "planner multid", bm, false, N, pc, fc, 1, dims, false, &P, Ns, nullptr,
              nullptr, nullptr);
     MinimalPlan P_inv(Ns, dims, region_start, region_end, P_INVERSE);
     std::cout << "P_inv: " << P_inv << std::endl;
-    test_fft(RNG, "planner multid inverse", bm, P_INVERSE, N, pc, fc, 1, dims, false, &P_inv, Ns,
+    test_fft(RNG, "planner multid inverse", bm, true, N, pc, fc, 1, dims, false, &P_inv, Ns,
              nullptr, nullptr, nullptr);
   }
 
+  {
+    static int64_t N_inplace[] = {2, 3, 5, 7, 0};
+    int dims = 4;
+    auto N = prod(dims, N_inplace);
+    const int32_t region_start = 0;
+    const int32_t region_end = dims-1;
+    MinimalPlan P(N_inplace, dims, region_start, region_end, P_NONE | P_INPLACE);
+    std::cout << "P: " << P << std::endl;
+    test_fft(RNG, "planner multid in-place", bm, false, N, pc, fc, 1, dims, false, &P, N_inplace, nullptr,
+             nullptr, nullptr);
+    MinimalPlan P_inv(N_inplace, dims, region_start, region_end, P_INVERSE | P_INPLACE);
+    std::cout << "P_inv: " << P_inv << std::endl;
+    test_fft(RNG, "planner multid inverse in-place", bm, true, N, pc, fc, 1, dims, false, &P_inv, N_inplace,
+             nullptr, nullptr, nullptr);
+  }
   printf("# Passed %d tests.\n", pass);
   printf("# Failed %d tests.\n", fail);
   if (bm) {

@@ -43,7 +43,7 @@ class MinimalPlan {
 
   ~MinimalPlan();
 
-  // X preserved if not inplace, does only a single FFT in region r
+  // does only a single FFT in region r, for in-place plans Y==X
   void execute_plan(MinAlignedVector& Y, MinAlignedVector& X, const int32_t region,
                     const int64_t bp, const int64_t stride) const;
 
@@ -52,6 +52,7 @@ class MinimalPlan {
                             const int64_t stride) const;  // *XX may be destroyed
 
   // does all ffts from region_start to region_end
+  // for in-place plans Y==X
   void execute_multid_plan(MinAlignedVector& Y, MinAlignedVector& X, const int32_t region_start,
                            int32_t region_end, const int64_t bp,
                            const int64_t stride) const;  // X preserved if not inplace)

@@ -11,36 +11,43 @@ endif()
 add_executable(test1
     test1.cpp
     hmean.cpp
+    buildinfo.cpp
 )
 
 add_executable(test2
     test2.cpp
     hmean.cpp
+    buildinfo.cpp
 )
 
 add_executable(test3
     test3.cpp
     hmean.cpp
+    buildinfo.cpp
 )
 
 add_executable(test4
     test4.cpp
     hmean.cpp
+    buildinfo.cpp
 )
 
 add_executable(test17
     test17.cpp
     hmean.cpp
+    buildinfo.cpp
 )
 
 add_executable(test18
     test18.cpp
     hmean.cpp
+    buildinfo.cpp
 )
 
 add_executable(test19
     test19.cpp
     hmean.cpp
+    buildinfo.cpp
 )
 
 #target_compile_options(test17 PRIVATE ${ASAN_FLAGS})

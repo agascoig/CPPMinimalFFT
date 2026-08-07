@@ -17,12 +17,15 @@ set(SIMD "ON")
 
 #set(OPTIMIZE "-O0") # cannot do with Google Highway SIMD ON
 #set(OPTIMIZE "-O1")
-set(OPTIMIZE "-O3 -fomit-frame-pointer -fno-stack-protector -ffast-math")
+set(OPTIMIZE " -O3 -fomit-frame-pointer -fno-stack-protector -ffast-math -DNDEBUG")
 
-set(NDEBUG "-DNDEBUG")
+#set(PROFILE "-fprofile-use=../tmp/merged.profdata -Rpass=pgo-instrument")
+#set(PROFILE "-fprofile-generate=pgo-data")
+
+#set(NDEBUG "-DNDEBUG")
 
 # remove -fPIC
-set(CMAKE_CXX_FLAGS "-march=native -g ${OPTIMIZE} -std=c++23 -DMINFFT=${MINFFT} ${SANITIZE} ${NDEBUG} -DSIMD=\\\"${SIMD}\\\" -DVERSION=\\\"${VERSION}\\\"")
+set(CMAKE_CXX_FLAGS "-march=native -g ${OPTIMIZE} -std=c++23 -DMINFFT=${MINFFT} ${PROFILE} ${SANITIZE} ${NDEBUG} -DSIMD=\\\"${SIMD}\\\" -DVERSION=\\\"${VERSION}\\\"")
 
 find_library(HIGHWAY_LIB highway HINTS /opt/homebrew/opt/highway)
 
